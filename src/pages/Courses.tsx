@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -35,29 +34,10 @@ const Courses = () => {
       if (!user) return;
 
       try {
-        // If projectId is provided, first check user's role for this project
+        // If projectId is provided, fetch courses for this specific project
         if (projectId) {
-          console.log('Checking user role for project:', projectId);
+          console.log('Fetching courses for project:', projectId);
           
-          const { data: roleData, error: roleError } = await supabase
-            .from('user_project_roles')
-            .select('role')
-            .eq('project_id', projectId)
-            .eq('user_id', user.id)
-            .single();
-            
-          if (roleError) {
-            console.error('Error fetching user role:', roleError);
-            return;
-          }
-
-          // Only allow viewing courses if user is an influencer for this project
-          if (roleData?.role !== 'influencer') {
-            console.log('User is not an influencer for this project');
-            navigate('/projects');
-            return;
-          }
-
           // Fetch project name
           const { data: projectData } = await supabase
             .from('projects')
@@ -69,25 +49,86 @@ const Courses = () => {
             setProjectName(projectData.name);
           }
           
-          // Fetch courses for this specific project
-          const { data: coursesData, error: coursesError } = await supabase
-            .from('courses')
-            .select(`
-              *,
-              project:projects(name, color_scheme)
-            `)
-            .eq('project_id', projectId);
+          // First check if user is the owner of this project
+          const { data: projectOwnerData } = await supabase
+            .from('projects')
+            .select('id')
+            .eq('id', projectId)
+            .eq('user_id', user.id)
+            .single();
+            
+          if (projectOwnerData) {
+            // User is the project owner, fetch all courses for this project
+            const { data: coursesData, error: coursesError } = await supabase
+              .from('courses')
+              .select(`
+                *,
+                project:projects(name, color_scheme)
+              `)
+              .eq('project_id', projectId);
 
-          if (coursesError) {
-            throw coursesError;
-          }
+            if (coursesError) {
+              throw coursesError;
+            }
 
-          if (coursesData) {
-            console.log('Courses for project:', coursesData);
-            setCourses(coursesData as CourseWithProject[]);
+            if (coursesData) {
+              console.log('Courses for project:', coursesData);
+              setCourses(coursesData as CourseWithProject[]);
+            }
+          } else {
+            // Check if user has an influencer role for this project
+            const { data: roleData, error: roleError } = await supabase
+              .from('user_project_roles')
+              .select('role')
+              .eq('project_id', projectId)
+              .eq('user_id', user.id);
+              
+            if (roleError) {
+              console.error('Error fetching user role:', roleError);
+              navigate('/projects');
+              return;
+            }
+
+            // Only allow viewing courses if user is an influencer for this project
+            const isInfluencer = roleData && roleData.some(role => role.role === 'influencer');
+            if (!isInfluencer) {
+              console.log('User is not an influencer for this project');
+              navigate('/projects');
+              return;
+            }
+            
+            // Fetch courses for this specific project
+            const { data: coursesData, error: coursesError } = await supabase
+              .from('courses')
+              .select(`
+                *,
+                project:projects(name, color_scheme)
+              `)
+              .eq('project_id', projectId);
+
+            if (coursesError) {
+              throw coursesError;
+            }
+
+            if (coursesData) {
+              console.log('Courses for project:', coursesData);
+              setCourses(coursesData as CourseWithProject[]);
+            }
           }
         } else {
-          // Fetch all projects where user is an influencer
+          // Fetch all projects owned by the user
+          const { data: ownedProjects, error: ownedProjectsError } = await supabase
+            .from('projects')
+            .select('id')
+            .eq('user_id', user.id);
+
+          if (ownedProjectsError) {
+            throw ownedProjectsError;
+          }
+
+          let projectIds = ownedProjects ? ownedProjects.map(project => project.id) : [];
+
+          // Also fetch all projects where user has an influencer role
           const { data: userProjects, error: projectsError } = await supabase
             .from('user_project_roles')
             .select('project_id')
@@ -98,14 +139,18 @@ const Courses = () => {
             throw projectsError;
           }
 
-          if (!userProjects || userProjects.length === 0) {
+          if (userProjects && userProjects.length > 0) {
+            projectIds = [...projectIds, ...userProjects.map(project => project.project_id)];
+            // Remove duplicates
+            projectIds = [...new Set(projectIds)];
+          }
+
+          if (projectIds.length === 0) {
             setLoading(false);
             return;
           }
 
-          const projectIds = userProjects.map(project => project.project_id);
-
-          // Fetch courses for all projects where user is an influencer
+          // Fetch courses for all these projects
           const { data: coursesData, error: coursesError } = await supabase
             .from('courses')
             .select(`
@@ -156,6 +201,7 @@ const Courses = () => {
     }
   };
 
+  
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">
