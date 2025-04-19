@@ -36,6 +36,8 @@ export interface Course {
   telegram_bot: string | null;
   project_id: string;
   created_at: string | null;
+  ai_instructions: string | null;
+  materials: string | null;
 }
 
 export interface Enrollment {
