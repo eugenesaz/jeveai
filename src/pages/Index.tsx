@@ -26,9 +26,11 @@ const Index = () => {
   const [loginLoading, setLoginLoading] = useState(false);
   const [signupLoading, setSignupLoading] = useState(false);
 
-  // Use useEffect for redirection after render
+  // Use useEffect for redirection after render with a console log to help debug
   useEffect(() => {
+    console.log('Index page useEffect:', { isLoading, user: user?.id });
     if (!isLoading && user) {
+      console.log('Redirecting to dashboard...');
       navigate('/dashboard');
     }
   }, [isLoading, user, navigate]);
@@ -67,6 +69,7 @@ const Index = () => {
         setAuthError(error.message);
         setLoginLoading(false);
       } else {
+        console.log('Login successful, dialog closing');
         setIsLoginOpen(false);
         setLoginLoading(false);
       }
