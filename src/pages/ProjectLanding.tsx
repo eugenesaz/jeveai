@@ -11,6 +11,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/components/ui/use-toast';
 import ReactMarkdown from 'react-markdown';
 import { Project, Course } from '@/types/supabase';
+import { ProjectLanguageSelector } from '@/components/landing/ProjectLanguageSelector';
+import { AuthDialogs } from '@/components/auth/AuthDialogs';
 
 interface SocialMedia {
   telegram?: string;
@@ -347,7 +349,8 @@ const ProjectLanding = () => {
       <header className={`bg-white shadow-sm border-b ${colorClass.border}`}>
         <div className="container mx-auto p-4 flex justify-between items-center">
           <h1 className={`text-2xl font-bold ${colorClass.text}`}>{project.name}</h1>
-          <div className="flex gap-4">
+          <div className="flex items-center gap-4">
+            <ProjectLanguageSelector />
             {user ? (
               <Button onClick={() => navigate('/')}>
                 {t('navigation.dashboard')}
@@ -443,232 +446,12 @@ const ProjectLanding = () => {
         )}
       </main>
 
-      <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('navigation.login')}</DialogTitle>
-            <DialogDescription>
-              {t('auth.hasAccount')}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">{t('auth.email')}</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">{t('auth.password')}</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-            {authError && (
-              <p className="text-sm text-red-500">{authError}</p>
-            )}
-          </div>
-          <DialogFooter className="flex flex-col sm:flex-row gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setIsLoginOpen(false);
-                setIsSignUpOpen(true);
-              }}
-              className="sm:order-1"
-            >
-              {t('auth.signupNow')}
-            </Button>
-            <Button 
-              onClick={() => handleAuth(false)} 
-              disabled={loginLoading}
-              className="sm:order-2"
-            >
-              {loginLoading ? 'Loading...' : t('navigation.login')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isSignUpOpen} onOpenChange={setIsSignUpOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('navigation.signup')}</DialogTitle>
-            <DialogDescription>
-              {t('auth.noAccount')}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="signup-email">{t('auth.email')}</Label>
-              <Input
-                id="signup-email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="signup-password">{t('auth.password')}</Label>
-              <Input
-                id="signup-password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirm-password">{t('auth.confirmPassword')}</Label>
-              <Input
-                id="confirm-password"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
-            </div>
-            {authError && (
-              <p className="text-sm text-red-500">{authError}</p>
-            )}
-          </div>
-          <DialogFooter className="flex flex-col sm:flex-row gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setIsSignUpOpen(false);
-                setIsLoginOpen(true);
-              }}
-              className="sm:order-1"
-            >
-              {t('auth.loginNow')}
-            </Button>
-            <Button 
-              onClick={() => handleAuth(true)} 
-              disabled={signupLoading}
-              className="sm:order-2"
-            >
-              {signupLoading ? 'Loading...' : t('navigation.signup')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isSocialDialogOpen} onOpenChange={setIsSocialDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('customer.social.title')}</DialogTitle>
-            <DialogDescription>
-              {t('customer.social.description')}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="telegram">{t('customer.social.telegram')}</Label>
-              <Input
-                id="telegram"
-                value={socialMedia.telegram || ''}
-                onChange={(e) => setSocialMedia({...socialMedia, telegram: e.target.value})}
-                placeholder="@yourusername"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="instagram">{t('customer.social.instagram')}</Label>
-              <Input
-                id="instagram"
-                value={socialMedia.instagram || ''}
-                onChange={(e) => setSocialMedia({...socialMedia, instagram: e.target.value})}
-                placeholder="yourusername"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="tiktok">{t('customer.social.tiktok')}</Label>
-              <Input
-                id="tiktok"
-                value={socialMedia.tiktok || ''}
-                onChange={(e) => setSocialMedia({...socialMedia, tiktok: e.target.value})}
-                placeholder="yourusername"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button 
-              onClick={handleSaveSocialMedia} 
-              disabled={socialLoading}
-            >
-              {socialLoading ? 'Saving...' : t('customer.social.save')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {selectedCourse && (
-        <Dialog open={isCourseDialogOpen} onOpenChange={setIsCourseDialogOpen}>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>{t('customer.courses.courseInfo')}</DialogTitle>
-              <DialogDescription>
-                {selectedCourse.name}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-gray-500">{t('customer.courses.description')}</p>
-                <p>{selectedCourse.description}</p>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-gray-500">{t('customer.courses.type')}</p>
-                  <p>{selectedCourse.type}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-gray-500">{t('customer.courses.price')}</p>
-                  <p className="font-semibold">${selectedCourse.price.toFixed(2)}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-gray-500">{t('customer.courses.duration')}</p>
-                  <p>
-                    {selectedCourse.duration === 0 
-                      ? t('customer.courses.oneTime') 
-                      : `${selectedCourse.duration} ${t('customer.courses.days')}`}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-gray-500">{t('customer.courses.recurring')}</p>
-                  <p>{selectedCourse.recurring ? t('yes') : t('no')}</p>
-                </div>
-              </div>
-              
-              {selectedCourse.details && (
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-gray-500">{t('influencer.course.details')}</p>
-                  <div className="prose prose-sm max-h-40 overflow-y-auto">
-                    <ReactMarkdown>{selectedCourse.details}</ReactMarkdown>
-                  </div>
-                </div>
-              )}
-            </div>
-            <DialogFooter className="flex gap-2">
-              <Button variant="outline" onClick={() => setIsCourseDialogOpen(false)}>
-                {t('customer.courses.cancel')}
-              </Button>
-              <Button 
-                className={colorClass.button}
-                onClick={() => handlePayment(selectedCourse)}
-              >
-                {t('customer.courses.purchase')}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+      <AuthDialogs 
+        isLoginOpen={isLoginOpen}
+        setIsLoginOpen={setIsLoginOpen}
+        isSignUpOpen={isSignUpOpen}
+        setIsSignUpOpen={setIsSignUpOpen}
+      />
     </div>
   );
 };
