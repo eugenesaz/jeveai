@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,10 +25,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Helper function to create profile if not exists
   const ensureProfileExists = async (userId: string, email: string | undefined) => {
     try {
-      // First check if profile exists
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -39,10 +36,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (error || !data) {
         console.log('Profile not found, creating profile for user:', userId);
         
-        // Default to 'influencer' role if not specified
         const defaultRole: UserRole = 'influencer';
         
-        // Create profile
         const { error: insertError } = await supabase
           .from('profiles')
           .insert({
@@ -53,25 +48,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         if (insertError) {
           console.error('Error creating profile:', insertError);
-          // Even if profile creation fails, we'll return a default role for UX purposes
-          // This way users can still use the app even if profile creation fails
           return defaultRole;
         }
         
-        // Return the created role
         return defaultRole;
       }
       
       return data.role as UserRole;
     } catch (err) {
       console.error('Error in ensureProfileExists:', err);
-      // Return default role to avoid blocking the user
       return 'influencer' as UserRole;
     }
   };
 
   useEffect(() => {
-    // Set up the session listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, currentSession) => {
         console.log('Auth state changed:', _event, currentSession?.user?.id);
@@ -80,10 +70,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setUser(currentSession?.user ?? null);
         
         if (currentSession?.user) {
-          // Use setTimeout to prevent potential deadlocks with Supabase auth
           setTimeout(async () => {
             try {
-              // Fetch user's role from metadata or database
               const { data, error } = await supabase
                 .from('profiles')
                 .select('role')
@@ -97,7 +85,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               } else {
                 console.log('Could not fetch role, error:', error);
                 
-                // Try to create profile if it doesn't exist
                 const role = await ensureProfileExists(
                   currentSession.user.id, 
                   currentSession.user.email
@@ -106,16 +93,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 if (role) {
                   setUserRole(role);
                 } else {
-                  // Default to influencer if all else fails
                   setUserRole('influencer');
                 }
               }
             } catch (err) {
               console.error('Error fetching user role:', err);
-              // Default to influencer if all else fails
               setUserRole('influencer');
             } finally {
-              // Ensure loading state is set to false even if there are errors
               setIsLoading(false);
             }
           }, 0);
@@ -126,7 +110,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     );
 
-    // Initial session check
     const initializeAuth = async () => {
       setIsLoading(true);
       try {
@@ -137,7 +120,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setUser(data.session?.user ?? null);
         
         if (data.session?.user) {
-          // Fetch user's role
           const { data: profileData, error } = await supabase
             .from('profiles')
             .select('role')
@@ -151,7 +133,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           } else {
             console.log('Could not fetch initial role, error:', error);
             
-            // Try to create profile if it doesn't exist
             const role = await ensureProfileExists(
               data.session.user.id, 
               data.session.user.email
@@ -160,7 +141,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (role) {
               setUserRole(role);
             } else {
-              // Default to influencer if all else fails
               setUserRole('influencer');
             }
           }
@@ -168,7 +148,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } catch (err) {
         console.error('Error during initial auth check:', err);
       } finally {
-        // Always set isLoading to false when initialization is complete
         setIsLoading(false);
       }
     };
@@ -184,7 +163,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (!user) return false;
     
     try {
-      // Get the latest role information from the database
       const { data, error } = await supabase
         .from('profiles')
         .select('role')
@@ -220,7 +198,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.log('Signup response:', data?.user?.id, error);
 
       if (!error && data.user) {
-        // Create profile in the database
         const { error: profileError } = await supabase.from('profiles').insert({
           id: data.user.id,
           email: email,
@@ -229,7 +206,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         console.log('Profile creation result:', profileError ? `Error: ${profileError.message}` : 'Success');
 
-        // Set the role even if there's a profile error so the user can continue
         setUserRole(role);
       }
 
@@ -252,11 +228,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.log('Signin response:', data?.user?.id, error);
       
       if (!error && data.user) {
-        // Manually set user and session without waiting for onAuthStateChange
         setUser(data.user);
         setSession(data.session);
         
-        // Fetch user's role after successful sign in
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('role')
@@ -268,14 +242,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (!profileError && profileData) {
           setUserRole(profileData.role as UserRole);
         } else {
-          // Try to create profile if it doesn't exist
           const role = await ensureProfileExists(data.user.id, data.user.email);
           
-          // Always set the role regardless of profile creation success
           setUserRole(role || 'influencer');
           
           if (!role) {
-            // Only show toast if we're using fallback role
             toast({
               title: "Note",
               description: "Using default role as influencer",
@@ -290,7 +261,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.error('Signin error:', error);
       return { error };
     } finally {
-      // Ensure we update loading state
       setIsLoading(false);
     }
   };
@@ -303,16 +273,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const signOut = async () => {
-    console.log('Signing out');
-    setIsLoading(true); // Set loading state while signing out
+    console.log('Signing out and clearing all session data');
+    setIsLoading(true);
     
-    await supabase.auth.signOut();
-    
-    setUser(null);
-    setSession(null);
-    setUserRole(null);
-    
-    setIsLoading(false); // Reset loading state after sign out
+    try {
+      await supabase.auth.signOut();
+      
+      setUser(null);
+      setSession(null);
+      setUserRole(null);
+      
+      localStorage.removeItem('supabase.auth.token');
+      sessionStorage.removeItem('supabase.auth.token');
+      
+      console.log('Sign out complete, all session data cleared');
+    } catch (error) {
+      console.error('Error during sign out:', error);
+      setUser(null);
+      setSession(null);
+      setUserRole(null);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const setRole = (role: UserRole) => {

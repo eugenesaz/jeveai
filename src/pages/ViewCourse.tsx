@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
@@ -18,7 +19,7 @@ interface CourseWithDates extends Course {
 const ViewCourse = () => {
   const { id } = useParams<{ id: string }>();
   const { t } = useTranslation();
-  const { user, userRole } = useAuth();
+  const { user, userRole, isLoading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [course, setCourse] = useState<CourseWithDates | null>(null);
@@ -89,7 +90,7 @@ const ViewCourse = () => {
     }
   };
 
-  if (loading) {
+  if (loading || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p>Loading course...</p>

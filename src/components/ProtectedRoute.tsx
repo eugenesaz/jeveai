@@ -1,6 +1,6 @@
 
-import { ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
+import { ReactNode, useEffect } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Spinner } from '@/components/ui/spinner';
 
@@ -10,7 +10,20 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
-  const { user, userRole, isLoading } = useAuth();
+  const { user, userRole, isLoading, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  // Force logout if session seems invalid
+  useEffect(() => {
+    // If we're not loading and there's no valid user or role when we should have one
+    if (!isLoading && (!user || !userRole)) {
+      console.log('Invalid session detected in protected route, forcing logout');
+      // Clear any lingering session data
+      signOut().then(() => {
+        navigate('/', { replace: true });
+      });
+    }
+  }, [isLoading, user, userRole, signOut, navigate]);
 
   // Show loading state while checking authentication
   if (isLoading) {
@@ -23,12 +36,14 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
   }
 
   // If not authenticated, redirect to landing page
-  if (!user) {
+  if (!user || !userRole) {
+    console.log('User not authenticated, redirecting to landing page');
     return <Navigate to="/" replace />;
   }
 
   // If user doesn't have the required role, redirect to dashboard or landing page
-  if (!userRole || !allowedRoles.includes(userRole)) {
+  if (!allowedRoles.includes(userRole)) {
+    console.log(`User has role ${userRole} but needs one of: ${allowedRoles.join(', ')}`);
     if (userRole === 'influencer') {
       return <Navigate to="/dashboard" replace />;
     } else if (userRole === 'customer') {

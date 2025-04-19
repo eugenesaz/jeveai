@@ -12,12 +12,21 @@ import { Spinner } from '@/components/ui/spinner';
 const Index = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, signOut } = useAuth();
 
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isSignUpOpen, setIsSignUpOpen] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
 
+  // Check for invalid auth state and force logout if needed
+  useEffect(() => {
+    if (!isLoading && user?.id && !user.email) {
+      console.log('Invalid user state detected, forcing logout');
+      signOut();
+    }
+  }, [isLoading, user, signOut]);
+
+  // Redirect authenticated users to dashboard
   useEffect(() => {
     if (!isLoading && user) {
       console.log('User authenticated, redirecting to dashboard...');
