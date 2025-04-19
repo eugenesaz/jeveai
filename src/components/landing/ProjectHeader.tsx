@@ -6,6 +6,7 @@ import { ProjectLanguageSelector } from '@/components/landing/ProjectLanguageSel
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/sonner';
+import { cn } from '@/lib/utils';
 
 interface ProjectHeaderProps {
   projectName: string;
@@ -38,14 +39,27 @@ export const ProjectHeader = ({ projectName, colorScheme = 'blue' }: ProjectHead
           <ProjectLanguageSelector />
           {user ? (
             <>
-              <Button variant="outline" className="text-white border-white hover:bg-white/20" onClick={handleLogout}>
+              <Button 
+                variant="outline" 
+                className={cn(
+                  "text-white border-white/30 hover:border-white/50 bg-white/10 hover:bg-white/20",
+                  "transition-all duration-300 ease-in-out"
+                )}
+                onClick={handleLogout}
+              >
                 {t('navigation.logout')}
               </Button>
             </>
           ) : (
             <>
               <Link to="/">
-                <Button variant="outline" className="text-white border-white hover:bg-white/20">
+                <Button 
+                  variant="outline" 
+                  className={cn(
+                    "text-white border-white/30 hover:border-white/50 bg-white/10 hover:bg-white/20",
+                    "transition-all duration-300 ease-in-out"
+                  )}
+                >
                   {t('navigation.login')}
                 </Button>
               </Link>
