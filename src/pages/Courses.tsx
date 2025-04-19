@@ -9,6 +9,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 
 // Define simplified types to prevent circular references
+interface ProjectDetails {
+  name: string;
+  color_scheme: string | null;
+}
+
 interface SimpleCourse {
   id: string;
   name: string;
@@ -24,11 +29,7 @@ interface SimpleCourse {
   created_at: string | null;
 }
 
-interface ProjectDetails {
-  name: string;
-  color_scheme: string | null;
-}
-
+// Create a separate interface for joined data to avoid circular references
 interface CourseWithProject extends SimpleCourse {
   project: ProjectDetails | null;
 }
