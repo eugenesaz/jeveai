@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,13 +8,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { Course } from '@/types/supabase';
 
-// Define a simplified project type without circular references
 interface ProjectDetails {
   name: string;
   color_scheme: string | null;
 }
 
-// Define a flat course structure to avoid circular references
 interface CourseWithProject {
   id: string;
   name: string;
@@ -44,7 +41,6 @@ const Courses = () => {
       if (!user) return;
 
       try {
-        // First, get all projects for this user
         const { data: userProjects, error: projectsError } = await supabase
           .from('projects')
           .select('id')
@@ -56,13 +52,11 @@ const Courses = () => {
 
         if (!userProjects || userProjects.length === 0) {
           setLoading(false);
-          return; // No projects, so no courses
+          return;
         }
 
-        // Extract project IDs
         const projectIds = userProjects.map(project => project.id);
 
-        // Now fetch courses that belong to any of these projects
         const { data: coursesData, error: coursesError } = await supabase
           .from('courses')
           .select(`
@@ -94,7 +88,6 @@ const Courses = () => {
     const translationKey = `influencer.course.types.${type.toLowerCase()}`;
     const translated = t(translationKey);
     
-    // If the translation key is returned as-is, it means the translation doesn't exist
     return translated !== translationKey ? translated : type;
   };
 
@@ -180,7 +173,7 @@ const Courses = () => {
                     variant="outline" 
                     onClick={() => navigate(`/edit-course/${course.id}`)}
                   >
-                    {t('edit', 'Edit')}
+                    {t('editButton')}
                   </Button>
                   <Button 
                     variant="default"

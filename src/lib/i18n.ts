@@ -104,7 +104,7 @@ const resources = {
         "project": "No Project"
       },
       "view": "View",
-      "edit": "Edit",
+      "editButton": "Edit",
       "loading": "Loading courses...",
       "customer": {
         "courses": {
@@ -162,16 +162,13 @@ const resources = {
         "enrolled": "Successfully enrolled in course!",
         "socialSaved": "Social media accounts saved successfully!"
       },
-      "edit": {
-        "course": {
-          "title": "Edit Course",
-          "save": "Save Changes",
-          "cancel": "Cancel",
-          "success": "Course updated successfully!",
-          "error": "Failed to update course"
-        }
-      },
-      "cancel": "Cancel"
+      "editCourse": {
+        "title": "Edit Course",
+        "save": "Save Changes",
+        "cancel": "Cancel",
+        "success": "Course updated successfully!",
+        "error": "Failed to update course"
+      }
     }
   },
   ru: {
@@ -273,7 +270,7 @@ const resources = {
         "project": "Нет проекта"
       },
       "view": "Просмотр",
-      "edit": "Редактировать",
+      "editButton": "Редактировать",
       "loading": "Загрузка курсов...",
       "customer": {
         "courses": {
@@ -331,16 +328,13 @@ const resources = {
         "enrolled": "Вы успешно записались на курс!",
         "socialSaved": "Аккаунты социальных сетей успешно сохранены!"
       },
-      "edit": {
-        "course": {
-          "title": "Редактировать курс",
-          "save": "Сохранить изменения",
-          "cancel": "Отмена",
-          "success": "Курс успешно обновлен!",
-          "error": "Не удалось обновить курс"
-        }
-      },
-      "cancel": "Отмена"
+      "editCourse": {
+        "title": "Редактировать курс",
+        "save": "Сохранить изменения",
+        "cancel": "Отмена",
+        "success": "Курс успешно обновлен!",
+        "error": "Не удалось обновить курс"
+      }
     }
   }
 };

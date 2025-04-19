@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -34,7 +33,6 @@ const Dashboard = () => {
         
         console.log('Projects data:', data);
         
-        // Cast color_scheme to ensure it matches the Project type
         const typedProjects = data?.map(project => ({
           ...project,
           color_scheme: (project.color_scheme === 'blue' || 
@@ -187,7 +185,7 @@ const Dashboard = () => {
                   <Button 
                     onClick={() => navigate(`/edit-project/${project.id}`)}
                   >
-                    {t('edit')}
+                    {t('editButton')}
                   </Button>
                 </CardFooter>
               </Card>
