@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,33 +6,22 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
+import { Course } from '@/types/supabase';
 
-interface Project {
+interface ProjectDetails {
   name: string;
   color_scheme: string;
 }
 
-interface Course {
-  id: string;
-  name: string;
-  description: string;
-  status: boolean;
-  type: string;
-  price: number;
-  duration: number;
-  recurring: boolean;
-  details: string;
-  telegram_bot: string;
-  project_id: string;
-  created_at: string;
-  project: Project;
+interface CourseWithProject extends Course {
+  project: ProjectDetails;
 }
 
 const Courses = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [courses, setCourses] = useState<CourseWithProject[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -54,7 +42,7 @@ const Courses = () => {
         }
 
         if (data) {
-          setCourses(data as Course[]);
+          setCourses(data as CourseWithProject[]);
         }
       } catch (error) {
         console.error('Error fetching courses:', error);
@@ -138,7 +126,7 @@ const Courses = () => {
                   <p className="text-sm line-clamp-2">{course.description}</p>
                   <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm mt-2">
                     <div className="text-gray-500">{t('customer.courses.type')}:</div>
-                    <div>{getTypeTranslation(course.type)}</div>
+                    <div>{getTypeTranslation(course.type || '')}</div>
                     <div className="text-gray-500">{t('customer.courses.price')}:</div>
                     <div>${course.price.toFixed(2)}</div>
                     <div className="text-gray-500">{t('customer.courses.duration')}:</div>
