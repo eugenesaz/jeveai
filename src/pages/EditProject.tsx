@@ -25,7 +25,7 @@ const EditProject = () => {
   const [projectName, setProjectName] = useState('');
   const [urlName, setUrlName] = useState('');
   const [isActive, setIsActive] = useState(true);
-  const [colorScheme, setColorScheme] = useState<string>('blue');
+  const [colorScheme, setColorScheme] = useState<'blue' | 'red' | 'orange' | 'green'>('blue');
   const [landingImage, setLandingImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -64,11 +64,25 @@ const EditProject = () => {
           return;
         }
 
-        setProject(data);
+        // Ensure color_scheme is one of the valid types
+        const validColorScheme = (data.color_scheme === 'blue' || 
+                                 data.color_scheme === 'red' || 
+                                 data.color_scheme === 'orange' || 
+                                 data.color_scheme === 'green') 
+                                 ? data.color_scheme as 'blue' | 'red' | 'orange' | 'green'
+                                 : 'blue'; // Default to blue if invalid
+
+        // Create properly typed project object
+        const typedProject: Project = {
+          ...data,
+          color_scheme: validColorScheme
+        };
+        
+        setProject(typedProject);
         setProjectName(data.name);
         setUrlName(data.url_name);
         setIsActive(data.status);
-        setColorScheme(data.color_scheme || 'blue');
+        setColorScheme(validColorScheme);
         
         if (data.landing_image) {
           setImagePreview(data.landing_image);

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -22,7 +21,7 @@ const CreateProject = () => {
   const [projectName, setProjectName] = useState('');
   const [urlName, setUrlName] = useState('');
   const [isActive, setIsActive] = useState(true);
-  const [colorScheme, setColorScheme] = useState<string>('blue');
+  const [colorScheme, setColorScheme] = useState<'blue' | 'red' | 'orange' | 'green'>('blue');
   const [landingImage, setLandingImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -40,7 +39,6 @@ const CreateProject = () => {
     if (!url) return t('errors.required');
     if (!/^[a-zA-Z0-9-_]+$/.test(url)) return 'URL can only contain letters, numbers, dashes, and underscores';
     
-    // Check if URL is already taken
     const { data } = await supabase
       .from('projects')
       .select('url_name')
@@ -62,7 +60,6 @@ const CreateProject = () => {
     e.preventDefault();
     if (!user) return;
     
-    // Validate form
     if (!projectName) {
       toast({
         title: 'Error',
@@ -83,13 +80,10 @@ const CreateProject = () => {
     try {
       let landingImageUrl = '';
 
-      // Upload image if it exists
       if (landingImage) {
-        // First check if bucket exists and is accessible
         const bucketAccessible = await checkBucketAccess('project-images');
         
         if (!bucketAccessible) {
-          // Try to create the bucket as a fallback
           const { error: createBucketError } = await supabase.storage
             .createBucket('project-images', { public: true });
           
@@ -102,7 +96,6 @@ const CreateProject = () => {
           }
         }
 
-        // Proceed with upload if we have a bucket or after attempted creation
         const fileExt = landingImage.name.split('.').pop();
         const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
         const filePath = `${user.id}/${fileName}`;
