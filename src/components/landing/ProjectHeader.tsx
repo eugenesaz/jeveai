@@ -1,4 +1,3 @@
-
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
@@ -22,7 +21,6 @@ export const ProjectHeader = ({ projectName, colorScheme = 'blue' }: ProjectHead
     try {
       await supabase.auth.signOut();
       toast.success(t('navigation.logout_success'));
-      navigate('/');
     } catch (error) {
       toast.error(t('navigation.logout_error'));
       console.error('Logout error:', error);
