@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -11,11 +10,6 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/components/ui/use-toast';
 import ReactMarkdown from 'react-markdown';
-
-// Initialize Supabase client
-const supabaseUrl = 'https://your-supabase-url.supabase.co';
-const supabaseAnonKey = 'your-supabase-anon-key';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 interface Project {
   id: string;
@@ -78,13 +72,11 @@ const ProjectLanding = () => {
   const [signupLoading, setSignupLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState(false);
 
-  // Get project details and courses
   useEffect(() => {
     const fetchProjectDetails = async () => {
       if (!urlName) return;
 
       try {
-        // Get project details
         const { data: projectData, error: projectError } = await supabase
           .from('projects')
           .select('*')
@@ -99,7 +91,6 @@ const ProjectLanding = () => {
         if (projectData) {
           setProject(projectData as Project);
           
-          // Get active courses for this project
           const { data: coursesData, error: coursesError } = await supabase
             .from('courses')
             .select('*')
@@ -124,7 +115,6 @@ const ProjectLanding = () => {
     fetchProjectDetails();
   }, [urlName]);
 
-  // Get enrolled courses for authenticated user
   useEffect(() => {
     const fetchEnrolledCourses = async () => {
       if (!user || !project) return;
@@ -151,7 +141,6 @@ const ProjectLanding = () => {
     fetchEnrolledCourses();
   }, [user, project]);
 
-  // Get social media details for authenticated user
   useEffect(() => {
     const fetchSocialMedia = async () => {
       if (!user) return;
@@ -203,7 +192,6 @@ const ProjectLanding = () => {
         setIsSignUpOpen(false);
         setSignupLoading(false);
         
-        // After successful signup, check if user needs to provide social media details
         if (selectedCourse) {
           setIsSocialDialogOpen(true);
         }
@@ -220,11 +208,9 @@ const ProjectLanding = () => {
         setIsLoginOpen(false);
         setLoginLoading(false);
         
-        // After successful login, check if user needs to provide social media details
         if (selectedCourse && (!socialMedia.telegram && !socialMedia.instagram && !socialMedia.tiktok)) {
           setIsSocialDialogOpen(true);
         } else if (selectedCourse) {
-          // Redirect to payment
           handlePayment(selectedCourse);
         }
       }
@@ -250,7 +236,6 @@ const ProjectLanding = () => {
   const handleSaveSocialMedia = async () => {
     if (!user) return;
     
-    // Validate at least one social media account
     if (!socialMedia.telegram && !socialMedia.instagram && !socialMedia.tiktok) {
       toast({
         title: 'Error',
@@ -283,7 +268,6 @@ const ProjectLanding = () => {
       });
       
       if (selectedCourse) {
-        // Show course details dialog
         setIsCourseDialogOpen(true);
       }
     } catch (error) {
@@ -295,11 +279,7 @@ const ProjectLanding = () => {
   const handlePayment = async (course: Course) => {
     if (!user || !project) return;
     
-    // Here we would integrate with Stripe for payment
-    // For now, we'll just simulate a successful payment
-    
     try {
-      // Record the enrollment
       const { error } = await supabase.from('enrollments').insert({
         user_id: user.id,
         course_id: course.id,
@@ -312,7 +292,6 @@ const ProjectLanding = () => {
       
       if (error) throw error;
       
-      // Update enrolled courses
       setEnrolledCourses([...enrolledCourses, course.id]);
       
       setIsCourseDialogOpen(false);
@@ -410,7 +389,6 @@ const ProjectLanding = () => {
       </header>
 
       <main className="container mx-auto p-6 space-y-8">
-        {/* Project landing image */}
         {project.landing_image && (
           <div className="w-full max-h-80 overflow-hidden rounded-lg shadow-md">
             <img 
@@ -421,7 +399,6 @@ const ProjectLanding = () => {
           </div>
         )}
 
-        {/* Active courses section */}
         {user && enrolledCourses.length > 0 && (
           <div className="space-y-4">
             <h2 className="text-2xl font-bold">{t('customer.courses.active')}</h2>
@@ -452,12 +429,11 @@ const ProjectLanding = () => {
           </div>
         )}
 
-        {/* Available courses section */}
-        <div className="space-y-4">
-          <h2 className="text-2xl font-bold">{t('customer.courses.available')}</h2>
-          {courses.length === 0 ? (
-            <p>No courses available yet.</p>
-          ) : (
+        {courses.length === 0 ? (
+          <p>No courses available yet.</p>
+        ) : (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold">{t('customer.courses.available')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {courses
                 .filter(course => !enrolledCourses.includes(course.id))
@@ -485,11 +461,10 @@ const ProjectLanding = () => {
                 ))
               }
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </main>
 
-      {/* Login Dialog */}
       <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
         <DialogContent>
           <DialogHeader>
@@ -544,7 +519,6 @@ const ProjectLanding = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Signup Dialog */}
       <Dialog open={isSignUpOpen} onOpenChange={setIsSignUpOpen}>
         <DialogContent>
           <DialogHeader>
@@ -608,7 +582,6 @@ const ProjectLanding = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Social Media Dialog */}
       <Dialog open={isSocialDialogOpen} onOpenChange={setIsSocialDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -657,7 +630,6 @@ const ProjectLanding = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Course Info Dialog */}
       {selectedCourse && (
         <Dialog open={isCourseDialogOpen} onOpenChange={setIsCourseDialogOpen}>
           <DialogContent className="sm:max-w-[500px]">

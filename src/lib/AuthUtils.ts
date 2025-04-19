@@ -1,10 +1,5 @@
 
-import { createClient } from '@supabase/supabase-js';
-
-// Initialize Supabase client
-const supabaseUrl = 'https://your-supabase-url.supabase.co';
-const supabaseAnonKey = 'your-supabase-anon-key';
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+import { supabase } from '@/integrations/supabase/client';
 
 export const adminLogin = async (username: string, password: string) => {
   if (username !== 'Wizard' || password !== 'Wizardry@579') {
