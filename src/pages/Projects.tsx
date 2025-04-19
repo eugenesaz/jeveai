@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -6,6 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/types/supabase';
+import { toast } from '@/components/ui/use-toast';
 
 const Projects = () => {
   const { t } = useTranslation();
@@ -19,6 +21,8 @@ const Projects = () => {
       if (!user) return;
 
       try {
+        console.log('Fetching projects for user ID:', user.id);
+        
         const { data, error } = await supabase
           .from('projects')
           .select('*')
@@ -28,11 +32,27 @@ const Projects = () => {
           throw error;
         }
 
-        if (data) {
-          setProjects(data as Project[]);
-        }
+        console.log('Projects data:', data);
+        
+        // Cast color_scheme to ensure it matches the Project type
+        const typedProjects = data?.map(project => ({
+          ...project,
+          color_scheme: (project.color_scheme === 'blue' || 
+                         project.color_scheme === 'red' || 
+                         project.color_scheme === 'orange' || 
+                         project.color_scheme === 'green') 
+                         ? project.color_scheme as 'blue' | 'red' | 'orange' | 'green'
+                         : null
+        })) || [];
+        
+        setProjects(typedProjects);
       } catch (error) {
         console.error('Error fetching projects:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load projects',
+          variant: 'destructive',
+        });
       } finally {
         setLoading(false);
       }
@@ -44,10 +64,13 @@ const Projects = () => {
   const handleCopyUrl = (urlName: string) => {
     const url = `${window.location.origin}/${urlName}`;
     navigator.clipboard.writeText(url);
-    // Add toast notification here
+    toast({
+      title: 'URL Copied',
+      description: 'Project URL has been copied to clipboard',
+    });
   };
 
-  const getColorClass = (colorScheme: string) => {
+  const getColorClass = (colorScheme: string | null) => {
     switch (colorScheme) {
       case 'blue':
         return 'bg-blue-100 border-blue-500';
@@ -60,6 +83,12 @@ const Projects = () => {
       default:
         return 'bg-gray-100 border-gray-500';
     }
+  };
+
+  // Debug user information
+  const debugUser = () => {
+    if (!user) return 'No user found';
+    return `User ID: ${user.id}, Email: ${user.email || 'No email'}`;
   };
 
   return (
@@ -82,6 +111,13 @@ const Projects = () => {
       </header>
 
       <main className="container mx-auto p-6 space-y-6">
+        {/* Temporary debug section */}
+        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md mb-4">
+          <h3 className="font-medium mb-2">Debug Info:</h3>
+          <p className="text-sm">{debugUser()}</p>
+          <p className="text-sm mt-2">Projects count: {projects.length}</p>
+        </div>
+        
         {loading ? (
           <div className="flex justify-center items-center h-40">
             <p>Loading projects...</p>

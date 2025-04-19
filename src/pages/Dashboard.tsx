@@ -22,6 +22,8 @@ const Dashboard = () => {
       if (!user) return;
 
       try {
+        console.log('Fetching projects for user ID:', user.id);
+        
         const { data, error } = await supabase
           .from('projects')
           .select('*')
@@ -29,6 +31,8 @@ const Dashboard = () => {
           .order('created_at', { ascending: false });
 
         if (error) throw error;
+        
+        console.log('Projects data:', data);
         
         // Cast color_scheme to ensure it matches the Project type
         const typedProjects = data?.map(project => ({
@@ -56,6 +60,12 @@ const Dashboard = () => {
 
     fetchProjects();
   }, [user]);
+
+  // Let's add a debug section to the page temporarily
+  const debugUser = () => {
+    if (!user) return 'No user found';
+    return `User ID: ${user.id}, Email: ${user.email || 'No email'}`;
+  };
 
   const getColorClass = (colorScheme: string | null) => {
     switch (colorScheme) {
@@ -99,6 +109,13 @@ const Dashboard = () => {
             <Plus className="h-4 w-4" />
             {t('influencer.project.createNew')}
           </Button>
+        </div>
+
+        {/* Temporary debug section */}
+        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md mb-4">
+          <h3 className="font-medium mb-2">Debug Info:</h3>
+          <p className="text-sm">{debugUser()}</p>
+          <p className="text-sm mt-2">Projects count: {projects.length}</p>
         </div>
 
         {loading ? (
