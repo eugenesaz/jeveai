@@ -8,6 +8,7 @@ import { Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/types/supabase';
+import { toast } from '@/components/ui/use-toast';
 
 const Dashboard = () => {
   const { t } = useTranslation();
@@ -28,9 +29,26 @@ const Dashboard = () => {
           .order('created_at', { ascending: false });
 
         if (error) throw error;
-        setProjects(data || []);
+        
+        // Cast color_scheme to ensure it matches the Project type
+        const typedProjects = data?.map(project => ({
+          ...project,
+          color_scheme: (project.color_scheme === 'blue' || 
+                         project.color_scheme === 'red' || 
+                         project.color_scheme === 'orange' || 
+                         project.color_scheme === 'green') 
+                         ? project.color_scheme as 'blue' | 'red' | 'orange' | 'green'
+                         : null
+        })) || [];
+        
+        setProjects(typedProjects);
       } catch (error) {
         console.error('Error fetching projects:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load projects',
+          variant: 'destructive',
+        });
       } finally {
         setLoading(false);
       }
@@ -47,6 +65,15 @@ const Dashboard = () => {
       case 'green': return 'bg-green-100 border-green-500';
       default: return 'bg-gray-100 border-gray-500';
     }
+  };
+
+  const copyProjectUrl = (urlName: string) => {
+    const url = `${window.location.origin}/${urlName}`;
+    navigator.clipboard.writeText(url);
+    toast({
+      title: 'URL Copied',
+      description: 'Project URL has been copied to clipboard',
+    });
   };
 
   return (
@@ -118,11 +145,7 @@ const Dashboard = () => {
                 <CardFooter className="flex justify-between">
                   <Button 
                     variant="outline"
-                    onClick={() => {
-                      const url = `${window.location.origin}/${project.url_name}`;
-                      navigator.clipboard.writeText(url);
-                      // You might want to add a toast notification here
-                    }}
+                    onClick={() => copyProjectUrl(project.url_name)}
                   >
                     {t('influencer.project.copyUrl')}
                   </Button>
