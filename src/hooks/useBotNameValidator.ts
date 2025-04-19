@@ -5,8 +5,11 @@ import { supabase } from '@/integrations/supabase/client';
 export const useBotNameValidator = () => {
   const [botNameError, setBotNameError] = useState('');
 
-  const validateBotName = async (name: string) => {
-    if (!name) return '';
+  const validateBotName = async (name: string, originalName?: string) => {
+    if (!name) {
+      setBotNameError('');
+      return '';
+    }
     
     // Check for @ symbol
     if (name.includes('@')) {
@@ -22,6 +25,13 @@ export const useBotNameValidator = () => {
       return error;
     }
     
+    // If we're editing and the name hasn't changed, no need to check for duplicates
+    if (originalName && name === originalName) {
+      setBotNameError('');
+      return '';
+    }
+    
+    // Check for duplicate bot names
     const { data } = await supabase
       .from('courses')
       .select('telegram_bot')

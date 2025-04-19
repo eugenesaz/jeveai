@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Input } from '@/components/ui/input';
@@ -48,6 +49,9 @@ export const CourseForm = ({ onSubmit, loading, initialValues }: CourseFormProps
     materials: [],
   });
 
+  // Store the original bot name for comparison during validation
+  const [originalBotName, setOriginalBotName] = useState<string>('');
+
   // Initialize form with initial values if provided (for editing)
   useEffect(() => {
     if (initialValues) {
@@ -57,14 +61,20 @@ export const CourseForm = ({ onSubmit, loading, initialValues }: CourseFormProps
         materials: initialValues.materials || []
       }));
       if (initialValues.telegramBot) {
-        validateBotName(initialValues.telegramBot);
+        setOriginalBotName(initialValues.telegramBot);
+        // Don't immediately validate when editing - only validate on change
       }
     }
-  }, [initialValues, validateBotName]);
+  }, [initialValues]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (botNameError) return;
+    
+    // Validate the bot name before submitting
+    if (formData.telegramBot && formData.telegramBot !== originalBotName) {
+      const error = await validateBotName(formData.telegramBot, originalBotName);
+      if (error) return;
+    }
 
     // Upload materials before submitting
     const uploadedMaterials = await Promise.all(
@@ -102,7 +112,10 @@ export const CourseForm = ({ onSubmit, loading, initialValues }: CourseFormProps
 
   const handleBotNameChange = async (value: string) => {
     setFormData(prev => ({ ...prev, telegramBot: value }));
-    await validateBotName(value);
+    // Only validate after a slight delay to prevent immediate validation while typing
+    setTimeout(() => {
+      validateBotName(value, originalBotName);
+    }, 500);
   };
 
   const handleMaterialUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
