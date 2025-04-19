@@ -45,7 +45,7 @@ export const CourseGrid = ({ courses }: CourseGridProps) => {
                   state={{ fromProjectLanding: true }}
                   className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition-colors"
                 >
-                  {t('customer.courses.view')}
+                  {t('customer.courses.view') || 'View Details'}
                 </Link>
               </div>
             </div>

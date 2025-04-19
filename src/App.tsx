@@ -34,6 +34,7 @@ const App = () => {
                 {/* Public Routes */}
                 <Route path="/" element={<Index />} />
                 <Route path="/:urlName" element={<ProjectLanding />} />
+                <Route path="/course/:id" element={<ViewCourse />} />
                 
                 {/* Influencer Routes */}
                 <Route path="/dashboard" element={
@@ -64,13 +65,6 @@ const App = () => {
                 <Route path="/create-course" element={
                   <ProtectedRoute allowedRoles={['influencer', 'admin']}>
                     <CreateCourse />
-                  </ProtectedRoute>
-                } />
-                
-                {/* Customer Routes */}
-                <Route path="/course/:id" element={
-                  <ProtectedRoute allowedRoles={['customer', 'influencer', 'admin']}>
-                    <ViewCourse />
                   </ProtectedRoute>
                 } />
                 
