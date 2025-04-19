@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -26,11 +26,12 @@ const Index = () => {
   const [loginLoading, setLoginLoading] = useState(false);
   const [signupLoading, setSignupLoading] = useState(false);
 
-  // Check if user is already logged in, redirect to dashboard
-  if (!isLoading && user) {
-    navigate('/dashboard');
-    return null;
-  }
+  // Use useEffect for redirection after render
+  useEffect(() => {
+    if (!isLoading && user) {
+      navigate('/dashboard');
+    }
+  }, [isLoading, user, navigate]);
 
   const handleAuth = async (isSignUp: boolean) => {
     setAuthError('');
