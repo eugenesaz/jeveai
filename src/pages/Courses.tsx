@@ -44,21 +44,39 @@ const Courses = () => {
       if (!user) return;
 
       try {
-        const { data, error } = await supabase
+        // First, get all projects for this user
+        const { data: userProjects, error: projectsError } = await supabase
+          .from('projects')
+          .select('id')
+          .eq('user_id', user.id);
+
+        if (projectsError) {
+          throw projectsError;
+        }
+
+        if (!userProjects || userProjects.length === 0) {
+          setLoading(false);
+          return; // No projects, so no courses
+        }
+
+        // Extract project IDs
+        const projectIds = userProjects.map(project => project.id);
+
+        // Now fetch courses that belong to any of these projects
+        const { data: coursesData, error: coursesError } = await supabase
           .from('courses')
           .select(`
             *,
             project:projects(name, color_scheme)
           `)
-          .eq('user_id', user.id);
+          .in('project_id', projectIds);
 
-        if (error) {
-          throw error;
+        if (coursesError) {
+          throw coursesError;
         }
 
-        if (data) {
-          // Explicitly cast the data to our safe type
-          setCourses(data as unknown as CourseWithProject[]);
+        if (coursesData) {
+          setCourses(coursesData as unknown as CourseWithProject[]);
         }
       } catch (error) {
         console.error('Error fetching courses:', error);
@@ -71,7 +89,13 @@ const Courses = () => {
   }, [user]);
 
   const getTypeTranslation = (type: string) => {
-    return t(`influencer.course.types.${type.toLowerCase()}`) || type;
+    if (!type) return '';
+    
+    const translationKey = `influencer.course.types.${type.toLowerCase()}`;
+    const translated = t(translationKey);
+    
+    // If the translation key is returned as-is, it means the translation doesn't exist
+    return translated !== translationKey ? translated : type;
   };
 
   const getColorClass = (colorScheme: string | null) => {
@@ -111,11 +135,11 @@ const Courses = () => {
       <main className="container mx-auto p-6 space-y-6">
         {loading ? (
           <div className="flex justify-center items-center h-40">
-            <p>Loading courses...</p>
+            <p>{t('loading')}</p>
           </div>
         ) : courses.length === 0 ? (
           <div className="text-center p-10">
-            <h2 className="text-xl font-semibold mb-4">{t('no.courses')}</h2>
+            <h2 className="text-xl font-semibold mb-4">{t('no.courses', 'No courses yet')}</h2>
             <Button onClick={() => navigate('/create-course')}>
               {t('influencer.course.createNew')}
             </Button>
@@ -135,7 +159,7 @@ const Courses = () => {
                     </Badge>
                   </div>
                   <CardDescription>
-                    {course.project?.name || 'No Project'}
+                    {course.project?.name || t('no.project', 'No Project')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2">
@@ -156,13 +180,13 @@ const Courses = () => {
                     variant="outline" 
                     onClick={() => navigate(`/edit-course/${course.id}`)}
                   >
-                    {t('edit')}
+                    {t('edit', 'Edit')}
                   </Button>
                   <Button 
                     variant="default"
                     onClick={() => navigate(`/course/${course.id}`)}
                   >
-                    {t('view')}
+                    {t('view', 'View')}
                   </Button>
                 </CardFooter>
               </Card>

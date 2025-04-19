@@ -1,4 +1,3 @@
-
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
@@ -98,6 +97,13 @@ const resources = {
           "no": "No"
         }
       },
+      "no": {
+        "courses": "No courses yet",
+        "project": "No Project"
+      },
+      "view": "View",
+      "edit": "Edit",
+      "loading": "Loading courses...",
       "customer": {
         "courses": {
           "title": "Courses",
@@ -248,6 +254,13 @@ const resources = {
           "no": "Нет"
         }
       },
+      "no": {
+        "courses": "Пока нет курсов",
+        "project": "Нет проекта"
+      },
+      "view": "Просмотр",
+      "edit": "Редактировать",
+      "loading": "Загрузка курсов...",
       "customer": {
         "courses": {
           "title": "Курсы",
