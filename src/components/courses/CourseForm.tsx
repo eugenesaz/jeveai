@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,9 +24,10 @@ interface CourseFormData {
 interface CourseFormProps {
   onSubmit: (data: CourseFormData) => Promise<void>;
   loading: boolean;
+  initialValues?: CourseFormData;
 }
 
-export const CourseForm = ({ onSubmit, loading }: CourseFormProps) => {
+export const CourseForm = ({ onSubmit, loading, initialValues }: CourseFormProps) => {
   const { t } = useTranslation();
   const { botNameError, validateBotName } = useBotNameValidator();
 
@@ -41,6 +42,16 @@ export const CourseForm = ({ onSubmit, loading }: CourseFormProps) => {
     details: '',
     telegramBot: '',
   });
+
+  // Initialize form with initial values if provided (for editing)
+  useEffect(() => {
+    if (initialValues) {
+      setFormData(initialValues);
+      if (initialValues.telegramBot) {
+        validateBotName(initialValues.telegramBot);
+      }
+    }
+  }, [initialValues]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -179,7 +190,7 @@ export const CourseForm = ({ onSubmit, loading }: CourseFormProps) => {
       </div>
 
       <Button type="submit" className="w-full" disabled={loading || !!botNameError}>
-        {loading ? 'Creating Course...' : t('influencer.course.save')}
+        {loading ? 'Saving Course...' : t('influencer.course.save')}
       </Button>
     </form>
   );

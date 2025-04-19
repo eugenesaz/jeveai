@@ -14,6 +14,7 @@ import CreateProject from "@/pages/CreateProject";
 import EditProject from "@/pages/EditProject";
 import Courses from "@/pages/Courses";
 import CreateCourse from "@/pages/CreateCourse";
+import EditCourse from "@/pages/EditCourse";
 import ViewCourse from "@/pages/ViewCourse";
 import ProjectLanding from "@/pages/ProjectLanding";
 import Admin from "@/pages/Admin";
@@ -65,6 +66,11 @@ const App = () => {
                 <Route path="/create-course" element={
                   <ProtectedRoute allowedRoles={['influencer', 'admin']}>
                     <CreateCourse />
+                  </ProtectedRoute>
+                } />
+                <Route path="/edit-course/:id" element={
+                  <ProtectedRoute allowedRoles={['influencer', 'admin']}>
+                    <EditCourse />
                   </ProtectedRoute>
                 } />
                 
