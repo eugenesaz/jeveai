@@ -1,3 +1,4 @@
+
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
@@ -19,7 +20,8 @@ const resources = {
         "projects": "Projects",
         "createProject": "Create Project",
         "profile": "Profile",
-        "language": "Language"
+        "language": "Language",
+        "cancel": "Cancel"
       },
       "auth": {
         "email": "Email",
@@ -149,7 +151,8 @@ const resources = {
         "uniqueCourseName": "This course name is already taken",
         "uniqueBotName": "This bot name is already taken",
         "minPrice": "Price must be greater than 0",
-        "socialRequired": "At least one social media account is required"
+        "socialRequired": "At least one social media account is required",
+        "botNameInvalid": "Bot name can only contain letters, numbers, and underscores"
       },
       "success": {
         "projectCreated": "Project created successfully!",
@@ -167,7 +170,8 @@ const resources = {
           "success": "Course updated successfully!",
           "error": "Failed to update course"
         }
-      }
+      },
+      "cancel": "Cancel"
     }
   },
   ru: {
@@ -185,7 +189,8 @@ const resources = {
         "projects": "Проекты",
         "createProject": "Создать проект",
         "profile": "Профиль",
-        "language": "Язык"
+        "language": "Язык",
+        "cancel": "Отмена"
       },
       "auth": {
         "email": "Эл. почта",
@@ -315,7 +320,8 @@ const resources = {
         "uniqueCourseName": "Это название курса уже занято",
         "uniqueBotName": "Это имя бота уже занято",
         "minPrice": "Цена должна быть больше 0",
-        "socialRequired": "Требуется указать хотя бы один аккаунт в социальных сетях"
+        "socialRequired": "Требуется указать хотя бы один аккаунт в социальных сетях",
+        "botNameInvalid": "Имя бота может содержать только буквы, цифры и знаки подчеркивания"
       },
       "success": {
         "projectCreated": "Проект успешно создан!",
@@ -333,7 +339,8 @@ const resources = {
           "success": "Курс успешно обновлен!",
           "error": "Не удалось обновить курс"
         }
-      }
+      },
+      "cancel": "Отмена"
     }
   }
 };
