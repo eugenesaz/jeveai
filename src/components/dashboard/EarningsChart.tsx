@@ -1,7 +1,7 @@
 
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChartLineUp } from 'lucide-react';
+import { ChartLine } from 'lucide-react';  // Changed from ChartLineUp to ChartLine
 import {
   Area,
   AreaChart,
@@ -39,7 +39,7 @@ export const EarningsChart = () => {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-xl font-bold flex items-center gap-2">
-          <ChartLineUp className="h-5 w-5 text-purple-500" />
+          <ChartLine className="h-5 w-5 text-purple-500" />  {/* Updated icon */}
           {t('dashboard.earnings.title')}
         </CardTitle>
       </CardHeader>
