@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Project } from '@/types/supabase';
 import { useNavigate } from 'react-router-dom';
+import { BookOpen } from 'lucide-react';
 
 interface ProjectTileProps {
   project: Project;
@@ -23,6 +24,8 @@ export const ProjectTile = ({ project, onCopyUrl }: ProjectTileProps) => {
       default: return 'bg-gray-100 border-gray-500';
     }
   };
+
+  const projectUrl = `${window.location.origin}/${project.url_name}`;
 
   return (
     <Card 
@@ -45,15 +48,29 @@ export const ProjectTile = ({ project, onCopyUrl }: ProjectTileProps) => {
           </div>
         )}
         <p className="text-sm text-gray-500">
-          URL: {window.location.origin}/{project.url_name}
+          URL: <a 
+            href={projectUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline"
+          >
+            {projectUrl}
+          </a>
         </p>
       </CardContent>
-      <CardFooter className="flex justify-between">
+      <CardFooter className="flex flex-wrap gap-2">
         <Button 
           variant="outline"
           onClick={() => onCopyUrl(project.url_name)}
         >
           {t('influencer.project.copyUrl')}
+        </Button>
+        <Button 
+          variant="outline"
+          onClick={() => navigate(`/courses?projectId=${project.id}`)}
+        >
+          <BookOpen className="mr-2 h-4 w-4" />
+          {t('navigation.courses')}
         </Button>
         <Button 
           onClick={() => navigate(`/edit-project/${project.id}`)}

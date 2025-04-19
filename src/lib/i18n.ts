@@ -1,9 +1,7 @@
-
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
-// Define translations directly
 const resources = {
   en: {
     translation: {
@@ -18,6 +16,7 @@ const resources = {
         "logout": "Logout",
         "dashboard": "Dashboard",
         "projects": "Projects",
+        "courses": "Manage Courses",
         "createProject": "Create Project",
         "profile": "Profile",
         "language": "Language",
@@ -184,6 +183,7 @@ const resources = {
         "logout": "Выход",
         "dashboard": "Панель управления",
         "projects": "Проекты",
+        "courses": "Управлять курсами",
         "createProject": "Создать проект",
         "profile": "Профиль",
         "language": "Язык",
