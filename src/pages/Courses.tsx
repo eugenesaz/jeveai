@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,11 +11,13 @@ import { Course } from '@/types/supabase';
 
 interface ProjectDetails {
   name: string;
-  color_scheme: string;
+  color_scheme: string | null;
 }
 
+// Define the CourseWithProject interface that extends the Course type
+// This prevents circular reference issues
 interface CourseWithProject extends Course {
-  project: ProjectDetails;
+  project: ProjectDetails | null;
 }
 
 const Courses = () => {
@@ -58,7 +61,7 @@ const Courses = () => {
     return t(`influencer.course.types.${type.toLowerCase()}`) || type;
   };
 
-  const getColorClass = (colorScheme: string) => {
+  const getColorClass = (colorScheme: string | null) => {
     switch (colorScheme) {
       case 'blue':
         return 'bg-blue-50 border-blue-200';
@@ -109,7 +112,7 @@ const Courses = () => {
             {courses.map((course) => (
               <Card 
                 key={course.id} 
-                className={`border ${getColorClass(course.project?.color_scheme || 'blue')}`}
+                className={`border ${getColorClass(course.project?.color_scheme || null)}`}
               >
                 <CardHeader>
                   <div className="flex justify-between items-start">
