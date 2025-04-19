@@ -13,13 +13,16 @@ export const ProjectsHeader = () => {
       <div className="container mx-auto p-4 flex justify-between items-center">
         <h1 className="text-2xl font-bold">{t('influencer.project.title')}</h1>
         <div className="flex gap-4">
-          <Button variant="ghost" onClick={() => navigate('/dashboard')}>
-            {t('navigation.dashboard')}
-          </Button>
-          <Button variant="ghost" onClick={() => navigate('/courses')}>
+          <Button 
+            onClick={() => navigate('/courses')} 
+            variant="ghost"
+          >
             {t('navigation.courses')}
           </Button>
-          <Button onClick={() => navigate('/create-project')} variant="default">
+          <Button 
+            onClick={() => navigate('/create-project')} 
+            variant="default"
+          >
             {t('influencer.project.createNew')}
           </Button>
         </div>
