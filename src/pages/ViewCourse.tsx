@@ -1,31 +1,14 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 import ReactMarkdown from 'react-markdown';
+import { Course } from '@/types/supabase';
 
-// Initialize Supabase client
-const supabaseUrl = 'https://your-supabase-url.supabase.co';
-const supabaseAnonKey = 'your-supabase-anon-key';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-interface Course {
-  id: string;
-  name: string;
-  description: string;
-  status: boolean;
-  type: string;
-  price: number;
-  duration: number;
-  recurring: boolean;
-  details: string;
-  telegram_bot: string;
-  project_id: string;
-  created_at: string;
+interface CourseWithDates extends Course {
   begin_date?: string;
   end_date?: string;
 }
@@ -35,7 +18,7 @@ const ViewCourse = () => {
   const { t } = useTranslation();
   const { user, userRole } = useAuth();
   const navigate = useNavigate();
-  const [course, setCourse] = useState<Course | null>(null);
+  const [course, setCourse] = useState<CourseWithDates | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -54,7 +37,7 @@ const ViewCourse = () => {
         }
 
         if (data) {
-          setCourse(data as Course);
+          setCourse(data as CourseWithDates);
         }
       } catch (error) {
         console.error('Error fetching course:', error);

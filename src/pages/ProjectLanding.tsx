@@ -10,29 +10,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/components/ui/use-toast';
 import ReactMarkdown from 'react-markdown';
-
-interface Project {
-  id: string;
-  name: string;
-  status: boolean;
-  url_name: string;
-  color_scheme: 'blue' | 'red' | 'orange' | 'green';
-  landing_image: string;
-  user_id: string;
-}
-
-interface Course {
-  id: string;
-  name: string;
-  description: string;
-  status: boolean;
-  type: string;
-  price: number;
-  duration: number;
-  recurring: boolean;
-  details: string;
-  telegram_bot: string;
-}
+import { Project, Course } from '@/types/supabase';
 
 interface SocialMedia {
   telegram?: string;

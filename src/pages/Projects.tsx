@@ -1,27 +1,11 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
-import { createClient } from '@supabase/supabase-js';
-
-// Initialize Supabase client
-const supabaseUrl = 'https://your-supabase-url.supabase.co';
-const supabaseAnonKey = 'your-supabase-anon-key';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-interface Project {
-  id: string;
-  name: string;
-  status: boolean;
-  url_name: string;
-  color_scheme: 'blue' | 'red' | 'orange' | 'green';
-  landing_image: string;
-  user_id: string;
-  created_at: string;
-}
+import { supabase } from '@/integrations/supabase/client';
+import { Project } from '@/types/supabase';
 
 const Projects = () => {
   const { t } = useTranslation();

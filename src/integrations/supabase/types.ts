@@ -9,7 +9,195 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      courses: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          details: string | null
+          duration: number | null
+          id: string
+          name: string
+          price: number
+          project_id: string
+          recurring: boolean | null
+          status: boolean | null
+          telegram_bot: string | null
+          type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          details?: string | null
+          duration?: number | null
+          id?: string
+          name: string
+          price: number
+          project_id: string
+          recurring?: boolean | null
+          status?: boolean | null
+          telegram_bot?: string | null
+          type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          details?: string | null
+          duration?: number | null
+          id?: string
+          name?: string
+          price?: number
+          project_id?: string
+          recurring?: boolean | null
+          status?: boolean | null
+          telegram_bot?: string | null
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courses_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      enrollments: {
+        Row: {
+          begin_date: string | null
+          course_id: string
+          created_at: string | null
+          end_date: string | null
+          id: string
+          is_paid: boolean | null
+          user_id: string
+        }
+        Insert: {
+          begin_date?: string | null
+          course_id: string
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          is_paid?: boolean | null
+          user_id: string
+        }
+        Update: {
+          begin_date?: string | null
+          course_id?: string
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          is_paid?: boolean | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enrollments_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          instagram: string | null
+          role: string | null
+          telegram: string | null
+          tiktok: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id: string
+          instagram?: string | null
+          role?: string | null
+          telegram?: string | null
+          tiktok?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          instagram?: string | null
+          role?: string | null
+          telegram?: string | null
+          tiktok?: string | null
+        }
+        Relationships: []
+      }
+      project_secrets: {
+        Row: {
+          created_at: string | null
+          gemini_api_key: string | null
+          id: string
+          project_id: string
+          stripe_secret: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          gemini_api_key?: string | null
+          id?: string
+          project_id: string
+          stripe_secret?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          gemini_api_key?: string | null
+          id?: string
+          project_id?: string
+          stripe_secret?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_secrets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          color_scheme: string | null
+          created_at: string | null
+          id: string
+          landing_image: string | null
+          name: string
+          status: boolean | null
+          url_name: string
+          user_id: string
+        }
+        Insert: {
+          color_scheme?: string | null
+          created_at?: string | null
+          id?: string
+          landing_image?: string | null
+          name: string
+          status?: boolean | null
+          url_name: string
+          user_id: string
+        }
+        Update: {
+          color_scheme?: string | null
+          created_at?: string | null
+          id?: string
+          landing_image?: string | null
+          name?: string
+          status?: boolean | null
+          url_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
