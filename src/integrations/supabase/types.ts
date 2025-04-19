@@ -11,11 +11,13 @@ export type Database = {
     Tables: {
       courses: {
         Row: {
+          ai_instructions: string | null
           created_at: string | null
           description: string | null
           details: string | null
           duration: number | null
           id: string
+          materials: string | null
           name: string
           price: number
           project_id: string
@@ -25,11 +27,13 @@ export type Database = {
           type: string | null
         }
         Insert: {
+          ai_instructions?: string | null
           created_at?: string | null
           description?: string | null
           details?: string | null
           duration?: number | null
           id?: string
+          materials?: string | null
           name: string
           price: number
           project_id: string
@@ -39,11 +43,13 @@ export type Database = {
           type?: string | null
         }
         Update: {
+          ai_instructions?: string | null
           created_at?: string | null
           description?: string | null
           details?: string | null
           duration?: number | null
           id?: string
+          materials?: string | null
           name?: string
           price?: number
           project_id?: string
