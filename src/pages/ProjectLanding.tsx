@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, Link } from 'react-router-dom';
@@ -6,7 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/types/supabase';
 import { Spinner } from '@/components/ui/spinner';
-import { LandingHeader } from '@/components/landing/LandingHeader';
+import { Button } from '@/components/ui/button';
+import { ProjectLanguageSelector } from '@/components/landing/ProjectLanguageSelector';
 
 interface Course {
   id: string;
@@ -34,12 +34,11 @@ const ProjectLanding = () => {
       }
       
       try {
-        // Fetch the project based on the URL name
         const { data: projectData, error: projectError } = await supabase
           .from('projects')
           .select('*')
           .eq('url_name', urlName)
-          .eq('status', true) // Only active projects
+          .eq('status', true)
           .single();
         
         if (projectError) {
@@ -51,12 +50,11 @@ const ProjectLanding = () => {
         
         setProject(projectData as Project);
 
-        // Fetch courses for this project
         const { data: coursesData, error: coursesError } = await supabase
           .from('courses')
           .select('id, name, description, price, duration')
           .eq('project_id', projectData.id)
-          .eq('status', true); // Only active courses
+          .eq('status', true);
 
         if (coursesError) {
           console.error('Error fetching courses:', coursesError);
@@ -133,7 +131,6 @@ const ProjectLanding = () => {
       </header>
 
       <main className="flex-grow">
-        {/* Project Hero Section */}
         <section className="relative py-20 bg-gradient-to-b from-gray-900 to-gray-800 text-white">
           {project.landing_image && (
             <div 
@@ -152,7 +149,6 @@ const ProjectLanding = () => {
           </div>
         </section>
 
-        {/* Courses Section */}
         <section className="py-16 bg-gray-50">
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold mb-8 text-center">{t('customer.courses.available')}</h2>
