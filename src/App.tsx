@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,17 +7,6 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { useEffect } from "react";
 import { initializeStorage } from "@/lib/StorageUtils";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import Dashboard from "./pages/Dashboard";
-import Projects from "./pages/Projects";
-import CreateProject from "./pages/CreateProject";
-import Courses from "./pages/Courses";
-import CreateCourse from "./pages/CreateCourse";
-import ViewCourse from "./pages/ViewCourse";
-import ProjectLanding from "./pages/ProjectLanding";
-import Admin from "./pages/Admin";
-import { ProtectedRoute } from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 

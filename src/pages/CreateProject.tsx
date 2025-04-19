@@ -86,18 +86,36 @@ const CreateProject = () => {
         const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
         const filePath = `project-images/${user.id}/${fileName}`;
 
-        const { error: uploadError } = await supabase.storage
+        console.log('Uploading image:', filePath);
+        
+        const { error: uploadError, data } = await supabase.storage
           .from('project-images')
           .upload(filePath, landingImage);
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          throw new Error('Failed to upload image');
+        }
 
-        const { data } = supabase.storage.from('project-images').getPublicUrl(filePath);
-        landingImageUrl = data.publicUrl;
+        console.log('Upload successful:', data);
+        
+        const { data: { publicUrl } } = supabase.storage
+          .from('project-images')
+          .getPublicUrl(filePath);
+          
+        landingImageUrl = publicUrl;
       }
 
-      // Create project in database
-      const { error } = await supabase.from('projects').insert({
+      console.log('Creating project with data:', {
+        name: projectName,
+        url_name: urlName,
+        status: isActive,
+        color_scheme: colorScheme,
+        landing_image: landingImageUrl,
+        user_id: user.id
+      });
+
+      const { error: insertError } = await supabase.from('projects').insert({
         name: projectName,
         url_name: urlName,
         status: isActive,
@@ -106,14 +124,16 @@ const CreateProject = () => {
         user_id: user.id,
       });
 
-      if (error) throw error;
+      if (insertError) {
+        console.error('Insert error:', insertError);
+        throw insertError;
+      }
 
       toast({
         title: 'Success',
         description: t('success.projectCreated'),
       });
 
-      // Redirect to projects page
       navigate('/projects');
     } catch (error) {
       console.error('Error creating project:', error);
