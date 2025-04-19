@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,13 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/components/ui/use-toast';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-
-// Initialize Supabase client
-const supabaseUrl = 'https://your-supabase-url.supabase.co';
-const supabaseAnonKey = 'your-supabase-anon-key';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 interface Influencer {
   id: string;
@@ -33,7 +27,7 @@ interface Project {
 
 const Admin = () => {
   const { t } = useTranslation();
-  const { user, signOut } = useAuth();
+  const { user, signOut, userRole } = useAuth();
   const navigate = useNavigate();
 
   const [influencers, setInfluencers] = useState<Influencer[]>([]);
@@ -50,33 +44,27 @@ const Admin = () => {
     const checkAdmin = async () => {
       if (!user) return;
 
-      try {
-        const { data, error } = await supabase
-          .from('admin')
-          .select('*')
-          .eq('username', 'Wizard')
-          .single();
-
-        if (error || !data) {
-          // User is not an admin, redirect
-          toast({
-            title: 'Access Denied',
-            description: 'You do not have permission to access this page.',
-            variant: 'destructive',
-          });
-          navigate('/');
-        }
-      } catch (error) {
-        console.error('Error checking admin status:', error);
-        navigate('/');
+      if (userRole !== 'admin') {
+        toast({
+          title: 'Access Denied',
+          description: 'You do not have permission to access this page.',
+          variant: 'destructive',
+        });
+        navigate('/dashboard');
+        return;
       }
+      
+      // If we get here, the user is an admin
+      console.log('Admin access granted');
     };
 
     checkAdmin();
-  }, [user, navigate]);
+  }, [user, userRole, navigate]);
 
   // Fetch all influencers
   useEffect(() => {
+    if (!user || userRole !== 'admin') return;
+    
     const fetchInfluencers = async () => {
       try {
         setLoading(true);
@@ -98,7 +86,7 @@ const Admin = () => {
     };
 
     fetchInfluencers();
-  }, []);
+  }, [user, userRole]);
 
   // Fetch projects for selected influencer
   useEffect(() => {

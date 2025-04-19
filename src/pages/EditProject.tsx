@@ -11,7 +11,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { Spinner } from '@/components/ui/spinner';
-import { uploadFile, createBucket } from '@/lib/StorageUtils';
+import { uploadFile, createBucket, testBucketAccess } from '@/lib/StorageUtils';
 import { Project } from '@/types/supabase';
 
 const EditProject = () => {
@@ -29,6 +29,7 @@ const EditProject = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [urlError, setUrlError] = useState('');
 
   const handleColorSchemeChange = (value: string) => {
@@ -161,15 +162,23 @@ const EditProject = () => {
     try {
       let landingImageUrl = project?.landing_image || '';
 
-      // Ensure the bucket exists first
-      await createBucket('project-images');
-
+      // Upload new image if one was selected
       if (landingImage) {
+        setUploadingImage(true);
+        
+        // Check bucket access first
+        const hasAccess = await testBucketAccess('project-images');
+        
+        if (!hasAccess) {
+          console.log('Creating project-images bucket...');
+          await createBucket('project-images');
+        }
+
         const fileExt = landingImage.name.split('.').pop();
-        const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
         const filePath = `${user.id}/${fileName}`;
 
-        console.log('Attempting to upload image:', filePath);
+        console.log('Uploading project image for edit:', filePath);
         
         const uploadedUrl = await uploadFile('project-images', filePath, landingImage);
         
@@ -177,12 +186,15 @@ const EditProject = () => {
           landingImageUrl = uploadedUrl;
           console.log('Image uploaded successfully. URL:', landingImageUrl);
         } else {
+          console.error('Image upload failed during edit');
           toast({
             title: 'Warning',
             description: 'Image upload failed. Project will be updated without changing the image.',
             variant: 'destructive',
           });
         }
+        
+        setUploadingImage(false);
       }
 
       console.log('Updating project with data:', {

@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { Spinner } from '@/components/ui/spinner';
-import { uploadFile, createBucket } from '@/lib/StorageUtils';
+import { uploadFile, createBucket, testBucketAccess } from '@/lib/StorageUtils';
 
 const CreateProject = () => {
   const { t } = useTranslation();
@@ -25,6 +25,7 @@ const CreateProject = () => {
   const [landingImage, setLandingImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [urlError, setUrlError] = useState('');
 
   const handleColorSchemeChange = (value: string) => {
@@ -82,20 +83,26 @@ const CreateProject = () => {
     }
 
     setLoading(true);
+    let landingImageUrl = '';
 
     try {
-      let landingImageUrl = '';
-
-      // Ensure the bucket exists first
-      await createBucket('project-images');
-
-      // Upload the image if one was selected
+      // Handle image upload if an image was selected
       if (landingImage) {
+        setUploadingImage(true);
+        
+        // Check bucket access first
+        const hasAccess = await testBucketAccess('project-images');
+        
+        if (!hasAccess) {
+          console.log('Creating project-images bucket...');
+          await createBucket('project-images');
+        }
+
         const fileExt = landingImage.name.split('.').pop();
-        const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
         const filePath = `${user.id}/${fileName}`;
 
-        console.log('Attempting to upload image:', filePath);
+        console.log('Uploading project image:', filePath);
         
         const uploadedUrl = await uploadFile('project-images', filePath, landingImage);
         
@@ -103,12 +110,15 @@ const CreateProject = () => {
           landingImageUrl = uploadedUrl;
           console.log('Image uploaded successfully. URL:', landingImageUrl);
         } else {
+          console.error('Image upload failed');
           toast({
             title: 'Warning',
             description: 'Image upload failed. Project will be created without an image.',
             variant: 'destructive',
           });
         }
+        
+        setUploadingImage(false);
       }
 
       console.log('Creating project with data:', {
