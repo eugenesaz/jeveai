@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { ProjectSelector } from '@/components/courses/ProjectSelector';
@@ -14,7 +14,11 @@ const CreateCourse = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [selectedProject, setSelectedProject] = useState<string>('');
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const initialProjectId = queryParams.get('projectId');
+  
+  const [selectedProject, setSelectedProject] = useState<string>(initialProjectId || '');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (formData: any) => {
@@ -33,6 +37,8 @@ const CreateCourse = () => {
         details: formData.details,
         telegram_bot: formData.telegramBot || null,
         project_id: selectedProject,
+        ai_instructions: formData.aiInstructions || null,
+        materials: formData.materials ? JSON.stringify(formData.materials) : '[]'
       });
 
       if (error) throw error;
@@ -78,6 +84,7 @@ const CreateCourse = () => {
                   userId={user.id}
                   value={selectedProject}
                   onChange={setSelectedProject}
+                  selectedProjectId={selectedProject}
                 />
                 {selectedProject && (
                   <CourseForm onSubmit={handleSubmit} loading={loading} />

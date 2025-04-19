@@ -5,20 +5,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { useTranslation } from 'react-i18next';
 
-interface Project {
-  id: string;
-  name: string;
-}
-
 interface ProjectSelectorProps {
-  userId: string;
-  value: string;
-  onChange: (value: string) => void;
+  userId?: string;
+  value?: string;
+  onChange?: (value: string) => void;
+  selectedProjectId?: string;
+  onProjectSelect?: (projectId: string) => void;
+  disabled?: boolean;
 }
 
-export const ProjectSelector = ({ userId, value, onChange }: ProjectSelectorProps) => {
+export const ProjectSelector = ({ 
+  userId, 
+  value, 
+  onChange, 
+  selectedProjectId, 
+  onProjectSelect, 
+  disabled = false 
+}: ProjectSelectorProps) => {
   const { t } = useTranslation();
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -33,8 +38,10 @@ export const ProjectSelector = ({ userId, value, onChange }: ProjectSelectorProp
 
         if (data && data.length > 0) {
           setProjects(data);
-          if (!value && data.length > 0) {
-            onChange(data[0].id);
+          // Use selectedProjectId or value, prioritizing selectedProjectId
+          const projectToSelect = selectedProjectId || value || (data.length > 0 ? data[0].id : '');
+          if (projectToSelect && onProjectSelect) {
+            onProjectSelect(projectToSelect);
           }
         }
       } catch (error) {
@@ -42,8 +49,10 @@ export const ProjectSelector = ({ userId, value, onChange }: ProjectSelectorProp
       }
     };
 
-    fetchProjects();
-  }, [userId, value, onChange]);
+    if (userId) {
+      fetchProjects();
+    }
+  }, [userId, selectedProjectId, value, onProjectSelect]);
 
   if (projects.length === 0) {
     return (
@@ -56,7 +65,14 @@ export const ProjectSelector = ({ userId, value, onChange }: ProjectSelectorProp
   return (
     <div className="space-y-2">
       <Label htmlFor="project">{t('select.project')}</Label>
-      <Select value={value} onValueChange={onChange}>
+      <Select 
+        value={selectedProjectId || value} 
+        onValueChange={(newValue) => {
+          if (onProjectSelect) onProjectSelect(newValue);
+          if (onChange) onChange(newValue);
+        }}
+        disabled={disabled}
+      >
         <SelectTrigger>
           <SelectValue placeholder={t('select.project')} />
         </SelectTrigger>

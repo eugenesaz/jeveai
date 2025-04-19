@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Input } from '@/components/ui/input';
@@ -8,6 +7,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { useBotNameValidator } from '@/hooks/useBotNameValidator';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/use-toast';
 
 interface CourseFormData {
   name: string;
@@ -19,12 +20,14 @@ interface CourseFormData {
   isRecurring: boolean;
   details: string;
   telegramBot: string;
+  aiInstructions: string;
+  materials: File[];
 }
 
 interface CourseFormProps {
   onSubmit: (data: CourseFormData) => Promise<void>;
   loading: boolean;
-  initialValues?: CourseFormData;
+  initialValues?: Partial<CourseFormData>;
 }
 
 export const CourseForm = ({ onSubmit, loading, initialValues }: CourseFormProps) => {
@@ -41,27 +44,84 @@ export const CourseForm = ({ onSubmit, loading, initialValues }: CourseFormProps
     isRecurring: false,
     details: '',
     telegramBot: '',
+    aiInstructions: '',
+    materials: [],
   });
 
   // Initialize form with initial values if provided (for editing)
   useEffect(() => {
     if (initialValues) {
-      setFormData(initialValues);
+      setFormData(prev => ({
+        ...prev,
+        ...initialValues,
+        materials: initialValues.materials || []
+      }));
       if (initialValues.telegramBot) {
         validateBotName(initialValues.telegramBot);
       }
     }
-  }, [initialValues]);
+  }, [initialValues, validateBotName]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (botNameError) return;
-    await onSubmit(formData);
+
+    // Upload materials before submitting
+    const uploadedMaterials = await Promise.all(
+      formData.materials.map(async (file) => {
+        const fileName = `${Date.now()}_${file.name}`;
+        const { data, error } = await supabase.storage
+          .from('course-materials')
+          .upload(fileName, file);
+
+        if (error) {
+          toast({
+            title: 'Upload Error',
+            description: `Failed to upload ${file.name}`,
+            variant: 'destructive',
+          });
+          return null;
+        }
+
+        return {
+          name: fileName,
+          url: data?.path,
+          original_name: file.name,
+        };
+      })
+    );
+
+    // Filter out any null uploads
+    const validMaterials = uploadedMaterials.filter(m => m !== null);
+
+    await onSubmit({
+      ...formData,
+      materials: validMaterials as any[]
+    });
   };
 
   const handleBotNameChange = async (value: string) => {
     setFormData(prev => ({ ...prev, telegramBot: value }));
     await validateBotName(value);
+  };
+
+  const handleMaterialUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      const limitedFiles = newFiles.slice(0, 10 - formData.materials.length);
+      
+      setFormData(prev => ({
+        ...prev,
+        materials: [...prev.materials, ...limitedFiles]
+      }));
+    }
+  };
+
+  const removeMaterial = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      materials: prev.materials.filter((_, i) => i !== index)
+    }));
   };
 
   return (
@@ -187,6 +247,53 @@ export const CourseForm = ({ onSubmit, loading, initialValues }: CourseFormProps
         <p className="text-xs text-gray-500">
           Bot name can include letters, numbers, underscores, and the @ symbol
         </p>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="aiInstructions">{t('influencer.course.aiInstructions')}</Label>
+        <Textarea
+          id="aiInstructions"
+          value={formData.aiInstructions}
+          onChange={(e) => setFormData(prev => ({ ...prev, aiInstructions: e.target.value }))}
+          placeholder="Optional AI instructions for the course"
+          rows={3}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="materials">{t('influencer.course.materials')}</Label>
+        <Input
+          id="materials"
+          type="file"
+          multiple
+          accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
+          onChange={handleMaterialUpload}
+          disabled={formData.materials.length >= 10}
+        />
+        <p className="text-sm text-gray-500">
+          {t('influencer.course.materialsInfo', 'Up to 10 files allowed')}
+        </p>
+        
+        {formData.materials.length > 0 && (
+          <div className="mt-2 space-y-2">
+            {formData.materials.map((file, index) => (
+              <div 
+                key={index} 
+                className="flex justify-between items-center bg-gray-100 p-2 rounded"
+              >
+                <span>{file.name}</span>
+                <Button 
+                  type="button" 
+                  variant="destructive" 
+                  size="sm"
+                  onClick={() => removeMaterial(index)}
+                >
+                  {t('remove')}
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <Button type="submit" className="w-full" disabled={loading || !!botNameError}>

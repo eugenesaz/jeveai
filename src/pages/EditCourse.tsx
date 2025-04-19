@@ -120,6 +120,8 @@ const EditCourse = () => {
         details: formData.details,
         telegram_bot: formData.telegramBot || null,
         project_id: projectId,
+        ai_instructions: formData.aiInstructions || null,
+        materials: formData.materials ? JSON.stringify(formData.materials) : '[]'
       };
       
       const { error } = await supabase
@@ -178,7 +180,7 @@ const EditCourse = () => {
         ) : course && userCanEdit ? (
           <div className="bg-white rounded-lg shadow-sm p-6 max-w-2xl mx-auto">
             <ProjectSelector 
-              selectedProjectId={projectId}
+              selectedProjectId={projectId || ''}
               onProjectSelect={setProjectId}
               disabled={true}
             />
@@ -189,13 +191,15 @@ const EditCourse = () => {
               initialValues={{
                 name: course.name,
                 description: course.description || '',
-                isActive: course.status,
+                isActive: course.status ?? true,
                 type: course.type || 'diet',
                 price: String(course.price),
                 duration: String(course.duration),
-                isRecurring: course.recurring,
+                isRecurring: course.recurring ?? false,
                 details: course.details || '',
                 telegramBot: course.telegram_bot || '',
+                aiInstructions: course.ai_instructions || '',
+                materials: course.materials ? JSON.parse(course.materials) : []
               }}
             />
           </div>
