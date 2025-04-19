@@ -52,7 +52,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         if (insertError) {
           console.error('Error creating profile:', insertError);
-          return null;
+          // Even if profile creation fails, we'll return a default role for UX purposes
+          // This way users can still use the app even if profile creation fails
+          return defaultRole;
         }
         
         // Return the created role
@@ -62,7 +64,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return data.role as UserRole;
     } catch (err) {
       console.error('Error in ensureProfileExists:', err);
-      return null;
+      // Return default role to avoid blocking the user
+      return 'influencer' as UserRole;
     }
   };
 
@@ -110,13 +113,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               console.error('Error fetching user role:', err);
               // Default to influencer if all else fails
               setUserRole('influencer');
+            } finally {
+              // Ensure loading state is set to false even if there are errors
+              setIsLoading(false);
             }
           }, 0);
         } else {
           setUserRole(null);
+          setIsLoading(false);
         }
-        
-        setIsLoading(false);
       }
     );
 
@@ -162,6 +167,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } catch (err) {
         console.error('Error during initial auth check:', err);
       } finally {
+        // Always set isLoading to false when initialization is complete
         setIsLoading(false);
       }
     };
@@ -199,9 +205,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         console.log('Profile creation result:', profileError ? `Error: ${profileError.message}` : 'Success');
 
-        if (!profileError) {
-          setUserRole(role);
-        }
+        // Set the role even if there's a profile error so the user can continue
+        setUserRole(role);
       }
 
       return { error };
@@ -241,11 +246,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         } else {
           // Try to create profile if it doesn't exist
           const role = await ensureProfileExists(data.user.id, data.user.email);
-          if (role) {
-            setUserRole(role);
-          } else {
-            // Default to influencer if all else fails
-            setUserRole('influencer');
+          
+          // Always set the role regardless of profile creation success
+          setUserRole(role || 'influencer');
+          
+          if (!role) {
+            // Only show toast if we're using fallback role
             toast({
               title: "Note",
               description: "Using default role as influencer",
@@ -259,6 +265,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (error) {
       console.error('Signin error:', error);
       return { error };
+    } finally {
+      // Ensure we update loading state
+      setIsLoading(false);
     }
   };
 
@@ -271,10 +280,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const signOut = async () => {
     console.log('Signing out');
+    setIsLoading(true); // Set loading state while signing out
+    
     await supabase.auth.signOut();
+    
     setUser(null);
     setSession(null);
     setUserRole(null);
+    
+    setIsLoading(false); // Reset loading state after sign out
   };
 
   const setRole = (role: UserRole) => {

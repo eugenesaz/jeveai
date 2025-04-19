@@ -6,6 +6,7 @@ import { LandingHeader } from '@/components/landing/LandingHeader';
 import { CallToAction } from '@/components/landing/CallToAction';
 import { Benefits } from '@/components/landing/Benefits';
 import { AuthDialogs } from '@/components/auth/AuthDialogs';
+import { Spinner } from '@/components/ui/spinner';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -13,15 +14,29 @@ const Index = () => {
 
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isSignUpOpen, setIsSignUpOpen] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
-    console.log('Index page useEffect:', { isLoading, user: user?.id });
-    
     if (!isLoading && user) {
-      console.log('Redirecting to dashboard...');
-      navigate('/dashboard');
+      console.log('User authenticated, redirecting to dashboard...');
+      setRedirecting(true);
+      // Add a small delay to prevent rapid re-renders
+      const timer = setTimeout(() => {
+        navigate('/dashboard');
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [isLoading, user, navigate]);
+
+  // Show loading state if we're waiting for auth or redirecting
+  if (isLoading || redirecting) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-purple-50 to-blue-50">
+        <Spinner className="h-10 w-10 mb-4" />
+        <p className="text-lg">{redirecting ? 'Redirecting to dashboard...' : 'Loading...'}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-50 to-blue-50">

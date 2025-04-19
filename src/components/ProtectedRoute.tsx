@@ -2,6 +2,7 @@
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { Spinner } from '@/components/ui/spinner';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -13,7 +14,12 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
 
   // Show loading state while checking authentication
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <Spinner className="h-8 w-8" />
+        <span className="ml-2 text-lg">Loading authentication...</span>
+      </div>
+    );
   }
 
   // If not authenticated, redirect to landing page
