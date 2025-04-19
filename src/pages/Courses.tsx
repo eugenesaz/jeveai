@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,14 +9,26 @@ import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { Course } from '@/types/supabase';
 
-// Define project type without circular references
+// Define a simplified project type without circular references
 interface ProjectDetails {
   name: string;
   color_scheme: string | null;
 }
 
-// Define the course with project as a flat structure without self-references
-interface CourseWithProject extends Omit<Course, 'project'> {
+// Define a flat course structure to avoid circular references
+interface CourseWithProject {
+  id: string;
+  name: string;
+  description: string | null;
+  status: boolean | null;
+  type: string | null;
+  price: number;
+  duration: number | null;
+  recurring: boolean | null;
+  details: string | null;
+  telegram_bot: string | null;
+  project_id: string;
+  created_at: string | null;
   project: ProjectDetails | null;
 }
 
@@ -44,7 +57,8 @@ const Courses = () => {
         }
 
         if (data) {
-          setCourses(data as CourseWithProject[]);
+          // Explicitly cast the data to our safe type
+          setCourses(data as unknown as CourseWithProject[]);
         }
       } catch (error) {
         console.error('Error fetching courses:', error);
