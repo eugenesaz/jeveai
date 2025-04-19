@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -88,32 +87,11 @@ const CreateProject = () => {
       let landingImageUrl = '';
 
       if (landingImage) {
-        // Make sure the bucket exists before uploading
-        const bucketAccessible = await checkBucketAccess('project-images');
-        
-        if (!bucketAccessible) {
-          // Try to create the bucket if it doesn't exist
-          try {
-            const { error: createBucketError } = await supabase.storage
-              .createBucket('project-images', { public: true });
-            
-            if (createBucketError) {
-              console.error('Error creating bucket on-demand:', createBucketError);
-              toast({
-                title: 'Warning',
-                description: 'Could not access image storage. Project will be created without an image.',
-              });
-            }
-          } catch (bucketError) {
-            console.error('Exception creating bucket:', bucketError);
-          }
-        }
-
         const fileExt = landingImage.name.split('.').pop();
         const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
         const filePath = `${user.id}/${fileName}`;
 
-        console.log('Uploading image:', filePath);
+        console.log('Attempting to upload image:', filePath);
         
         try {
           const { error: uploadError, data } = await supabase.storage
@@ -125,6 +103,7 @@ const CreateProject = () => {
             toast({
               title: 'Warning',
               description: 'Image upload failed. Project will be created without an image.',
+              variant: 'destructive',
             });
           } else {
             console.log('Upload successful:', data);
@@ -141,6 +120,7 @@ const CreateProject = () => {
           toast({
             title: 'Warning',
             description: 'Image upload failed. Project will be created without an image.',
+            variant: 'destructive',
           });
         }
       }

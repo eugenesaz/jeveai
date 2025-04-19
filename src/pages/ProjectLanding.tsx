@@ -354,11 +354,6 @@ const ProjectLanding = () => {
             {user ? (
               <div className="flex items-center gap-2">
                 <Button
-                  onClick={() => navigate('/')}
-                >
-                  {t('navigation.dashboard')}
-                </Button>
-                <Button
                   variant="outline"
                   onClick={() => signOut()}
                 >
