@@ -1,33 +1,18 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Badge } from '@/components/ui/badge';
 import { Course } from '@/types/supabase';
+import { ProjectsHeader } from '@/components/projects/ProjectsHeader';
 
-interface ProjectDetails {
-  name: string;
-  color_scheme: string | null;
-}
-
-interface CourseWithProject {
-  id: string;
-  name: string;
-  description: string | null;
-  status: boolean | null;
-  type: string | null;
-  price: number;
-  duration: number | null;
-  recurring: boolean | null;
-  details: string | null;
-  telegram_bot: string | null;
-  project_id: string;
-  created_at: string | null;
-  project: ProjectDetails | null;
+interface CourseWithProject extends Course {
+  project: {
+    name: string;
+    color_scheme: string | null;
+  } | null;
 }
 
 const Courses = () => {
@@ -48,25 +33,41 @@ const Courses = () => {
       if (!user) return;
 
       try {
-        // If projectId is provided, fetch only courses for that project
+        // If projectId is provided, first check user's role for this project
         if (projectId) {
-          console.log('Fetching courses for specific project ID:', projectId);
+          console.log('Checking user role for project:', projectId);
           
-          // First get the project name
-          const { data: projectData, error: projectError } = await supabase
-            .from('projects')
-            .select('name')
-            .eq('id', projectId)
+          const { data: roleData, error: roleError } = await supabase
+            .from('user_project_roles')
+            .select('role')
+            .eq('project_id', projectId)
             .eq('user_id', user.id)
             .single();
             
-          if (projectError) {
-            console.error('Error fetching project:', projectError);
-          } else if (projectData) {
+          if (roleError) {
+            console.error('Error fetching user role:', roleError);
+            return;
+          }
+
+          // Only allow viewing courses if user is an influencer for this project
+          if (roleData?.role !== 'influencer') {
+            console.log('User is not an influencer for this project');
+            navigate('/projects');
+            return;
+          }
+
+          // Fetch project name
+          const { data: projectData } = await supabase
+            .from('projects')
+            .select('name')
+            .eq('id', projectId)
+            .single();
+            
+          if (projectData) {
             setProjectName(projectData.name);
           }
           
-          // Then get the courses for this project
+          // Fetch courses for this specific project
           const { data: coursesData, error: coursesError } = await supabase
             .from('courses')
             .select(`
@@ -81,15 +82,15 @@ const Courses = () => {
 
           if (coursesData) {
             console.log('Courses for project:', coursesData);
-            setCourses(coursesData as unknown as CourseWithProject[]);
+            setCourses(coursesData as CourseWithProject[]);
           }
-          
         } else {
-          // Fetch all courses for all user's projects
+          // Fetch all projects where user is an influencer
           const { data: userProjects, error: projectsError } = await supabase
-            .from('projects')
-            .select('id')
-            .eq('user_id', user.id);
+            .from('user_project_roles')
+            .select('project_id')
+            .eq('user_id', user.id)
+            .eq('role', 'influencer');
 
           if (projectsError) {
             throw projectsError;
@@ -100,8 +101,9 @@ const Courses = () => {
             return;
           }
 
-          const projectIds = userProjects.map(project => project.id);
+          const projectIds = userProjects.map(project => project.project_id);
 
+          // Fetch courses for all projects where user is an influencer
           const { data: coursesData, error: coursesError } = await supabase
             .from('courses')
             .select(`
@@ -115,7 +117,7 @@ const Courses = () => {
           }
 
           if (coursesData) {
-            setCourses(coursesData as unknown as CourseWithProject[]);
+            setCourses(coursesData as CourseWithProject[]);
           }
         }
       } catch (error) {
@@ -126,7 +128,7 @@ const Courses = () => {
     };
 
     fetchCourses();
-  }, [user, projectId]);
+  }, [user, projectId, navigate]);
 
   const getTypeTranslation = (type: string) => {
     if (!type) return '';
@@ -173,7 +175,6 @@ const Courses = () => {
             </Button>
             <Button 
               onClick={() => {
-                // If we have a projectId, pass it to the create course page
                 if (projectId) {
                   navigate(`/create-course?projectId=${projectId}`);
                 } else {

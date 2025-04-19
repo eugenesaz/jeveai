@@ -198,12 +198,55 @@ export type Database = {
         }
         Relationships: []
       }
+      user_project_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          project_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          project_id: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          project_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_project_roles_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      assign_customer_role_to_all_projects: {
+        Args: { customer_id: string; influencer_id: string }
+        Returns: undefined
+      }
+      assign_influencer_role_to_own_project: {
+        Args: { owner_id: string; project_id: string }
+        Returns: undefined
+      }
+      get_user_owned_project_ids: {
+        Args: { owner_id: string }
+        Returns: string[]
+      }
     }
     Enums: {
       [_ in never]: never
