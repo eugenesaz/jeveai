@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -21,8 +20,13 @@ interface Project {
   name: string;
   url_name: string;
   status: boolean;
-  stripe_key?: string;
-  gemini_key?: string;
+}
+
+interface ProjectSecret {
+  id: string;
+  project_id: string;
+  stripe_secret?: string | null;
+  gemini_api_key?: string | null;
 }
 
 const Admin = () => {
@@ -101,7 +105,7 @@ const Admin = () => {
         setLoading(true);
         const { data, error } = await supabase
           .from('projects')
-          .select('id, name, url_name, status, stripe_key, gemini_key')
+          .select('id, name, url_name, status')
           .eq('user_id', selectedInfluencer);
 
         if (error) throw error;
@@ -110,8 +114,9 @@ const Admin = () => {
           setProjects(data as Project[]);
           if (data.length > 0) {
             setSelectedProject(data[0].id);
-            setStripeKey(data[0].stripe_key || '');
-            setGeminiKey(data[0].gemini_key || '');
+            
+            // Fetch project secrets
+            await fetchProjectSecrets(data[0].id);
           } else {
             setSelectedProject(null);
             setStripeKey('');
@@ -128,19 +133,37 @@ const Admin = () => {
     fetchProjects();
   }, [selectedInfluencer]);
 
-  // Update keys when selecting a different project
-  useEffect(() => {
-    if (selectedProject) {
-      const project = projects.find(p => p.id === selectedProject);
-      if (project) {
-        setStripeKey(project.stripe_key || '');
-        setGeminiKey(project.gemini_key || '');
+  // Fetch project secrets when a project is selected
+  const fetchProjectSecrets = async (projectId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('project_secrets')
+        .select('id, project_id, stripe_secret, gemini_api_key')
+        .eq('project_id', projectId)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        setStripeKey(data.stripe_secret || '');
+        setGeminiKey(data.gemini_api_key || '');
+      } else {
+        setStripeKey('');
+        setGeminiKey('');
       }
-    } else {
+    } catch (error) {
+      console.error('Error fetching project secrets:', error);
       setStripeKey('');
       setGeminiKey('');
     }
-  }, [selectedProject, projects]);
+  };
+
+  // Update keys when selecting a different project
+  useEffect(() => {
+    if (selectedProject) {
+      fetchProjectSecrets(selectedProject);
+    }
+  }, [selectedProject]);
 
   const handleSaveKeys = async () => {
     if (!selectedProject) {
@@ -154,27 +177,45 @@ const Admin = () => {
 
     try {
       setSaving(true);
-      const { error } = await supabase
-        .from('projects')
-        .update({
-          stripe_key: stripeKey,
-          gemini_key: geminiKey,
-        })
-        .eq('id', selectedProject);
-
-      if (error) throw error;
+      
+      // Check if a record already exists
+      const { data: existingData, error: checkError } = await supabase
+        .from('project_secrets')
+        .select('id')
+        .eq('project_id', selectedProject)
+        .maybeSingle();
+      
+      if (checkError) throw checkError;
+      
+      let result;
+      
+      if (existingData) {
+        // Update existing record
+        result = await supabase
+          .from('project_secrets')
+          .update({
+            stripe_secret: stripeKey,
+            gemini_api_key: geminiKey,
+            updated_at: new Date().toISOString()
+          })
+          .eq('project_id', selectedProject);
+      } else {
+        // Insert new record
+        result = await supabase
+          .from('project_secrets')
+          .insert({
+            project_id: selectedProject,
+            stripe_secret: stripeKey,
+            gemini_api_key: geminiKey
+          });
+      }
+      
+      if (result.error) throw result.error;
 
       toast({
         title: 'Success',
         description: 'API keys saved successfully',
       });
-
-      // Update the local state
-      setProjects(projects.map(project => 
-        project.id === selectedProject 
-          ? { ...project, stripe_key: stripeKey, gemini_key: geminiKey } 
-          : project
-      ));
     } catch (error) {
       console.error('Error saving API keys:', error);
       toast({

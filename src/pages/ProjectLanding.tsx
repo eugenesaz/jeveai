@@ -119,11 +119,10 @@ const ProjectLanding = () => {
 
       {/* Project content */}
       <main className="flex-grow">
-        {/* Landing header with image background */}
+        {/* Need to update LandingHeader component to match the props */}
         <LandingHeader 
-          title={project.name}
-          subtitle={t('landing.subtitle')}
-          backgroundImage={project.landing_image || ''}
+          onLoginClick={() => {}}
+          onSignUpClick={() => {}}
         />
         
         {/* Benefits section */}
@@ -131,9 +130,11 @@ const ProjectLanding = () => {
           <Benefits />
         </section>
         
-        {/* Call to action */}
+        {/* Need to update CallToAction component to match the props */}
         <section className="py-16">
-          <CallToAction colorScheme={project.color_scheme || 'blue'} />
+          <CallToAction 
+            onSignUpClick={() => {}}
+          />
         </section>
       </main>
       

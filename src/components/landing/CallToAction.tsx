@@ -4,10 +4,32 @@ import { Button } from '@/components/ui/button';
 
 interface CallToActionProps {
   onSignUpClick: () => void;
+  colorScheme?: 'blue' | 'red' | 'orange' | 'green';
 }
 
-export const CallToAction = ({ onSignUpClick }: CallToActionProps) => {
+export const CallToAction = ({ onSignUpClick, colorScheme = 'blue' }: CallToActionProps) => {
   const { t } = useTranslation();
+  
+  // Get color based on scheme
+  const getButtonClass = () => {
+    switch (colorScheme) {
+      case 'blue': return 'bg-blue-600 hover:bg-blue-700';
+      case 'red': return 'bg-red-600 hover:bg-red-700';
+      case 'orange': return 'bg-orange-600 hover:bg-orange-700';
+      case 'green': return 'bg-green-600 hover:bg-green-700';
+      default: return 'bg-purple-600 hover:bg-purple-700';
+    }
+  };
+
+  const getBgClass = () => {
+    switch (colorScheme) {
+      case 'blue': return 'bg-blue-100';
+      case 'red': return 'bg-red-100';
+      case 'orange': return 'bg-orange-100';
+      case 'green': return 'bg-green-100';
+      default: return 'bg-purple-100';
+    }
+  };
 
   return (
     <>
@@ -20,14 +42,14 @@ export const CallToAction = ({ onSignUpClick }: CallToActionProps) => {
         </p>
         <Button 
           size="lg" 
-          className="bg-purple-600 hover:bg-purple-700 text-white px-8"
+          className={`${getButtonClass()} text-white px-8`}
           onClick={onSignUpClick}
         >
           {t('get.started')}
         </Button>
       </section>
 
-      <section className="py-16 text-center bg-purple-100 rounded-lg p-10 mb-10">
+      <section className={`py-16 text-center ${getBgClass()} rounded-lg p-10 mb-10`}>
         <h2 className="text-3xl font-bold mb-4 text-purple-900">
           {t('ready.to.start')}
         </h2>
@@ -36,7 +58,7 @@ export const CallToAction = ({ onSignUpClick }: CallToActionProps) => {
         </p>
         <Button 
           size="lg" 
-          className="bg-purple-600 hover:bg-purple-700 text-white px-8"
+          className={`${getButtonClass()} text-white px-8`}
           onClick={onSignUpClick}
         >
           {t('start.for.free')}
