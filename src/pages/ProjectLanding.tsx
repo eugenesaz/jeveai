@@ -16,6 +16,7 @@ interface Course {
   description: string | null;
   price: number;
   duration: number | null;
+  project_id: string;
 }
 
 const ProjectLanding = () => {
@@ -53,7 +54,7 @@ const ProjectLanding = () => {
 
         const { data: coursesData, error: coursesError } = await supabase
           .from('courses')
-          .select('id, name, description, price, duration')
+          .select('id, name, description, price, duration, project_id')
           .eq('project_id', projectData.id)
           .eq('status', true);
 
@@ -81,7 +82,7 @@ const ProjectLanding = () => {
       <ProjectHeader projectName={project.name} colorScheme={project.color_scheme} />
       <main className="flex-grow">
         <ProjectHero project={project} />
-        <CourseGrid courses={courses} />
+        <CourseGrid courses={courses} projectId={project.id} />
       </main>
       <footer className={`bg-gray-900 text-white py-8`}>
         <div className="container mx-auto px-4">

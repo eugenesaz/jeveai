@@ -8,21 +8,26 @@ interface Course {
   description: string | null;
   price: number;
   duration: number | null;
+  project_id: string;
 }
 
 interface CourseGridProps {
   courses: Course[];
+  projectId: string;
 }
 
-export const CourseGrid = ({ courses }: CourseGridProps) => {
+export const CourseGrid = ({ courses, projectId }: CourseGridProps) => {
   const { t } = useTranslation();
+  
+  // Filter courses to only show those that belong to this project
+  const filteredCourses = courses.filter(course => course.project_id === projectId);
 
   return (
     <section className="py-16 bg-gray-50">
       <div className="container mx-auto px-4">
         <h2 className="text-3xl font-bold mb-8 text-center">{t('customer.courses.available')}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {courses.map((course) => (
+          {filteredCourses.map((course) => (
             <div 
               key={course.id} 
               className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
@@ -51,7 +56,7 @@ export const CourseGrid = ({ courses }: CourseGridProps) => {
             </div>
           ))}
         </div>
-        {courses.length === 0 && (
+        {filteredCourses.length === 0 && (
           <p className="text-center text-gray-600">{t('no.courses.available')}</p>
         )}
       </div>
