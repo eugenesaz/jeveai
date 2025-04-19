@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -26,9 +25,9 @@ const Index = () => {
   const [loginLoading, setLoginLoading] = useState(false);
   const [signupLoading, setSignupLoading] = useState(false);
 
-  // Use useEffect for redirection after render with a console log to help debug
   useEffect(() => {
     console.log('Index page useEffect:', { isLoading, user: user?.id });
+    
     if (!isLoading && user) {
       console.log('Redirecting to dashboard...');
       navigate('/dashboard');
@@ -63,14 +62,20 @@ const Index = () => {
     } else {
       setLoginLoading(true);
       
-      const { error } = await signIn(email, password);
-      
-      if (error) {
-        setAuthError(error.message);
-        setLoginLoading(false);
-      } else {
-        console.log('Login successful, dialog closing');
-        setIsLoginOpen(false);
+      try {
+        const { error } = await signIn(email, password);
+        
+        if (error) {
+          console.error('Login error:', error);
+          setAuthError(error.message);
+          setLoginLoading(false);
+        } else {
+          console.log('Login successful, dialog closing');
+          setIsLoginOpen(false);
+        }
+      } catch (err) {
+        console.error('Login error:', err);
+        setAuthError('An unexpected error occurred');
         setLoginLoading(false);
       }
     }
@@ -121,7 +126,6 @@ const Index = () => {
       </header>
 
       <main className="container mx-auto p-6">
-        {/* Hero section */}
         <section className="py-16 text-center">
           <h1 className="text-5xl font-bold mb-4 text-purple-900">
             {t('influencer.benefits.title')}
@@ -138,7 +142,6 @@ const Index = () => {
           </Button>
         </section>
 
-        {/* Benefits section */}
         <section className="py-16">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
             <Card className="border border-purple-100 shadow-sm hover:shadow-md transition-shadow duration-200">
@@ -218,7 +221,6 @@ const Index = () => {
           </div>
         </section>
 
-        {/* CTA section */}
         <section className="py-16 text-center bg-purple-100 rounded-lg p-10 mb-10">
           <h2 className="text-3xl font-bold mb-4 text-purple-900">
             {t('ready.to.start')}
@@ -242,7 +244,6 @@ const Index = () => {
         </div>
       </footer>
 
-      {/* Login Dialog */}
       <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
         <DialogContent>
           <DialogHeader>
@@ -304,7 +305,6 @@ const Index = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Signup Dialog */}
       <Dialog open={isSignUpOpen} onOpenChange={setIsSignUpOpen}>
         <DialogContent>
           <DialogHeader>

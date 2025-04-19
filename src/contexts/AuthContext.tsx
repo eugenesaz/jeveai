@@ -27,31 +27,34 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     // Set up the session listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, currentSession) => {
-        console.log('Auth state changed:', event, currentSession?.user?.id);
+      (_event, currentSession) => {
+        console.log('Auth state changed:', _event, currentSession?.user?.id);
         
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         
         if (currentSession?.user) {
-          try {
-            // Fetch user's role from metadata or database
-            const { data, error } = await supabase
-              .from('profiles')
-              .select('role')
-              .eq('id', currentSession.user.id)
-              .single();
+          // Use setTimeout to prevent potential deadlocks with Supabase auth
+          setTimeout(async () => {
+            try {
+              // Fetch user's role from metadata or database
+              const { data, error } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', currentSession.user.id)
+                .single();
+                
+              console.log('Profile data for role:', data, error);
               
-            console.log('Profile data for role:', data, error);
-            
-            if (!error && data) {
-              setUserRole(data.role as UserRole);
-            } else {
-              console.log('Could not fetch role, error:', error);
+              if (!error && data) {
+                setUserRole(data.role as UserRole);
+              } else {
+                console.log('Could not fetch role, error:', error);
+              }
+            } catch (err) {
+              console.error('Error fetching user role:', err);
             }
-          } catch (err) {
-            console.error('Error fetching user role:', err);
-          }
+          }, 0);
         } else {
           setUserRole(null);
         }
@@ -149,6 +152,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       console.log('Signin response:', data?.user?.id, error);
       
+      if (!error && data.user) {
+        // Manually set user and session without waiting for onAuthStateChange
+        setUser(data.user);
+        setSession(data.session);
+        
+        // Fetch user's role after successful sign in
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .single();
+          
+        console.log('Profile data after login:', profileData, profileError);
+        
+        if (!profileError && profileData) {
+          setUserRole(profileData.role as UserRole);
+        }
+      }
+      
       return { error };
     } catch (error) {
       console.error('Signin error:', error);
@@ -166,6 +188,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const signOut = async () => {
     console.log('Signing out');
     await supabase.auth.signOut();
+    setUser(null);
+    setSession(null);
     setUserRole(null);
   };
 
