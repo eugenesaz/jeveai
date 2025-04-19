@@ -27,6 +27,12 @@ const CreateProject = () => {
   const [loading, setLoading] = useState(false);
   const [urlError, setUrlError] = useState('');
 
+  const handleColorSchemeChange = (value: string) => {
+    if (value === 'blue' || value === 'red' || value === 'orange' || value === 'green') {
+      setColorScheme(value);
+    }
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -233,7 +239,7 @@ const CreateProject = () => {
                 <RadioGroup 
                   defaultValue="blue" 
                   value={colorScheme} 
-                  onValueChange={setColorScheme}
+                  onValueChange={handleColorSchemeChange}
                   className="flex space-x-4"
                 >
                   <div className="flex items-center space-x-2">

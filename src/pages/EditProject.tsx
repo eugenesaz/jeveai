@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -32,6 +31,12 @@ const EditProject = () => {
   const [saving, setSaving] = useState(false);
   const [urlError, setUrlError] = useState('');
 
+  const handleColorSchemeChange = (value: string) => {
+    if (value === 'blue' || value === 'red' || value === 'orange' || value === 'green') {
+      setColorScheme(value);
+    }
+  };
+
   useEffect(() => {
     const fetchProject = async () => {
       if (!user || !id) return;
@@ -64,15 +69,13 @@ const EditProject = () => {
           return;
         }
 
-        // Ensure color_scheme is one of the valid types
         const validColorScheme = (data.color_scheme === 'blue' || 
                                  data.color_scheme === 'red' || 
                                  data.color_scheme === 'orange' || 
                                  data.color_scheme === 'green') 
                                  ? data.color_scheme as 'blue' | 'red' | 'orange' | 'green'
-                                 : 'blue'; // Default to blue if invalid
+                                 : 'blue';
 
-        // Create properly typed project object
         const typedProject: Project = {
           ...data,
           color_scheme: validColorScheme
@@ -115,10 +118,8 @@ const EditProject = () => {
     if (!url) return t('errors.required');
     if (!/^[a-zA-Z0-9-_]+$/.test(url)) return 'URL can only contain letters, numbers, dashes, and underscores';
     
-    // If the URL hasn't changed, it's valid
     if (project && url === project.url_name) return '';
     
-    // Check if URL is already taken
     const { data } = await supabase
       .from('projects')
       .select('url_name')
@@ -140,7 +141,6 @@ const EditProject = () => {
     e.preventDefault();
     if (!user || !id) return;
     
-    // Validate form
     if (!projectName) {
       toast({
         title: 'Error',
@@ -161,13 +161,10 @@ const EditProject = () => {
     try {
       let landingImageUrl = project?.landing_image || '';
 
-      // Upload image if it exists
       if (landingImage) {
-        // First check if bucket exists and is accessible
         const bucketAccessible = await checkBucketAccess('project-images');
         
         if (!bucketAccessible) {
-          // Try to create the bucket as a fallback
           const { error: createBucketError } = await supabase.storage
             .createBucket('project-images', { public: true });
           
@@ -180,7 +177,6 @@ const EditProject = () => {
           }
         }
 
-        // Proceed with upload if we have a bucket or after attempted creation
         const fileExt = landingImage.name.split('.').pop();
         const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
         const filePath = `${user.id}/${fileName}`;
@@ -330,7 +326,7 @@ const EditProject = () => {
                 <Label>{t('influencer.project.colorScheme')}</Label>
                 <RadioGroup 
                   value={colorScheme} 
-                  onValueChange={setColorScheme}
+                  onValueChange={handleColorSchemeChange}
                   className="flex space-x-4"
                 >
                   <div className="flex items-center space-x-2">
