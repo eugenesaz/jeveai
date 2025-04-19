@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
+import { Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/types/supabase';
 import { toast } from '@/components/ui/use-toast';
-import { Plus, BookText } from 'lucide-react';
+import { ProjectsHeader } from '@/components/projects/ProjectsHeader';
+import { ProjectTile } from '@/components/projects/ProjectTile';
 
 const Projects = () => {
   const { t } = useTranslation();
@@ -34,7 +36,6 @@ const Projects = () => {
 
         console.log('Projects data:', data);
         
-        // Cast color_scheme to ensure it matches the Project type
         const typedProjects = data?.map(project => ({
           ...project,
           color_scheme: (project.color_scheme === 'blue' || 
@@ -70,21 +71,6 @@ const Projects = () => {
     });
   };
 
-  const getColorClass = (colorScheme: string | null) => {
-    switch (colorScheme) {
-      case 'blue':
-        return 'bg-blue-100 border-blue-500';
-      case 'red':
-        return 'bg-red-100 border-red-500';
-      case 'orange':
-        return 'bg-orange-100 border-orange-500';
-      case 'green':
-        return 'bg-green-100 border-green-500';
-      default:
-        return 'bg-gray-100 border-gray-500';
-    }
-  };
-
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -108,23 +94,7 @@ const Projects = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm">
-        <div className="container mx-auto p-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">{t('influencer.project.title')}</h1>
-          <div className="flex gap-4">
-            <Button variant="ghost" onClick={() => navigate('/dashboard')}>
-              {t('navigation.dashboard')}
-            </Button>
-            <Button variant="ghost" onClick={() => navigate('/courses')}>
-              {t('navigation.courses')}
-            </Button>
-            <Button onClick={() => navigate('/create-project')} variant="default">
-              {t('influencer.project.createNew')}
-            </Button>
-          </div>
-        </div>
-      </header>
-
+      <ProjectsHeader />
       <main className="container mx-auto p-6 space-y-6">
         {loading ? (
           <div className="flex justify-center items-center h-40">
@@ -139,57 +109,13 @@ const Projects = () => {
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {projects.map((project) => (
-              <Card 
-                key={project.id} 
-                className={`border-2 ${getColorClass(project.color_scheme)}`}
-              >
-                <CardHeader>
-                  <CardTitle>{project.name}</CardTitle>
-                  <CardDescription>
-                    {project.status ? t('influencer.project.active') : t('influencer.project.inactive')}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {project.landing_image && (
-                    <div className="w-full h-40 mb-4 overflow-hidden rounded">
-                      <img 
-                        src={project.landing_image} 
-                        alt={project.name} 
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                  <p className="text-sm text-gray-500">
-                    URL: {window.location.origin}/{project.url_name}
-                  </p>
-                </CardContent>
-                <CardFooter className="flex flex-wrap gap-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => handleCopyUrl(project.url_name)}
-                  >
-                    {t('influencer.project.copyUrl')}
-                  </Button>
-                  <div className="flex gap-2 ml-auto">
-                    <Button 
-                      variant="default"
-                      onClick={() => navigate('/courses', { state: { projectId: project.id } })}
-                      className="gap-2"
-                    >
-                      <BookText className="h-4 w-4" />
-                      {t('influencer.project.manageCourses')}
-                    </Button>
-                    <Button 
-                      variant="default"
-                      onClick={() => navigate(`/edit-project/${project.id}`)}
-                    >
-                      {t('edit')}
-                    </Button>
-                  </div>
-                </CardFooter>
-              </Card>
+              <ProjectTile
+                key={project.id}
+                project={project}
+                onCopyUrl={handleCopyUrl}
+              />
             ))}
           </div>
         )}
