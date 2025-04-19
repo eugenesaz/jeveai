@@ -112,8 +112,8 @@ const resources = {
           "title": "Courses",
           "active": "Active Courses",
           "available": "Available Courses",
-          "enroll": "Enroll",
-          "view": "View",
+          "enroll": "Enroll Now",
+          "view": "View Details",
           "courseInfo": "Course Information",
           "duration": "Duration",
           "price": "Price",
@@ -122,7 +122,8 @@ const resources = {
           "oneTime": "One-time payment",
           "purchase": "Purchase",
           "cancel": "Cancel",
-          "days": "days"
+          "days": "days",
+          "viewDetails": "View Details"
         },
         "social": {
           "title": "Connect Social Media",
@@ -169,6 +170,9 @@ const resources = {
         "cancel": "Cancel",
         "success": "Course updated successfully!",
         "error": "Failed to update course"
+      },
+      "go": {
+        "back": "Go Back"
       }
     }
   },
@@ -281,8 +285,8 @@ const resources = {
           "title": "Курсы",
           "active": "Активные курсы",
           "available": "Доступные курсы",
-          "enroll": "Записаться",
-          "view": "Просмотр",
+          "enroll": "Записаться сейчас",
+          "view": "Подробнее",
           "courseInfo": "Информация о курсе",
           "duration": "Продолжительность",
           "price": "Цена",
@@ -291,7 +295,8 @@ const resources = {
           "oneTime": "Разовый платеж",
           "purchase": "Купить",
           "cancel": "Отмена",
-          "days": "дней"
+          "days": "дней",
+          "viewDetails": "Подробнее"
         },
         "social": {
           "title": "Подключить социальные сети",
@@ -338,6 +343,9 @@ const resources = {
         "cancel": "Отмена",
         "success": "Курс успешно обновлен!",
         "error": "Не удалось обновить курс"
+      },
+      "go": {
+        "back": "Назад"
       }
     }
   }
@@ -351,7 +359,7 @@ i18n
     fallbackLng: 'en',
     supportedLngs: ['en', 'ru'],
     detection: {
-      order: ['localStorage', 'navigator'], // Changed order to prioritize localStorage
+      order: ['localStorage', 'navigator'], 
       lookupLocalStorage: 'i18nextLng',
       caches: ['localStorage'],
     },

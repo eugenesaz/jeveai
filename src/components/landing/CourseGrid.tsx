@@ -42,9 +42,10 @@ export const CourseGrid = ({ courses }: CourseGridProps) => {
               <div className="px-6 pb-4">
                 <Link 
                   to={`/course/${course.id}`}
+                  state={{ fromProjectLanding: true }}
                   className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition-colors"
                 >
-                  {t('customer.courses.viewDetails')}
+                  {t('customer.courses.view')}
                 </Link>
               </div>
             </div>
