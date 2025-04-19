@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/types/supabase';
 import { toast } from '@/components/ui/use-toast';
 import { ProjectTile } from '@/components/projects/ProjectTile';
+import { EarningsChart } from '@/components/dashboard/EarningsChart';
 
 const Dashboard = () => {
   const { t } = useTranslation();
@@ -118,40 +118,46 @@ const Dashboard = () => {
         </div>
       </header>
 
-      <main className="container mx-auto p-6 space-y-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold">{t('influencer.dashboard.projects')}</h2>
-          <Button onClick={handleCreateProject} className="gap-2">
-            <Plus className="h-4 w-4" />
-            {t('influencer.project.createNew')}
-          </Button>
-        </div>
-
-        {loading ? (
-          <div className="flex justify-center items-center h-40">
-            <p>{t('loading')}</p>
-          </div>
-        ) : projects.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <p className="text-lg text-gray-600 mb-4">{t('no.projects')}</p>
+      <main className="container mx-auto p-6 space-y-8">
+        <div className="grid gap-8">
+          <EarningsChart />
+          
+          <div>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold">{t('influencer.dashboard.projects')}</h2>
               <Button onClick={handleCreateProject} className="gap-2">
                 <Plus className="h-4 w-4" />
                 {t('influencer.project.createNew')}
               </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects.map((project) => (
-              <ProjectTile
-                key={project.id}
-                project={project}
-                onCopyUrl={handleCopyUrl}
-              />
-            ))}
+            </div>
+
+            {loading ? (
+              <div className="flex justify-center items-center h-40">
+                <p>{t('loading')}</p>
+              </div>
+            ) : projects.length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <p className="text-lg text-gray-600 mb-4">{t('no.projects')}</p>
+                  <Button onClick={handleCreateProject} className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    {t('influencer.project.createNew')}
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {projects.map((project) => (
+                  <ProjectTile
+                    key={project.id}
+                    project={project}
+                    onCopyUrl={handleCopyUrl}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </main>
     </div>
   );

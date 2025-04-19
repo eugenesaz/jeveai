@@ -183,6 +183,12 @@ const resources = {
           "join": "Join thousands of influencers who are already scaling their business with Paradise.",
           "ready": "Ready to Start Your Journey?"
         }
+      },
+      "dashboard": {
+        "earnings": {
+          "title": "Earnings Overview",
+          "earnings": "Earnings"
+        }
       }
     }
   },
@@ -365,6 +371,12 @@ const resources = {
           "start": "Начать",
           "join": "Присоединяйтесь к тысячам инфлюенсеров, которые уже масштабируют свой бизнес с Paradise.",
           "ready": "Готовы начать свой путь?"
+        }
+      },
+      "dashboard": {
+        "earnings": {
+          "title": "Обзор доходов",
+          "earnings": "Доход"
         }
       }
     }
