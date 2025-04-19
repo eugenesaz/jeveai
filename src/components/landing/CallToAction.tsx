@@ -45,23 +45,23 @@ export const CallToAction = ({ onSignUpClick, colorScheme = 'blue' }: CallToActi
           className={`${getButtonClass()} text-white px-8`}
           onClick={onSignUpClick}
         >
-          {t('get.started')}
+          {t('landing.cta.start')}
         </Button>
       </section>
 
       <section className={`py-16 text-center ${getBgClass()} rounded-lg p-10 mb-10`}>
         <h2 className="text-3xl font-bold mb-4 text-purple-900">
-          {t('ready.to.start')}
+          {t('landing.cta.ready')}
         </h2>
         <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-8">
-          Join thousands of influencers who are already scaling their business with Paradise.
+          {t('landing.cta.join')}
         </p>
         <Button 
           size="lg" 
           className={`${getButtonClass()} text-white px-8`}
           onClick={onSignUpClick}
         >
-          {t('start.for.free')}
+          {t('landing.cta.start')}
         </Button>
       </section>
     </>

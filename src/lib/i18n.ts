@@ -173,6 +173,16 @@ const resources = {
       },
       "go": {
         "back": "Go Back"
+      },
+      "landing": {
+        "loading": "Loading...",
+        "redirecting": "Redirecting to dashboard...",
+        "footer": "© 2025 Paradise Knowledge Hub. All rights reserved.",
+        "cta": {
+          "start": "Get Started",
+          "join": "Join thousands of influencers who are already scaling their business with Paradise.",
+          "ready": "Ready to Start Your Journey?"
+        }
       }
     }
   },
@@ -346,6 +356,16 @@ const resources = {
       },
       "go": {
         "back": "Назад"
+      },
+      "landing": {
+        "loading": "Загрузка...",
+        "redirecting": "Перенаправление в панель управления...",
+        "footer": "© 2025 Paradise Knowledge Hub. Все права защищены.",
+        "cta": {
+          "start": "Начать",
+          "join": "Присоединяйтесь к тысячам инфлюенсеров, которые уже масштабируют свой бизнес с Paradise.",
+          "ready": "Готовы начать свой путь?"
+        }
       }
     }
   }
