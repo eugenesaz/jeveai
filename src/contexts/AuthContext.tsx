@@ -15,6 +15,7 @@ type AuthContextType = {
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   setRole: (role: UserRole) => void;
+  checkIsAdmin: () => Promise<boolean>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -179,6 +180,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
   }, []);
 
+  const checkIsAdmin = async (): Promise<boolean> => {
+    if (!user) return false;
+    
+    try {
+      // Get the latest role information from the database
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+        
+      if (error) {
+        console.error('Error checking admin status:', error);
+        return false;
+      }
+      
+      return data?.role === 'admin';
+    } catch (err) {
+      console.error('Exception checking admin status:', err);
+      return false;
+    }
+  };
+
   const signUp = async (email: string, password: string, role: UserRole) => {
     try {
       console.log('Signing up with:', email, 'as', role);
@@ -305,6 +329,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     signInWithGoogle,
     signOut,
     setRole,
+    checkIsAdmin,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

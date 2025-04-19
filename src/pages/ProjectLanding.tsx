@@ -103,26 +103,20 @@ const ProjectLanding = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Project header */}
-      <header className={`${getColorClass()} shadow-sm`}>
-        <div className="container mx-auto p-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">{project.name}</h1>
-          <div className="flex items-center gap-4">
-            <ProjectLanguageSelector />
-            {/* Render other navigation links but NOT the Dashboard link for logged in users */}
-            <Link to="/" className="text-white hover:text-gray-200">
-              {t('navigation.home')}
-            </Link>
-          </div>
-        </div>
-      </header>
+      {/* Project header - Now using the LandingHeader component */}
+      <LandingHeader 
+        onLoginClick={() => {}} 
+        onSignUpClick={() => {}}
+        colorScheme={project.color_scheme as 'blue' | 'red' | 'orange' | 'green' || 'blue'}
+      />
 
       {/* Project content */}
       <main className="flex-grow">
-        {/* Need to update LandingHeader component to match the props */}
+        {/* Hero section */}
         <LandingHeader 
-          onLoginClick={() => {}}
-          onSignUpClick={() => {}}
+          title={project.name}
+          subtitle={t('landing.subtitle')}
+          backgroundImage={project.landing_image || undefined}
         />
         
         {/* Benefits section */}
@@ -130,12 +124,11 @@ const ProjectLanding = () => {
           <Benefits />
         </section>
         
-        {/* Need to update CallToAction component to match the props */}
-        <section className="py-16">
-          <CallToAction 
-            onSignUpClick={() => {}}
-          />
-        </section>
+        {/* Call to action section */}
+        <CallToAction 
+          onSignUpClick={() => {}}
+          colorScheme={project.color_scheme as 'blue' | 'red' | 'orange' | 'green' || 'blue'}
+        />
       </main>
       
       {/* Footer */}
