@@ -1,9 +1,11 @@
 
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { ProjectLanguageSelector } from '@/components/landing/ProjectLanguageSelector';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/sonner';
 
 interface ProjectHeaderProps {
   projectName: string;
@@ -13,6 +15,18 @@ interface ProjectHeaderProps {
 export const ProjectHeader = ({ projectName, colorScheme = 'blue' }: ProjectHeaderProps) => {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.success(t('navigation.logout_success'));
+      navigate('/');
+    } catch (error) {
+      toast.error(t('navigation.logout_error'));
+      console.error('Logout error:', error);
+    }
+  };
 
   return (
     <header className={`bg-${colorScheme}-500 text-white`}>
@@ -22,7 +36,13 @@ export const ProjectHeader = ({ projectName, colorScheme = 'blue' }: ProjectHead
         </h1>
         <div className="flex items-center space-x-4">
           <ProjectLanguageSelector />
-          {!user && (
+          {user ? (
+            <>
+              <Button variant="outline" className="text-white border-white hover:bg-white/20" onClick={handleLogout}>
+                {t('navigation.logout')}
+              </Button>
+            </>
+          ) : (
             <>
               <Link to="/">
                 <Button variant="outline" className="text-white border-white hover:bg-white/20">
@@ -30,7 +50,7 @@ export const ProjectHeader = ({ projectName, colorScheme = 'blue' }: ProjectHead
                 </Button>
               </Link>
               <Link to="/">
-                <Button variant="outline" className="text-white border-white hover:bg-white/20">
+                <Button variant="default" className="text-white">
                   {t('navigation.signup')}
                 </Button>
               </Link>

@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Languages } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export const ProjectLanguageSelector = () => {
   const { i18n } = useTranslation();
@@ -18,7 +19,12 @@ export const ProjectLanguageSelector = () => {
     <div className="flex items-center gap-2">
       <Languages className="h-4 w-4 text-white" />
       <Select value={i18n.language} onValueChange={i18n.changeLanguage}>
-        <SelectTrigger className="w-[120px] text-white border-white hover:bg-white/20">
+        <SelectTrigger 
+          className={cn(
+            "w-[120px] text-white border-white/30 hover:border-white/50 bg-white/10 hover:bg-white/20",
+            "transition-all duration-300 ease-in-out"
+          )}
+        >
           <SelectValue placeholder="Select language" />
         </SelectTrigger>
         <SelectContent>

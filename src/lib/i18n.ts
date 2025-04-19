@@ -20,7 +20,9 @@ const resources = {
         "createProject": "Create Project",
         "profile": "Profile",
         "language": "Language",
-        "cancel": "Cancel"
+        "cancel": "Cancel",
+        "logout_success": "Successfully logged out",
+        "logout_error": "Failed to log out. Please try again."
       },
       "auth": {
         "email": "Email",
@@ -187,7 +189,9 @@ const resources = {
         "createProject": "Создать проект",
         "profile": "Профиль",
         "language": "Язык",
-        "cancel": "Отмена"
+        "cancel": "Отмена",
+        "logout_success": "Вы успешно вышли из системы",
+        "logout_error": "Не удалось выйти. Пожалуйста, попробуйте снова."
       },
       "auth": {
         "email": "Эл. почта",
@@ -203,7 +207,7 @@ const resources = {
       },
       "influencer": {
         "benefits": {
-          "title": "Масштабируйте свое влияние",
+          "title": "Масштабируйте свое вл��яние",
           "subtitle": "Поделитесь своими знаниями и опытом с мировой аудиторией",
           "virtualAssistant": "Создайте виртуального помощника на основе своих знаний",
           "scaleYourBusiness": "Масштабируйте свой бизнес с современными AI технологиями",
