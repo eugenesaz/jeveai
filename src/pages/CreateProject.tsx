@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { Spinner } from '@/components/ui/spinner';
-import { checkBucketAccess } from '@/lib/StorageUtils';
+import { uploadFile, createBucket } from '@/lib/StorageUtils';
 
 const CreateProject = () => {
   const { t } = useTranslation();
@@ -86,6 +86,10 @@ const CreateProject = () => {
     try {
       let landingImageUrl = '';
 
+      // Ensure the bucket exists first
+      await createBucket('project-images');
+
+      // Upload the image if one was selected
       if (landingImage) {
         const fileExt = landingImage.name.split('.').pop();
         const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
@@ -93,30 +97,12 @@ const CreateProject = () => {
 
         console.log('Attempting to upload image:', filePath);
         
-        try {
-          const { error: uploadError, data } = await supabase.storage
-            .from('project-images')
-            .upload(filePath, landingImage);
-
-          if (uploadError) {
-            console.error('Upload error:', uploadError);
-            toast({
-              title: 'Warning',
-              description: 'Image upload failed. Project will be created without an image.',
-              variant: 'destructive',
-            });
-          } else {
-            console.log('Upload successful:', data);
-            
-            const { data: { publicUrl } } = supabase.storage
-              .from('project-images')
-              .getPublicUrl(filePath);
-              
-            landingImageUrl = publicUrl;
-            console.log('Image URL set to:', landingImageUrl);
-          }
-        } catch (uploadError) {
-          console.error('Upload exception:', uploadError);
+        const uploadedUrl = await uploadFile('project-images', filePath, landingImage);
+        
+        if (uploadedUrl) {
+          landingImageUrl = uploadedUrl;
+          console.log('Image uploaded successfully. URL:', landingImageUrl);
+        } else {
           toast({
             title: 'Warning',
             description: 'Image upload failed. Project will be created without an image.',

@@ -11,7 +11,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { Spinner } from '@/components/ui/spinner';
-import { checkBucketAccess } from '@/lib/StorageUtils';
+import { uploadFile, createBucket } from '@/lib/StorageUtils';
 import { Project } from '@/types/supabase';
 
 const EditProject = () => {
@@ -161,42 +161,26 @@ const EditProject = () => {
     try {
       let landingImageUrl = project?.landing_image || '';
 
+      // Ensure the bucket exists first
+      await createBucket('project-images');
+
       if (landingImage) {
-        // Always attempt to upload regardless of bucket check result
         const fileExt = landingImage.name.split('.').pop();
         const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
         const filePath = `${user.id}/${fileName}`;
 
         console.log('Attempting to upload image:', filePath);
         
-        try {
-          const { error: uploadError, data } = await supabase.storage
-            .from('project-images')
-            .upload(filePath, landingImage);
-
-          if (uploadError) {
-            console.error('Upload error:', uploadError);
-            toast({
-              title: 'Warning',
-              description: 'Image upload failed. Project will be updated without changing the image.',
-              variant: 'destructive',
-            });
-          } else {
-            console.log('Upload successful:', data);
-            
-            const { data: { publicUrl } } = supabase.storage
-              .from('project-images')
-              .getPublicUrl(filePath);
-              
-            landingImageUrl = publicUrl;
-            console.log('Image URL set to:', landingImageUrl);
-          }
-        } catch (uploadError) {
-          console.error('Upload exception:', uploadError);
+        const uploadedUrl = await uploadFile('project-images', filePath, landingImage);
+        
+        if (uploadedUrl) {
+          landingImageUrl = uploadedUrl;
+          console.log('Image uploaded successfully. URL:', landingImageUrl);
+        } else {
           toast({
             title: 'Warning',
             description: 'Image upload failed. Project will be updated without changing the image.',
-            variant: 'destructive', 
+            variant: 'destructive',
           });
         }
       }
