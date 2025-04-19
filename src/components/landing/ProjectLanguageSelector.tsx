@@ -16,9 +16,9 @@ export const ProjectLanguageSelector = () => {
 
   return (
     <div className="flex items-center gap-2">
-      <Languages className="h-4 w-4 text-gray-500" />
+      <Languages className="h-4 w-4 text-white" />
       <Select value={i18n.language} onValueChange={i18n.changeLanguage}>
-        <SelectTrigger className="w-[120px]">
+        <SelectTrigger className="w-[120px] text-white border-white hover:bg-white/20">
           <SelectValue placeholder="Select language" />
         </SelectTrigger>
         <SelectContent>

@@ -101,11 +101,36 @@ const ProjectLanding = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <LandingHeader 
-        onLoginClick={() => {}} 
-        onSignUpClick={() => {}}
-        colorScheme={project.color_scheme as 'blue' | 'red' | 'orange' | 'green' || 'blue'}
-      />
+      <header className={`bg-${project.color_scheme || 'blue'}-500 text-white`}>
+        <div className="container mx-auto p-4 flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-white">
+            {project.name}
+          </h1>
+          <div className="flex items-center space-x-4">
+            <ProjectLanguageSelector />
+            {user ? (
+              <Link to="/dashboard">
+                <Button variant="outline" className="text-white border-white hover:bg-white/20">
+                  {t('navigation.dashboard')}
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Link to="/">
+                  <Button variant="outline" className="text-white border-white hover:bg-white/20">
+                    {t('navigation.login')}
+                  </Button>
+                </Link>
+                <Link to="/">
+                  <Button variant="outline" className="text-white border-white hover:bg-white/20">
+                    {t('navigation.signup')}
+                  </Button>
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+      </header>
 
       <main className="flex-grow">
         {/* Project Hero Section */}
@@ -130,7 +155,7 @@ const ProjectLanding = () => {
         {/* Courses Section */}
         <section className="py-16 bg-gray-50">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold mb-8 text-center">{t('courses.available')}</h2>
+            <h2 className="text-3xl font-bold mb-8 text-center">{t('customer.courses.available')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {courses.map((course) => (
                 <div 
@@ -179,4 +204,3 @@ const ProjectLanding = () => {
 };
 
 export default ProjectLanding;
-
