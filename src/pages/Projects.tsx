@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/types/supabase';
 import { toast } from '@/components/ui/use-toast';
-import { Plus } from 'lucide-react';
+import { Plus, BookText } from 'lucide-react';
 
 const Projects = () => {
   const { t } = useTranslation();
@@ -166,19 +165,29 @@ const Projects = () => {
                     URL: {window.location.origin}/{project.url_name}
                   </p>
                 </CardContent>
-                <CardFooter className="flex justify-between">
+                <CardFooter className="flex flex-wrap gap-2">
                   <Button 
                     variant="outline" 
                     onClick={() => handleCopyUrl(project.url_name)}
                   >
                     {t('influencer.project.copyUrl')}
                   </Button>
-                  <Button 
-                    variant="default"
-                    onClick={() => navigate(`/edit-project/${project.id}`)}
-                  >
-                    {t('edit')}
-                  </Button>
+                  <div className="flex gap-2 ml-auto">
+                    <Button 
+                      variant="default"
+                      onClick={() => navigate('/courses', { state: { projectId: project.id } })}
+                      className="gap-2"
+                    >
+                      <BookText className="h-4 w-4" />
+                      {t('influencer.project.manageCourses')}
+                    </Button>
+                    <Button 
+                      variant="default"
+                      onClick={() => navigate(`/edit-project/${project.id}`)}
+                    >
+                      {t('edit')}
+                    </Button>
+                  </div>
                 </CardFooter>
               </Card>
             ))}
