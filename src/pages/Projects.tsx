@@ -1,0 +1,162 @@
+
+import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { useNavigate } from 'react-router-dom';
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client
+const supabaseUrl = 'https://your-supabase-url.supabase.co';
+const supabaseAnonKey = 'your-supabase-anon-key';
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+interface Project {
+  id: string;
+  name: string;
+  status: boolean;
+  url_name: string;
+  color_scheme: 'blue' | 'red' | 'orange' | 'green';
+  landing_image: string;
+  user_id: string;
+  created_at: string;
+}
+
+const Projects = () => {
+  const { t } = useTranslation();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      if (!user) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('projects')
+          .select('*')
+          .eq('user_id', user.id);
+
+        if (error) {
+          throw error;
+        }
+
+        if (data) {
+          setProjects(data as Project[]);
+        }
+      } catch (error) {
+        console.error('Error fetching projects:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, [user]);
+
+  const handleCopyUrl = (urlName: string) => {
+    const url = `${window.location.origin}/${urlName}`;
+    navigator.clipboard.writeText(url);
+    // Add toast notification here
+  };
+
+  const getColorClass = (colorScheme: string) => {
+    switch (colorScheme) {
+      case 'blue':
+        return 'bg-blue-100 border-blue-500';
+      case 'red':
+        return 'bg-red-100 border-red-500';
+      case 'orange':
+        return 'bg-orange-100 border-orange-500';
+      case 'green':
+        return 'bg-green-100 border-green-500';
+      default:
+        return 'bg-gray-100 border-gray-500';
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-white shadow-sm">
+        <div className="container mx-auto p-4 flex justify-between items-center">
+          <h1 className="text-2xl font-bold">{t('influencer.project.title')}</h1>
+          <div className="flex gap-4">
+            <Button variant="ghost" onClick={() => navigate('/dashboard')}>
+              {t('navigation.dashboard')}
+            </Button>
+            <Button variant="ghost" onClick={() => navigate('/courses')}>
+              {t('navigation.courses')}
+            </Button>
+            <Button onClick={() => navigate('/create-project')} variant="default">
+              {t('influencer.project.createNew')}
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <main className="container mx-auto p-6 space-y-6">
+        {loading ? (
+          <div className="flex justify-center items-center h-40">
+            <p>Loading projects...</p>
+          </div>
+        ) : projects.length === 0 ? (
+          <div className="text-center p-10">
+            <h2 className="text-xl font-semibold mb-4">{t('no.projects')}</h2>
+            <Button onClick={() => navigate('/create-project')}>
+              {t('influencer.project.createNew')}
+            </Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {projects.map((project) => (
+              <Card 
+                key={project.id} 
+                className={`border-2 ${getColorClass(project.color_scheme)}`}
+              >
+                <CardHeader>
+                  <CardTitle>{project.name}</CardTitle>
+                  <CardDescription>
+                    {project.status ? t('influencer.project.active') : t('influencer.project.inactive')}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {project.landing_image && (
+                    <div className="w-full h-40 mb-4 overflow-hidden rounded">
+                      <img 
+                        src={project.landing_image} 
+                        alt={project.name} 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  <p className="text-sm text-gray-500">
+                    URL: {window.location.origin}/{project.url_name}
+                  </p>
+                </CardContent>
+                <CardFooter className="flex justify-between">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => handleCopyUrl(project.url_name)}
+                  >
+                    {t('influencer.project.copyUrl')}
+                  </Button>
+                  <Button 
+                    variant="default"
+                    onClick={() => navigate(`/edit-project/${project.id}`)}
+                  >
+                    {t('edit')}
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+};
+
+export default Projects;
