@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { Course } from '@/types/supabase';
@@ -33,44 +34,89 @@ const Courses = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [courses, setCourses] = useState<CourseWithProject[]>([]);
   const [loading, setLoading] = useState(true);
+  const [projectName, setProjectName] = useState<string | null>(null);
+  
+  // Get the project ID from the URL query parameters
+  const queryParams = new URLSearchParams(location.search);
+  const projectId = queryParams.get('projectId');
 
   useEffect(() => {
     const fetchCourses = async () => {
       if (!user) return;
 
       try {
-        const { data: userProjects, error: projectsError } = await supabase
-          .from('projects')
-          .select('id')
-          .eq('user_id', user.id);
+        // If projectId is provided, fetch only courses for that project
+        if (projectId) {
+          console.log('Fetching courses for specific project ID:', projectId);
+          
+          // First get the project name
+          const { data: projectData, error: projectError } = await supabase
+            .from('projects')
+            .select('name')
+            .eq('id', projectId)
+            .eq('user_id', user.id)
+            .single();
+            
+          if (projectError) {
+            console.error('Error fetching project:', projectError);
+          } else if (projectData) {
+            setProjectName(projectData.name);
+          }
+          
+          // Then get the courses for this project
+          const { data: coursesData, error: coursesError } = await supabase
+            .from('courses')
+            .select(`
+              *,
+              project:projects(name, color_scheme)
+            `)
+            .eq('project_id', projectId);
 
-        if (projectsError) {
-          throw projectsError;
-        }
+          if (coursesError) {
+            throw coursesError;
+          }
 
-        if (!userProjects || userProjects.length === 0) {
-          setLoading(false);
-          return;
-        }
+          if (coursesData) {
+            console.log('Courses for project:', coursesData);
+            setCourses(coursesData as unknown as CourseWithProject[]);
+          }
+          
+        } else {
+          // Fetch all courses for all user's projects
+          const { data: userProjects, error: projectsError } = await supabase
+            .from('projects')
+            .select('id')
+            .eq('user_id', user.id);
 
-        const projectIds = userProjects.map(project => project.id);
+          if (projectsError) {
+            throw projectsError;
+          }
 
-        const { data: coursesData, error: coursesError } = await supabase
-          .from('courses')
-          .select(`
-            *,
-            project:projects(name, color_scheme)
-          `)
-          .in('project_id', projectIds);
+          if (!userProjects || userProjects.length === 0) {
+            setLoading(false);
+            return;
+          }
 
-        if (coursesError) {
-          throw coursesError;
-        }
+          const projectIds = userProjects.map(project => project.id);
 
-        if (coursesData) {
-          setCourses(coursesData as unknown as CourseWithProject[]);
+          const { data: coursesData, error: coursesError } = await supabase
+            .from('courses')
+            .select(`
+              *,
+              project:projects(name, color_scheme)
+            `)
+            .in('project_id', projectIds);
+
+          if (coursesError) {
+            throw coursesError;
+          }
+
+          if (coursesData) {
+            setCourses(coursesData as unknown as CourseWithProject[]);
+          }
         }
       } catch (error) {
         console.error('Error fetching courses:', error);
@@ -80,7 +126,7 @@ const Courses = () => {
     };
 
     fetchCourses();
-  }, [user]);
+  }, [user, projectId]);
 
   const getTypeTranslation = (type: string) => {
     if (!type) return '';
@@ -110,7 +156,14 @@ const Courses = () => {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">
         <div className="container mx-auto p-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">{t('influencer.course.title')}</h1>
+          <div>
+            <h1 className="text-2xl font-bold">{t('influencer.course.title')}</h1>
+            {projectName && (
+              <p className="text-gray-500 mt-1">
+                {t('filtering.for.project')}: {projectName}
+              </p>
+            )}
+          </div>
           <div className="flex gap-4">
             <Button variant="ghost" onClick={() => navigate('/dashboard')}>
               {t('navigation.dashboard')}
@@ -118,7 +171,17 @@ const Courses = () => {
             <Button variant="ghost" onClick={() => navigate('/projects')}>
               {t('navigation.projects')}
             </Button>
-            <Button onClick={() => navigate('/create-course')} variant="default">
+            <Button 
+              onClick={() => {
+                // If we have a projectId, pass it to the create course page
+                if (projectId) {
+                  navigate(`/create-course?projectId=${projectId}`);
+                } else {
+                  navigate('/create-course');
+                }
+              }} 
+              variant="default"
+            >
               {t('influencer.course.createNew')}
             </Button>
           </div>
@@ -132,8 +195,20 @@ const Courses = () => {
           </div>
         ) : courses.length === 0 ? (
           <div className="text-center p-10">
-            <h2 className="text-xl font-semibold mb-4">{t('no.courses', 'No courses yet')}</h2>
-            <Button onClick={() => navigate('/create-course')}>
+            <h2 className="text-xl font-semibold mb-4">
+              {projectName 
+                ? t('no.courses.for.project', 'No courses for this project') 
+                : t('no.courses', 'No courses yet')}
+            </h2>
+            <Button 
+              onClick={() => {
+                if (projectId) {
+                  navigate(`/create-course?projectId=${projectId}`);
+                } else {
+                  navigate('/create-course');
+                }
+              }}
+            >
               {t('influencer.course.createNew')}
             </Button>
           </div>
