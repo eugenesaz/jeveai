@@ -11,7 +11,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { Spinner } from '@/components/ui/spinner';
-import { uploadFile, createBucket, testBucketAccess } from '@/lib/StorageUtils';
+import { uploadProjectImage, testBucketAccess } from '@/lib/StorageUtils';
 import { Project } from '@/types/supabase';
 
 const EditProject = () => {
@@ -170,17 +170,18 @@ const EditProject = () => {
         const hasAccess = await testBucketAccess('project-images');
         
         if (!hasAccess) {
-          console.log('Creating project-images bucket...');
-          await createBucket('project-images');
+          console.error('Project-images bucket not accessible.');
+          toast({
+            title: 'Warning',
+            description: 'Storage bucket not available. Contact support.',
+            variant: 'destructive',
+          });
+          setUploadingImage(false);
+          setSaving(false);
+          return;
         }
 
-        const fileExt = landingImage.name.split('.').pop();
-        const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
-        const filePath = `${user.id}/${fileName}`;
-
-        console.log('Uploading project image for edit:', filePath);
-        
-        const uploadedUrl = await uploadFile('project-images', filePath, landingImage);
+        const uploadedUrl = await uploadProjectImage(landingImage, user.id);
         
         if (uploadedUrl) {
           landingImageUrl = uploadedUrl;

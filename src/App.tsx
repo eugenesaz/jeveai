@@ -6,8 +6,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
-import { useEffect } from "react";
-import { initializeStorage } from "@/lib/StorageUtils";
 import Index from "@/pages/Index";
 import NotFound from "@/pages/NotFound";
 import Dashboard from "@/pages/Dashboard";
@@ -24,11 +22,6 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 const queryClient = new QueryClient();
 
 const App = () => {
-  useEffect(() => {
-    // Initialize storage buckets
-    initializeStorage();
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>

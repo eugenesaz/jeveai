@@ -21,6 +21,77 @@ export const testBucketAccess = async (bucket: string): Promise<boolean> => {
   }
 };
 
+// Function to create a bucket if it doesn't exist
+export const createBucket = async (bucketName: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase.storage.createBucket(bucketName, {
+      public: true
+    });
+    
+    if (error) {
+      console.error(`Error creating bucket ${bucketName}:`, error);
+      return false;
+    }
+    
+    console.log(`Bucket ${bucketName} created successfully`);
+    return true;
+  } catch (error) {
+    console.error(`Exception creating bucket ${bucketName}:`, error);
+    return false;
+  }
+};
+
+// Initialize storage - placeholder function for App.tsx
+export const initializeStorage = async (): Promise<void> => {
+  console.log('Initializing storage...');
+  const bucketName = 'project-images';
+  
+  const hasAccess = await testBucketAccess(bucketName);
+  if (!hasAccess) {
+    console.log(`Bucket ${bucketName} not accessible, attempting to create...`);
+    await createBucket(bucketName);
+  } else {
+    console.log(`Bucket ${bucketName} accessible, no need to create`);
+  }
+};
+
+// Generic function to upload a file to a bucket
+export const uploadFile = async (bucket: string, filePath: string, file: File): Promise<string | null> => {
+  try {
+    const { error: uploadError } = await supabase.storage
+      .from(bucket)
+      .upload(filePath, file, {
+        upsert: true,
+        cacheControl: '3600'
+      });
+
+    if (uploadError) {
+      console.error('Upload error:', uploadError);
+      toast({
+        title: 'Upload Failed',
+        description: 'Could not upload the file. Please try again.',
+        variant: 'destructive',
+      });
+      return null;
+    }
+    
+    const { data: { publicUrl } } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(filePath);
+    
+    console.log('File uploaded successfully. Public URL:', publicUrl);
+    return publicUrl;
+  } catch (error) {
+    console.error('Exception during upload:', error);
+    toast({
+      title: 'Upload Error',
+      description: 'An unexpected error occurred during upload.',
+      variant: 'destructive',
+    });
+    return null;
+  }
+};
+
 // Function to upload a project image with proper organization
 export const uploadProjectImage = async (file: File, userId: string): Promise<string | null> => {
   const bucket = 'project-images';
@@ -84,4 +155,3 @@ export const fileExists = async (bucket: string, path: string): Promise<boolean>
     return false;
   }
 };
-
