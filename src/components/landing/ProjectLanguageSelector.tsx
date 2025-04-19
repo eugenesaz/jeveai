@@ -12,7 +12,7 @@ export const ProjectLanguageSelector = () => {
     if (detectedLang && (detectedLang === 'en' || detectedLang === 'ru')) {
       i18n.changeLanguage(detectedLang);
     }
-  }, []);
+  }, [i18n]);
 
   return (
     <div className="flex items-center gap-2">

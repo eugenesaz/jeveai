@@ -24,7 +24,7 @@ const ProjectLanding = () => {
   const { urlName } = useParams<{ urlName: string }>();
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user, signUp, signIn } = useAuth();
+  const { user, signUp, signIn, signOut } = useAuth();
   
   const [project, setProject] = useState<Project | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -352,18 +352,28 @@ const ProjectLanding = () => {
           <div className="flex items-center gap-4">
             <ProjectLanguageSelector />
             {user ? (
-              <Button onClick={() => navigate('/')}>
-                {t('navigation.dashboard')}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={() => navigate('/')}
+                >
+                  {t('navigation.dashboard')}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => signOut()}
+                >
+                  {t('navigation.logout')}
+                </Button>
+              </div>
             ) : (
-              <>
+              <div className="flex items-center gap-2">
                 <Button variant="outline" onClick={() => setIsLoginOpen(true)}>
                   {t('navigation.login')}
                 </Button>
                 <Button variant="default" onClick={() => setIsSignUpOpen(true)}>
                   {t('navigation.signup')}
                 </Button>
-              </>
+              </div>
             )}
           </div>
         </div>
@@ -452,6 +462,81 @@ const ProjectLanding = () => {
         isSignUpOpen={isSignUpOpen}
         setIsSignUpOpen={setIsSignUpOpen}
       />
+
+      <Dialog open={isCourseDialogOpen} onOpenChange={setIsCourseDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('customer.courses.confirmEnrollment')}</DialogTitle>
+            <DialogDescription>
+              {t('customer.courses.confirmEnrollmentDesc')}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedCourse && (
+            <div className="py-4">
+              <p className="font-semibold">{selectedCourse.name}</p>
+              <p className="text-sm text-gray-500">{selectedCourse.type}</p>
+              <p className="mt-2">{selectedCourse.description}</p>
+              <p className="mt-4 font-bold">${selectedCourse.price.toFixed(2)}</p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCourseDialogOpen(false)}>
+              {t('actions.cancel')}
+            </Button>
+            <Button onClick={() => selectedCourse && handlePayment(selectedCourse)}>
+              {t('customer.courses.confirmPay')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isSocialDialogOpen} onOpenChange={setIsSocialDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('customer.social.title')}</DialogTitle>
+            <DialogDescription>
+              {t('customer.social.description')}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="telegram">{t('customer.social.telegram')}</Label>
+              <Input
+                id="telegram"
+                type="text"
+                value={socialMedia.telegram || ''}
+                onChange={(e) => setSocialMedia({ ...socialMedia, telegram: e.target.value })}
+                placeholder="@username"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="instagram">{t('customer.social.instagram')}</Label>
+              <Input
+                id="instagram"
+                type="text"
+                value={socialMedia.instagram || ''}
+                onChange={(e) => setSocialMedia({ ...socialMedia, instagram: e.target.value })}
+                placeholder="@username"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="tiktok">{t('customer.social.tiktok')}</Label>
+              <Input
+                id="tiktok"
+                type="text"
+                value={socialMedia.tiktok || ''}
+                onChange={(e) => setSocialMedia({ ...socialMedia, tiktok: e.target.value })}
+                placeholder="@username"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleSaveSocialMedia} disabled={socialLoading}>
+              {socialLoading ? t('actions.saving') : t('actions.save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
