@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,29 +6,15 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
+import { Course } from '@/types/supabase';
 
-// Define simple, independent types
+// Define project type without circular references
 interface ProjectDetails {
   name: string;
   color_scheme: string | null;
 }
 
-interface SimpleCourse {
-  id: string;
-  name: string;
-  description: string | null;
-  status: boolean | null;
-  type: string | null;
-  price: number;
-  duration: number | null;
-  recurring: boolean | null;
-  details: string | null;
-  telegram_bot: string | null;
-  project_id: string;
-  created_at: string | null;
-}
-
-// Define a separate type for joined data instead of extending
+// Define the joined type using a flat structure
 interface CourseWithProject {
   id: string;
   name: string;
