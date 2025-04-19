@@ -52,6 +52,7 @@ const ProjectLanding = () => {
         
         setProject(projectData as Project);
 
+        // Make sure to only fetch courses that belong to this specific project
         const { data: coursesData, error: coursesError } = await supabase
           .from('courses')
           .select('id, name, description, price, duration, project_id')
@@ -61,7 +62,10 @@ const ProjectLanding = () => {
         if (coursesError) {
           console.error('Error fetching courses:', coursesError);
         } else {
-          setCourses(coursesData || []);
+          // Double check that we're only setting courses that belong to this project
+          const filteredCourses = coursesData?.filter(course => course.project_id === projectData.id) || [];
+          console.log('Filtered courses for project', projectData.id, ':', filteredCourses);
+          setCourses(filteredCourses);
         }
       } catch (err) {
         console.error('Exception:', err);

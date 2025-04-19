@@ -21,6 +21,10 @@ export const CourseGrid = ({ courses, projectId }: CourseGridProps) => {
   
   // Filter courses to only show those that belong to this project
   const filteredCourses = courses.filter(course => course.project_id === projectId);
+  
+  console.log('CourseGrid - Project ID:', projectId);
+  console.log('CourseGrid - Courses before filtering:', courses);
+  console.log('CourseGrid - Filtered courses:', filteredCourses);
 
   return (
     <section className="py-16 bg-gray-50">
