@@ -14,20 +14,8 @@ interface ProjectDetails {
   color_scheme: string | null;
 }
 
-// Define the joined type using a flat structure
-interface CourseWithProject {
-  id: string;
-  name: string;
-  description: string | null;
-  status: boolean | null;
-  type: string | null;
-  price: number;
-  duration: number | null;
-  recurring: boolean | null;
-  details: string | null;
-  telegram_bot: string | null;
-  project_id: string;
-  created_at: string | null;
+// Define the course with project as a flat structure without self-references
+interface CourseWithProject extends Omit<Course, 'project'> {
   project: ProjectDetails | null;
 }
 
