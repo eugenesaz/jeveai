@@ -34,7 +34,19 @@ const Dashboard = () => {
         if (error) throw error;
         
         console.log('Projects data:', data);
-        setProjects(data || []);
+        
+        // Convert to the correct type by mapping the color_scheme property
+        const typedProjects = data?.map(project => ({
+          ...project,
+          color_scheme: (project.color_scheme === 'blue' || 
+                         project.color_scheme === 'red' || 
+                         project.color_scheme === 'orange' || 
+                         project.color_scheme === 'green') 
+                         ? project.color_scheme as 'blue' | 'red' | 'orange' | 'green'
+                         : null
+        })) || [];
+        
+        setProjects(typedProjects);
       } catch (error) {
         console.error('Error fetching projects:', error);
         toast({
