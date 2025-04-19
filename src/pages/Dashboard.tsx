@@ -1,13 +1,15 @@
+
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/types/supabase';
 import { toast } from '@/components/ui/use-toast';
+import { ProjectTile } from '@/components/projects/ProjectTile';
 
 const Dashboard = () => {
   const { t } = useTranslation();
@@ -32,18 +34,7 @@ const Dashboard = () => {
         if (error) throw error;
         
         console.log('Projects data:', data);
-        
-        const typedProjects = data?.map(project => ({
-          ...project,
-          color_scheme: (project.color_scheme === 'blue' || 
-                         project.color_scheme === 'red' || 
-                         project.color_scheme === 'orange' || 
-                         project.color_scheme === 'green') 
-                         ? project.color_scheme as 'blue' | 'red' | 'orange' | 'green'
-                         : null
-        })) || [];
-        
-        setProjects(typedProjects);
+        setProjects(data || []);
       } catch (error) {
         console.error('Error fetching projects:', error);
         toast({
@@ -59,23 +50,13 @@ const Dashboard = () => {
     fetchProjects();
   }, [user]);
 
-  const copyProjectUrl = (urlName: string) => {
+  const handleCopyUrl = (urlName: string) => {
     const url = `${window.location.origin}/${urlName}`;
     navigator.clipboard.writeText(url);
     toast({
       title: 'URL Copied',
       description: 'Project URL has been copied to clipboard',
     });
-  };
-
-  const getColorClass = (colorScheme: string | null) => {
-    switch (colorScheme) {
-      case 'blue': return 'bg-blue-100 border-blue-500';
-      case 'red': return 'bg-red-100 border-red-500';
-      case 'orange': return 'bg-orange-100 border-orange-500';
-      case 'green': return 'bg-green-100 border-green-500';
-      default: return 'bg-gray-100 border-gray-500';
-    }
   };
 
   const handleCreateProject = () => {
@@ -151,44 +132,11 @@ const Dashboard = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {projects.map((project) => (
-              <Card 
+              <ProjectTile
                 key={project.id}
-                className={`border-2 ${getColorClass(project.color_scheme)} hover:shadow-lg transition-shadow`}
-              >
-                <CardHeader>
-                  <CardTitle>{project.name}</CardTitle>
-                  <CardDescription>
-                    {project.status ? t('influencer.project.active') : t('influencer.project.inactive')}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {project.landing_image && (
-                    <div className="w-full h-40 mb-4 overflow-hidden rounded">
-                      <img 
-                        src={project.landing_image} 
-                        alt={project.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                  <p className="text-sm text-gray-500">
-                    URL: {window.location.origin}/{project.url_name}
-                  </p>
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  <Button 
-                    variant="outline"
-                    onClick={() => copyProjectUrl(project.url_name)}
-                  >
-                    {t('influencer.project.copyUrl')}
-                  </Button>
-                  <Button 
-                    onClick={() => navigate(`/edit-project/${project.id}`)}
-                  >
-                    {t('editButton')}
-                  </Button>
-                </CardFooter>
-              </Card>
+                project={project}
+                onCopyUrl={handleCopyUrl}
+              />
             ))}
           </div>
         )}
