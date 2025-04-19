@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
@@ -67,20 +66,16 @@ const ViewCourse = () => {
       return;
     }
 
-    if (!course) return;
-
     try {
-      // Here we'd implement enrollment logic
-      // For now just show a success message
       toast({
-        title: t('success.enrolled'),
-        description: `${t('customer.courses.enroll')} ${course.name}`,
+        title: t('info.coming_soon'),
+        description: "Payment integration coming soon",
       });
     } catch (error) {
-      console.error('Error enrolling in course:', error);
+      console.error('Error processing payment:', error);
       toast({
         title: 'Error',
-        description: 'Failed to enroll in course',
+        description: 'Failed to process payment',
         variant: 'destructive',
       });
     }
@@ -88,10 +83,8 @@ const ViewCourse = () => {
 
   const handleGoBack = () => {
     if (isFromProjectLanding) {
-      // Go back to the project landing page
       navigate(-1);
     } else {
-      // Default back behavior
       navigate('/dashboard');
     }
   };
@@ -195,7 +188,7 @@ const ViewCourse = () => {
                   onClick={handleEnroll}
                   className="px-8 py-6 text-lg bg-blue-600 hover:bg-blue-700"
                 >
-                  {t('customer.courses.enroll')}
+                  {user ? t('customer.courses.pay_and_enroll', 'Pay & Enroll') : t('customer.courses.enroll', 'Enroll')}
                 </Button>
               </div>
             </CardContent>
