@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -65,7 +66,8 @@ const CreateCourse = () => {
 
   const validateBotName = async (name: string) => {
     if (!name) return '';
-    if (!/^[a-zA-Z0-9_]+$/.test(name)) return 'Bot name can only contain letters, numbers, and underscores';
+    // Modified regex to allow @ symbol in bot names
+    if (!/^[a-zA-Z0-9_@]+$/.test(name)) return 'Bot name can only contain letters, numbers, underscores, and @ symbol';
     
     // Check if bot name is already taken
     const { data } = await supabase
@@ -325,9 +327,12 @@ const CreateCourse = () => {
                     id="telegramBot"
                     value={telegramBot}
                     onChange={handleBotNameChange}
-                    placeholder="your_bot_name"
+                    placeholder="your_bot_name or @your_bot_name"
                   />
                   {botNameError && <p className="text-sm text-red-500">{botNameError}</p>}
+                  <p className="text-xs text-gray-500">
+                    Bot name can include letters, numbers, underscores, and the @ symbol
+                  </p>
                 </div>
 
                 <Button type="submit" className="w-full" disabled={loading}>

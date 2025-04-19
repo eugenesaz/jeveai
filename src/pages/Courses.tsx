@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -6,6 +7,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
+
+interface Project {
+  name: string;
+  color_scheme: string;
+}
 
 interface Course {
   id: string;
@@ -20,10 +26,7 @@ interface Course {
   telegram_bot: string;
   project_id: string;
   created_at: string;
-  project: {
-    name: string;
-    color_scheme: string;
-  };
+  project: Project;
 }
 
 const Courses = () => {
