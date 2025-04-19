@@ -25,10 +25,7 @@ export const initializeStorage = async () => {
       
       if (error) {
         console.error('Error creating bucket:', error);
-        
-        // Even if creation fails, let's continue with the app
-        // as the bucket might already exist but not be visible to the current user
-        console.log('Continuing app initialization despite bucket creation error');
+        throw error; // Throw the error so we can properly handle it
       } else {
         console.log('Successfully created project-images bucket');
       }
@@ -44,11 +41,14 @@ export const initializeStorage = async () => {
 // Function to check if a bucket exists and is accessible
 export const checkBucketAccess = async (bucketName: string): Promise<boolean> => {
   try {
-    const { data } = await supabase.storage.getBucket(bucketName);
+    const { data, error } = await supabase.storage.getBucket(bucketName);
+    if (error) {
+      console.error(`Error accessing bucket ${bucketName}:`, error);
+      return false;
+    }
     return !!data;
   } catch (error) {
     console.error(`Error checking bucket ${bucketName} access:`, error);
     return false;
   }
 };
-

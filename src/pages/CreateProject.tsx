@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -87,18 +88,24 @@ const CreateProject = () => {
       let landingImageUrl = '';
 
       if (landingImage) {
+        // Make sure the bucket exists before uploading
         const bucketAccessible = await checkBucketAccess('project-images');
         
         if (!bucketAccessible) {
-          const { error: createBucketError } = await supabase.storage
-            .createBucket('project-images', { public: true });
-          
-          if (createBucketError) {
-            console.error('Error creating bucket on-demand:', createBucketError);
-            toast({
-              title: 'Warning',
-              description: 'Could not access image storage. Project will be created without an image.',
-            });
+          // Try to create the bucket if it doesn't exist
+          try {
+            const { error: createBucketError } = await supabase.storage
+              .createBucket('project-images', { public: true });
+            
+            if (createBucketError) {
+              console.error('Error creating bucket on-demand:', createBucketError);
+              toast({
+                title: 'Warning',
+                description: 'Could not access image storage. Project will be created without an image.',
+              });
+            }
+          } catch (bucketError) {
+            console.error('Exception creating bucket:', bucketError);
           }
         }
 
@@ -127,6 +134,7 @@ const CreateProject = () => {
               .getPublicUrl(filePath);
               
             landingImageUrl = publicUrl;
+            console.log('Image URL set to:', landingImageUrl);
           }
         } catch (uploadError) {
           console.error('Upload exception:', uploadError);
