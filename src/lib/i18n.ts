@@ -158,6 +158,15 @@ const resources = {
         "courseUpdated": "Course updated successfully!",
         "enrolled": "Successfully enrolled in course!",
         "socialSaved": "Social media accounts saved successfully!"
+      },
+      "edit": {
+        "course": {
+          "title": "Edit Course",
+          "save": "Save Changes",
+          "cancel": "Cancel",
+          "success": "Course updated successfully!",
+          "error": "Failed to update course"
+        }
       }
     }
   },
@@ -315,25 +324,34 @@ const resources = {
         "courseUpdated": "Курс успешно обновлен!",
         "enrolled": "Вы успешно записались на курс!",
         "socialSaved": "Аккаунты социальных сетей успешно сохранены!"
+      },
+      "edit": {
+        "course": {
+          "title": "Редактировать курс",
+          "save": "Сохранить изменения",
+          "cancel": "Отмена",
+          "success": "Курс успешно обновлен!",
+          "error": "Не удалось обновить курс"
+        }
       }
     }
   }
 };
 
-// Configure i18n
 i18n
-  .use(LanguageDetector) // Automatically detect browser language
-  .use(initReactI18next) // Initialize React-i18next
+  .use(LanguageDetector) 
+  .use(initReactI18next)
   .init({
     resources,
-    fallbackLng: 'en', // Fallback to English if language isn't supported
+    fallbackLng: 'en',
     supportedLngs: ['en', 'ru'],
     detection: {
-      order: ['navigator', 'htmlTag', 'cookie', 'localStorage'],
-      caches: ['localStorage', 'cookie'],
+      order: ['localStorage', 'navigator'], // Changed order to prioritize localStorage
+      lookupLocalStorage: 'i18nextLng',
+      caches: ['localStorage'],
     },
     interpolation: {
-      escapeValue: false, // React already escapes values
+      escapeValue: false,
     },
   });
 

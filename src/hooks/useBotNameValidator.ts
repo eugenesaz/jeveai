@@ -7,8 +7,17 @@ export const useBotNameValidator = () => {
 
   const validateBotName = async (name: string) => {
     if (!name) return '';
-    if (!/^[a-zA-Z0-9_@]+$/.test(name)) {
-      const error = 'Bot name can only contain letters, numbers, underscores, and @ symbol';
+    
+    // Check for @ symbol
+    if (name.includes('@')) {
+      const error = 'Bot name should not include @ symbol, it will be added automatically';
+      setBotNameError(error);
+      return error;
+    }
+    
+    // Check for valid characters
+    if (!/^[a-zA-Z0-9_]+$/.test(name)) {
+      const error = 'Bot name can only contain letters, numbers, and underscores';
       setBotNameError(error);
       return error;
     }
