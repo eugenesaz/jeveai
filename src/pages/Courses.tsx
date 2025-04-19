@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 
-// Define simplified types to prevent circular references
+// Define simple, independent types
 interface ProjectDetails {
   name: string;
   color_scheme: string | null;
@@ -29,8 +29,20 @@ interface SimpleCourse {
   created_at: string | null;
 }
 
-// Create a separate interface for joined data to avoid circular references
-interface CourseWithProject extends SimpleCourse {
+// Define a separate type for joined data instead of extending
+interface CourseWithProject {
+  id: string;
+  name: string;
+  description: string | null;
+  status: boolean | null;
+  type: string | null;
+  price: number;
+  duration: number | null;
+  recurring: boolean | null;
+  details: string | null;
+  telegram_bot: string | null;
+  project_id: string;
+  created_at: string | null;
   project: ProjectDetails | null;
 }
 
