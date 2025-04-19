@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -122,7 +121,7 @@ const CreateCourse = () => {
     setLoading(true);
 
     try {
-      // Create course in database
+      // Create course in database - Remove user_id field as it doesn't exist in the courses table
       const { error } = await supabase.from('courses').insert({
         name: courseName,
         description: description,
@@ -134,7 +133,6 @@ const CreateCourse = () => {
         details: details,
         telegram_bot: telegramBot || null,
         project_id: selectedProject,
-        user_id: user.id,
       });
 
       if (error) throw error;
