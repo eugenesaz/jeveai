@@ -38,13 +38,17 @@ export const ProjectTile = ({ project, onCopyUrl }: ProjectTileProps) => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {project.landing_image && (
+        {project.landing_image && project.landing_image.trim() !== '' ? (
           <div className="w-full h-40 mb-4 overflow-hidden rounded">
             <img 
               src={project.landing_image} 
               alt={project.name}
               className="w-full h-full object-cover"
             />
+          </div>
+        ) : (
+          <div className="w-full h-40 mb-4 overflow-hidden rounded bg-gray-200 flex items-center justify-center">
+            <p className="text-gray-500">No image available</p>
           </div>
         )}
         <p className="text-sm text-gray-500">
