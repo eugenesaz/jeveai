@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +11,8 @@ import { Switch } from '@/components/ui/switch';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
+import { Spinner } from '@/components/ui/spinner';
+import { checkBucketAccess } from '@/lib/StorageUtils';
 
 const CreateProject = () => {
   const { t } = useTranslation();
@@ -82,28 +85,57 @@ const CreateProject = () => {
 
       // Upload image if it exists
       if (landingImage) {
+        // First check if bucket exists and is accessible
+        const bucketAccessible = await checkBucketAccess('project-images');
+        
+        if (!bucketAccessible) {
+          // Try to create the bucket as a fallback
+          const { error: createBucketError } = await supabase.storage
+            .createBucket('project-images', { public: true });
+          
+          if (createBucketError) {
+            console.error('Error creating bucket on-demand:', createBucketError);
+            toast({
+              title: 'Warning',
+              description: 'Could not access image storage. Project will be created without an image.',
+            });
+          }
+        }
+
+        // Proceed with upload if we have a bucket or after attempted creation
         const fileExt = landingImage.name.split('.').pop();
         const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
-        const filePath = `project-images/${user.id}/${fileName}`;
+        const filePath = `${user.id}/${fileName}`;
 
         console.log('Uploading image:', filePath);
         
-        const { error: uploadError, data } = await supabase.storage
-          .from('project-images')
-          .upload(filePath, landingImage);
+        try {
+          const { error: uploadError, data } = await supabase.storage
+            .from('project-images')
+            .upload(filePath, landingImage);
 
-        if (uploadError) {
-          console.error('Upload error:', uploadError);
-          throw new Error('Failed to upload image');
+          if (uploadError) {
+            console.error('Upload error:', uploadError);
+            toast({
+              title: 'Warning',
+              description: 'Image upload failed. Project will be created without an image.',
+            });
+          } else {
+            console.log('Upload successful:', data);
+            
+            const { data: { publicUrl } } = supabase.storage
+              .from('project-images')
+              .getPublicUrl(filePath);
+              
+            landingImageUrl = publicUrl;
+          }
+        } catch (uploadError) {
+          console.error('Upload exception:', uploadError);
+          toast({
+            title: 'Warning',
+            description: 'Image upload failed. Project will be created without an image.',
+          });
         }
-
-        console.log('Upload successful:', data);
-        
-        const { data: { publicUrl } } = supabase.storage
-          .from('project-images')
-          .getPublicUrl(filePath);
-          
-        landingImageUrl = publicUrl;
       }
 
       console.log('Creating project with data:', {
@@ -262,8 +294,19 @@ const CreateProject = () => {
                 )}
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Creating Project...' : t('influencer.project.save')}
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={loading}
+              >
+                {loading ? (
+                  <div className="flex items-center justify-center">
+                    <Spinner className="h-5 w-5 mr-2" />
+                    <span>Creating Project...</span>
+                  </div>
+                ) : (
+                  t('influencer.project.save')
+                )}
               </Button>
             </form>
           </CardContent>
