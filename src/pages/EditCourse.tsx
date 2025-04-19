@@ -55,7 +55,12 @@ const EditCourse = () => {
           return;
         }
         
-        setCourse(courseData);
+        // Ensure all properties are included, even if they're null
+        setCourse({
+          ...courseData,
+          ai_instructions: courseData.ai_instructions || null,
+          materials: courseData.materials || null,
+        });
         setProjectId(courseData.project_id);
         
         // Check if user is the project owner
@@ -121,7 +126,7 @@ const EditCourse = () => {
         telegram_bot: formData.telegramBot || null,
         project_id: projectId,
         ai_instructions: formData.aiInstructions || null,
-        materials: formData.materials ? JSON.stringify(formData.materials) : '[]'
+        materials: formData.materials ? JSON.stringify(formData.materials) : null
       };
       
       const { error } = await supabase
