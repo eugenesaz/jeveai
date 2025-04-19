@@ -15,15 +15,15 @@ export const ProjectTile = ({ project, onCopyUrl }: ProjectTileProps) => {
 
   return (
     <Card className={`border-2 ${getColorClass(project.color_scheme)} hover:shadow-lg transition-shadow`}>
-      <CardHeader>
-        <CardTitle>{project.name}</CardTitle>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-xl">{project.name}</CardTitle>
         <CardDescription>
           {project.status ? 'Active' : 'Inactive'}
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pb-2">
         {project.landing_image && (
-          <div className="w-full h-40 mb-4 overflow-hidden rounded">
+          <div className="w-full h-32 mb-2 overflow-hidden rounded">
             <img 
               src={project.landing_image} 
               alt={project.name}
@@ -31,22 +31,24 @@ export const ProjectTile = ({ project, onCopyUrl }: ProjectTileProps) => {
             />
           </div>
         )}
-        <p className="text-sm text-gray-500">
+        <p className="text-xs text-gray-500 truncate">
           URL: {window.location.origin}/{project.url_name}
         </p>
       </CardContent>
-      <CardFooter className="flex flex-col space-y-2">
+      <CardFooter className="flex flex-col space-y-2 pt-0">
         <div className="flex w-full gap-2">
           <Button 
             variant="outline"
             onClick={() => onCopyUrl(project.url_name)}
-            className="flex-1"
+            className="flex-1 text-xs px-1"
+            size="sm"
           >
             Copy URL
           </Button>
           <Button 
             onClick={() => navigate(`/edit-project/${project.id}`)}
-            className="flex-1"
+            className="flex-1 text-xs px-1"
+            size="sm"
           >
             Edit
           </Button>
@@ -54,7 +56,7 @@ export const ProjectTile = ({ project, onCopyUrl }: ProjectTileProps) => {
         <Button 
           variant="default"
           onClick={() => navigate('/courses', { state: { projectId: project.id } })}
-          className="w-full gap-2"
+          className="w-full gap-1 text-sm"
         >
           <BookText className="h-4 w-4" />
           Manage Courses
