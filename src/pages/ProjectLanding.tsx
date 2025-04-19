@@ -1,12 +1,14 @@
+
 import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useParams, Link } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/types/supabase';
-import { Spinner } from '@/components/ui/spinner';
-import { Button } from '@/components/ui/button';
-import { ProjectLanguageSelector } from '@/components/landing/ProjectLanguageSelector';
+import { LoadingState } from '@/components/landing/LoadingState';
+import { ErrorState } from '@/components/landing/ErrorState';
+import { ProjectHeader } from '@/components/landing/ProjectHeader';
+import { ProjectHero } from '@/components/landing/ProjectHero';
+import { CourseGrid } from '@/components/landing/CourseGrid';
 
 interface Course {
   id: string;
@@ -19,7 +21,6 @@ interface Course {
 const ProjectLanding = () => {
   const { t } = useTranslation();
   const { urlName } = useParams();
-  const { user } = useAuth();
   const [project, setProject] = useState<Project | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,122 +73,16 @@ const ProjectLanding = () => {
     fetchProjectAndCourses();
   }, [urlName]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <Spinner size="lg" className="mb-4" />
-          <p>{t('loading')}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !project) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-500 mb-4">{error || 'Project not found'}</h1>
-          <p className="mb-4">{t('errors.projectNotFoundOrInactive')}</p>
-          <Link to="/" className="text-blue-500 hover:underline">
-            {t('navigation.goHome')}
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <LoadingState />;
+  if (error || !project) return <ErrorState error={error} />;
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className={`bg-${project.color_scheme || 'blue'}-500 text-white`}>
-        <div className="container mx-auto p-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-white">
-            {project.name}
-          </h1>
-          <div className="flex items-center space-x-4">
-            <ProjectLanguageSelector />
-            {user ? (
-              <Link to="/dashboard">
-                <Button variant="outline" className="text-white border-white hover:bg-white/20">
-                  {t('navigation.dashboard')}
-                </Button>
-              </Link>
-            ) : (
-              <>
-                <Link to="/">
-                  <Button variant="outline" className="text-white border-white hover:bg-white/20">
-                    {t('navigation.login')}
-                  </Button>
-                </Link>
-                <Link to="/">
-                  <Button variant="outline" className="text-white border-white hover:bg-white/20">
-                    {t('navigation.signup')}
-                  </Button>
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </header>
-
+      <ProjectHeader projectName={project.name} colorScheme={project.color_scheme} />
       <main className="flex-grow">
-        <section className="relative py-20 bg-gradient-to-b from-gray-900 to-gray-800 text-white">
-          {project.landing_image && (
-            <div 
-              className="absolute inset-0 opacity-20" 
-              style={{
-                backgroundImage: `url(${project.landing_image})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center'
-              }}
-            />
-          )}
-          <div className="container mx-auto px-4 relative z-10">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-center">
-              {project.name}
-            </h1>
-          </div>
-        </section>
-
-        <section className="py-16 bg-gray-50">
-          <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold mb-8 text-center">{t('customer.courses.available')}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {courses.map((course) => (
-                <div 
-                  key={course.id} 
-                  className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
-                >
-                  <div className="p-6">
-                    <h3 className="text-xl font-semibold mb-2">{course.name}</h3>
-                    <p className="text-gray-600 mb-4 line-clamp-2">{course.description}</p>
-                    <div className="flex justify-between items-center">
-                      <span className="text-lg font-bold">${course.price.toFixed(2)}</span>
-                      {course.duration && (
-                        <span className="text-sm text-gray-500">
-                          {course.duration} {t('customer.courses.days')}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="px-6 pb-4">
-                    <Link 
-                      to={`/course/${course.id}`}
-                      className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition-colors"
-                    >
-                      {t('customer.courses.viewDetails')}
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
-            {courses.length === 0 && (
-              <p className="text-center text-gray-600">{t('no.courses.available')}</p>
-            )}
-          </div>
-        </section>
+        <ProjectHero project={project} />
+        <CourseGrid courses={courses} />
       </main>
-      
       <footer className={`bg-gray-900 text-white py-8`}>
         <div className="container mx-auto px-4">
           <p className="text-center">
