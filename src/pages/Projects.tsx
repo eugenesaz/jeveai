@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/types/supabase';
 import { toast } from '@/components/ui/use-toast';
+import { Plus } from 'lucide-react';
 
 const Projects = () => {
   const { t } = useTranslation();
@@ -85,11 +86,26 @@ const Projects = () => {
     }
   };
 
-  // Debug user information
-  const debugUser = () => {
-    if (!user) return 'No user found';
-    return `User ID: ${user.id}, Email: ${user.email || 'No email'}`;
-  };
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Card className="w-[350px]">
+          <CardHeader>
+            <CardTitle>{t('login.required')}</CardTitle>
+            <CardDescription>{t('please.login.to.access')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button 
+              onClick={() => navigate('/')} 
+              className="w-full"
+            >
+              {t('go.to.login')}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -111,21 +127,15 @@ const Projects = () => {
       </header>
 
       <main className="container mx-auto p-6 space-y-6">
-        {/* Temporary debug section */}
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md mb-4">
-          <h3 className="font-medium mb-2">Debug Info:</h3>
-          <p className="text-sm">{debugUser()}</p>
-          <p className="text-sm mt-2">Projects count: {projects.length}</p>
-        </div>
-        
         {loading ? (
           <div className="flex justify-center items-center h-40">
-            <p>Loading projects...</p>
+            <p>{t('loading')}</p>
           </div>
         ) : projects.length === 0 ? (
           <div className="text-center p-10">
             <h2 className="text-xl font-semibold mb-4">{t('no.projects')}</h2>
-            <Button onClick={() => navigate('/create-project')}>
+            <Button onClick={() => navigate('/create-project')} className="gap-2">
+              <Plus className="h-4 w-4" />
               {t('influencer.project.createNew')}
             </Button>
           </div>

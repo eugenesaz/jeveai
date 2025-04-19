@@ -61,10 +61,13 @@ const Dashboard = () => {
     fetchProjects();
   }, [user]);
 
-  // Let's add a debug section to the page temporarily
-  const debugUser = () => {
-    if (!user) return 'No user found';
-    return `User ID: ${user.id}, Email: ${user.email || 'No email'}`;
+  const copyProjectUrl = (urlName: string) => {
+    const url = `${window.location.origin}/${urlName}`;
+    navigator.clipboard.writeText(url);
+    toast({
+      title: 'URL Copied',
+      description: 'Project URL has been copied to clipboard',
+    });
   };
 
   const getColorClass = (colorScheme: string | null) => {
@@ -77,14 +80,30 @@ const Dashboard = () => {
     }
   };
 
-  const copyProjectUrl = (urlName: string) => {
-    const url = `${window.location.origin}/${urlName}`;
-    navigator.clipboard.writeText(url);
-    toast({
-      title: 'URL Copied',
-      description: 'Project URL has been copied to clipboard',
-    });
+  const handleCreateProject = () => {
+    navigate('/create-project');
   };
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Card className="w-[350px]">
+          <CardHeader>
+            <CardTitle>{t('login.required')}</CardTitle>
+            <CardDescription>{t('please.login.to.access')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button 
+              onClick={() => navigate('/')} 
+              className="w-full"
+            >
+              {t('go.to.login')}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -94,6 +113,12 @@ const Dashboard = () => {
           <div className="flex gap-4">
             <Button variant="ghost" onClick={() => navigate('/')}>
               {t('navigation.home')}
+            </Button>
+            <Button variant="ghost" onClick={() => navigate('/projects')}>
+              {t('influencer.dashboard.projects')}
+            </Button>
+            <Button variant="ghost" onClick={() => navigate('/courses')}>
+              {t('navigation.courses')}
             </Button>
             <Button variant="ghost" onClick={signOut}>
               {t('navigation.logout')}
@@ -105,17 +130,10 @@ const Dashboard = () => {
       <main className="container mx-auto p-6 space-y-6">
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold">{t('influencer.dashboard.projects')}</h2>
-          <Button onClick={() => navigate('/create-project')} className="gap-2">
+          <Button onClick={handleCreateProject} className="gap-2">
             <Plus className="h-4 w-4" />
             {t('influencer.project.createNew')}
           </Button>
-        </div>
-
-        {/* Temporary debug section */}
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md mb-4">
-          <h3 className="font-medium mb-2">Debug Info:</h3>
-          <p className="text-sm">{debugUser()}</p>
-          <p className="text-sm mt-2">Projects count: {projects.length}</p>
         </div>
 
         {loading ? (
@@ -126,7 +144,7 @@ const Dashboard = () => {
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <p className="text-lg text-gray-600 mb-4">{t('no.projects')}</p>
-              <Button onClick={() => navigate('/create-project')} className="gap-2">
+              <Button onClick={handleCreateProject} className="gap-2">
                 <Plus className="h-4 w-4" />
                 {t('influencer.project.createNew')}
               </Button>

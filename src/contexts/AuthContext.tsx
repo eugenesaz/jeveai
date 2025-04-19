@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { UserRole, Profile } from '@/types/supabase';
+import { toast } from '@/components/ui/use-toast';
 
 type AuthContextType = {
   session: Session | null;
@@ -23,6 +24,47 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Helper function to create profile if not exists
+  const ensureProfileExists = async (userId: string, email: string | undefined) => {
+    try {
+      // First check if profile exists
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (error || !data) {
+        console.log('Profile not found, creating profile for user:', userId);
+        
+        // Default to 'influencer' role if not specified
+        const defaultRole: UserRole = 'influencer';
+        
+        // Create profile
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: userId,
+            email: email || '',
+            role: defaultRole,
+          });
+        
+        if (insertError) {
+          console.error('Error creating profile:', insertError);
+          return null;
+        }
+        
+        // Return the created role
+        return defaultRole;
+      }
+      
+      return data.role as UserRole;
+    } catch (err) {
+      console.error('Error in ensureProfileExists:', err);
+      return null;
+    }
+  };
 
   useEffect(() => {
     // Set up the session listener
@@ -50,9 +92,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 setUserRole(data.role as UserRole);
               } else {
                 console.log('Could not fetch role, error:', error);
+                
+                // Try to create profile if it doesn't exist
+                const role = await ensureProfileExists(
+                  currentSession.user.id, 
+                  currentSession.user.email
+                );
+                
+                if (role) {
+                  setUserRole(role);
+                } else {
+                  // Default to influencer if all else fails
+                  setUserRole('influencer');
+                }
               }
             } catch (err) {
               console.error('Error fetching user role:', err);
+              // Default to influencer if all else fails
+              setUserRole('influencer');
             }
           }, 0);
         } else {
@@ -87,6 +144,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setUserRole(profileData.role as UserRole);
           } else {
             console.log('Could not fetch initial role, error:', error);
+            
+            // Try to create profile if it doesn't exist
+            const role = await ensureProfileExists(
+              data.session.user.id, 
+              data.session.user.email
+            );
+            
+            if (role) {
+              setUserRole(role);
+            } else {
+              // Default to influencer if all else fails
+              setUserRole('influencer');
+            }
           }
         }
       } catch (err) {
@@ -168,6 +238,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         if (!profileError && profileData) {
           setUserRole(profileData.role as UserRole);
+        } else {
+          // Try to create profile if it doesn't exist
+          const role = await ensureProfileExists(data.user.id, data.user.email);
+          if (role) {
+            setUserRole(role);
+          } else {
+            // Default to influencer if all else fails
+            setUserRole('influencer');
+            toast({
+              title: "Note",
+              description: "Using default role as influencer",
+              variant: "default",
+            });
+          }
         }
       }
       
