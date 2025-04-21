@@ -53,6 +53,50 @@ export const sanitizeFileName = (fileName: string): string => {
     .replace(/\s+/g, '_');     // Replace spaces with underscores
 };
 
+// Function to upload project image to storage
+export const uploadProjectImage = async (image: File, userId: string): Promise<string | null> => {
+  try {
+    // Create a unique file path including user ID for better organization
+    const fileExt = image.name.split('.').pop();
+    const fileName = `${userId}/${Date.now()}_${sanitizeFileName(image.name)}`;
+    
+    // Make sure the bucket exists
+    await createBucket('project-images');
+    
+    const { error: uploadError } = await supabase.storage
+      .from('project-images')
+      .upload(fileName, image, {
+        upsert: true,
+        cacheControl: '3600'
+      });
+
+    if (uploadError) {
+      console.error('Project image upload error:', uploadError);
+      toast({
+        title: 'Upload Failed',
+        description: 'Could not upload the project image. Please try again.',
+        variant: 'destructive',
+      });
+      return null;
+    }
+    
+    const { data: urlData } = supabase.storage
+      .from('project-images')
+      .getPublicUrl(fileName);
+      
+    console.log('Project image uploaded successfully. Public URL:', urlData.publicUrl);
+    return urlData.publicUrl;
+  } catch (error) {
+    console.error('Exception during project image upload:', error);
+    toast({
+      title: 'Upload Error',
+      description: 'An unexpected error occurred during image upload.',
+      variant: 'destructive',
+    });
+    return null;
+  }
+};
+
 // Generic function to upload a file to a bucket
 export const uploadFile = async (bucket: string, filePath: string, file: File): Promise<string | null> => {
   try {
