@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 
@@ -95,7 +94,7 @@ export const sanitizeFileName = (fileName: string): string => {
     .replace(/__+/g, '_');    // Replace multiple consecutive underscores with a single one
 };
 
-// Check if file is within size limit (2MB for documents)
+// Check if file is within size limit (in MB)
 export const isFileSizeValid = (file: File, maxSizeMB: number = 2): boolean => {
   const maxSizeBytes = maxSizeMB * 1024 * 1024;
   if (file.size > maxSizeBytes) {
@@ -181,12 +180,12 @@ export const generateKnowledgeStorageKey = (projectId: string, originalFileName:
 export const uploadKnowledgeDocument = async (file: File, projectId: string): Promise<{fileName: string, url: string} | null> => {
   try {
     console.log(`Starting upload for document: ${file.name} for project ${projectId}`);
-    
-    // Check file size - 2MB limit for documents
-    if (!isFileSizeValid(file, 2)) {
+
+    // Check file size - 50MB limit for knowledge documents (updated from 2MB)
+    if (!isFileSizeValid(file, 50)) {
       return null;
     }
-    
+
     // Ensure buckets are properly configured first
     console.log('Ensuring storage buckets are configured...');
     const bucketsConfigured = await ensureStorageBuckets();
@@ -199,11 +198,11 @@ export const uploadKnowledgeDocument = async (file: File, projectId: string): Pr
       });
       return null;
     }
-    
+
     // Create a storage key that avoids problematic characters
     const storageKey = generateKnowledgeStorageKey(projectId, file.name);
     console.log(`Attempting to upload document with storage key: ${storageKey}`);
-    
+
     // Test bucket access before attempting upload
     console.log('Testing bucket access...');
     const hasAccess = await testBucketAccess('project-knowledge');
@@ -216,7 +215,7 @@ export const uploadKnowledgeDocument = async (file: File, projectId: string): Pr
       });
       return null;
     }
-    
+
     // Upload the file
     console.log('Uploading file...');
     const { data, error: uploadError } = await supabase.storage
@@ -225,15 +224,15 @@ export const uploadKnowledgeDocument = async (file: File, projectId: string): Pr
         upsert: true,
         cacheControl: '3600'
       });
-    
+
     if (uploadError) {
       console.error('Knowledge document upload error:', uploadError);
-      
+
       // Specific error for file size
       if (uploadError.message && uploadError.message.includes("too large")) {
         toast({
           title: 'File Too Large',
-          description: `The file is too large. Maximum allowed size is 2MB.`,
+          description: `The file is too large. Maximum allowed size is 50MB.`,
           variant: 'destructive',
         });
       } else {
@@ -245,12 +244,12 @@ export const uploadKnowledgeDocument = async (file: File, projectId: string): Pr
       }
       return null;
     }
-    
+
     // Get the public URL
     const { data: urlData } = supabase.storage
       .from('project-knowledge')
       .getPublicUrl(storageKey);
-    
+
     console.log('Knowledge document uploaded successfully. Public URL:', urlData.publicUrl);
     return {
       fileName: file.name,
