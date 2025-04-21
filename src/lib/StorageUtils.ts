@@ -2,6 +2,32 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 
+// Function to ensure necessary buckets exist via edge function
+export const ensureStorageBuckets = async (): Promise<boolean> => {
+  try {
+    const { data: authData } = await supabase.auth.getSession();
+    
+    const { data, error } = await supabase.functions.invoke('manage-knowledge-buckets', {
+      method: 'POST',
+      body: { action: 'ensure_buckets' },
+      headers: {
+        Authorization: `Bearer ${authData.session?.access_token || ''}`,
+      }
+    });
+
+    if (error) {
+      console.error('Error ensuring storage buckets:', error);
+      return false;
+    }
+
+    console.log('Storage buckets setup response:', data);
+    return true;
+  } catch (error) {
+    console.error('Exception ensuring buckets:', error);
+    return false;
+  }
+};
+
 // Function to test bucket access - try to list files
 export const testBucketAccess = async (bucket: string): Promise<boolean> => {
   try {
@@ -24,34 +50,17 @@ export const testBucketAccess = async (bucket: string): Promise<boolean> => {
 // Function to create a bucket if it doesn't exist
 export const createBucket = async (bucketName: string): Promise<boolean> => {
   try {
-    // First check if bucket already exists
-    const { data: existingBuckets, error: listError } = await supabase.storage.listBuckets();
+    // Use the edge function to ensure buckets exist
+    const bucketsConfigured = await ensureStorageBuckets();
     
-    if (listError) {
-      console.error('Error listing buckets:', listError);
+    if (!bucketsConfigured) {
+      console.error(`Failed to configure buckets via edge function`);
       return false;
     }
     
-    // Check if our bucket is in the list
-    const bucketExists = existingBuckets.some(bucket => bucket.name === bucketName);
-    
-    if (bucketExists) {
-      console.log(`Bucket ${bucketName} already exists`);
-      return true;
-    }
-    
-    // Create the bucket if it doesn't exist
-    const { error } = await supabase.storage.createBucket(bucketName, {
-      public: true
-    });
-    
-    if (error) {
-      console.error(`Error creating bucket ${bucketName}:`, error);
-      return false;
-    }
-    
-    console.log(`Bucket ${bucketName} created successfully`);
-    return true;
+    // Now test access to the specific bucket
+    const hasAccess = await testBucketAccess(bucketName);
+    return hasAccess;
   } catch (error) {
     console.error(`Exception creating bucket ${bucketName}:`, error);
     return false;
@@ -74,18 +83,24 @@ export const sanitizeFileName = (fileName: string): string => {
 // Function to upload project image to storage
 export const uploadProjectImage = async (image: File, userId: string): Promise<string | null> => {
   try {
+    // Ensure buckets are properly configured first
+    const bucketsConfigured = await ensureStorageBuckets();
+    if (!bucketsConfigured) {
+      console.error('Failed to configure storage buckets');
+      toast({
+        title: 'Storage Error',
+        description: 'Could not access storage. Please try again later.',
+        variant: 'destructive',
+      });
+      return null;
+    }
+
     // Create a unique file path including user ID for better organization
     const fileExt = image.name.split('.').pop();
     const safeName = sanitizeFileName(image.name.split('.')[0]);
     const fileName = `${userId}/${Date.now()}_${safeName}.${fileExt}`;
     
-    // Make sure the bucket exists
-    const bucketExists = await createBucket('project-images');
-    if (!bucketExists) {
-      console.error('Failed to create or access project-images bucket');
-      return null;
-    }
-    
+    // Upload the file
     const { error: uploadError } = await supabase.storage
       .from('project-images')
       .upload(fileName, image, {
@@ -131,21 +146,21 @@ export const generateKnowledgeStorageKey = (projectId: string, originalFileName:
 // Upload knowledge document to project-knowledge bucket
 export const uploadKnowledgeDocument = async (file: File, projectId: string): Promise<{fileName: string, url: string} | null> => {
   try {
-    // Create a storage key that avoids problematic characters
-    const storageKey = generateKnowledgeStorageKey(projectId, file.name);
-    console.log(`Attempting to upload document with storage key: ${storageKey}`);
-    
-    // Ensure bucket exists
-    const bucketExists = await createBucket('project-knowledge');
-    if (!bucketExists) {
-      console.error('Failed to create or access project-knowledge bucket');
+    // Ensure buckets are properly configured first
+    const bucketsConfigured = await ensureStorageBuckets();
+    if (!bucketsConfigured) {
+      console.error('Failed to configure storage buckets');
       toast({
         title: 'Storage Error',
-        description: 'Could not access storage bucket. Please try again later.',
+        description: 'Could not access storage. Please try again later.',
         variant: 'destructive',
       });
       return null;
     }
+    
+    // Create a storage key that avoids problematic characters
+    const storageKey = generateKnowledgeStorageKey(projectId, file.name);
+    console.log(`Attempting to upload document with storage key: ${storageKey}`);
     
     // Upload the file
     const { error: uploadError } = await supabase.storage
@@ -201,10 +216,10 @@ export const uploadFile = async (bucket: string, filePath: string, file: File): 
     const sanitizedFileName = sanitizeFileName(baseName) + '.' + fileExt;
     const sanitizedPath = [...pathParts, sanitizedFileName].join('/');
     
-    // Try to create the bucket if it doesn't exist
-    const bucketExists = await createBucket(bucket);
-    if (!bucketExists) {
-      console.error(`Failed to create or access bucket: ${bucket}`);
+    // Ensure buckets are properly configured first
+    const bucketsConfigured = await ensureStorageBuckets();
+    if (!bucketsConfigured) {
+      console.error(`Failed to configure storage`);
       return null;
     }
     
@@ -265,18 +280,7 @@ export const fileExists = async (bucket: string, path: string): Promise<boolean>
 // Initialize storage - ensure required buckets exist
 export const initializeStorage = async (): Promise<void> => {
   console.log('Initializing storage buckets...');
-  
-  const buckets = ['project-images', 'project-knowledge'];
-  
-  for (const bucketName of buckets) {
-    const hasAccess = await testBucketAccess(bucketName);
-    if (!hasAccess) {
-      console.log(`Bucket ${bucketName} not accessible, attempting to create...`);
-      await createBucket(bucketName);
-    } else {
-      console.log(`Bucket ${bucketName} accessible, no need to create`);
-    }
-  }
+  await ensureStorageBuckets();
 };
 
 // List all files in a bucket or folder

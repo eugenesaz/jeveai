@@ -14,9 +14,7 @@ import { FileText, Trash2, Plus, Download, ExternalLink } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ProfileButton } from '@/components/profile/ProfileButton';
 import { 
-  createBucket, 
-  testBucketAccess, 
-  listFiles,
+  initializeStorage,
   uploadKnowledgeDocument
 } from '@/lib/StorageUtils';
 
@@ -41,14 +39,8 @@ const ManageKnowledge = () => {
       if (!user || !id) return;
 
       try {
-        // Initialize storage bucket if needed
-        const bucketCreated = await createBucket('project-knowledge');
-        setBucketStatus(bucketCreated ? 'Bucket ready' : 'Failed to create bucket');
-        console.log('Bucket status:', bucketCreated ? 'Created/Exists' : 'Failed to create');
-        
-        // List files in bucket for debugging
-        const files = await listFiles('project-knowledge', id);
-        console.log('Files in project-knowledge bucket:', files);
+        await initializeStorage();
+        console.log('Storage initialized');
         
         const { data: projectData, error: projectError } = await supabase
           .from('projects')
@@ -135,22 +127,12 @@ const ManageKnowledge = () => {
     
     console.log(`Uploading ${knowledgeDocuments.length} knowledge documents for project ${projectId}`);
     
-    // Ensure bucket exists
-    const bucketCreated = await createBucket('project-knowledge');
-    if (!bucketCreated) {
-      console.error('Failed to create or access project-knowledge bucket');
-      toast({
-        title: 'Error',
-        description: 'Failed to access storage. Cannot upload documents.',
-        variant: 'destructive',
-      });
-      return [];
-    }
-    
     const uploadResults = await Promise.all(
       knowledgeDocuments.map(async (file) => {
         try {
-          return await uploadKnowledgeDocument(file, projectId);
+          const result = await uploadKnowledgeDocument(file, projectId);
+          console.log("Document upload result:", result);
+          return result;
         } catch (error) {
           console.error(`Exception uploading document ${file.name}:`, error);
           return null;
