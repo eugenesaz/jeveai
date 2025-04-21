@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.31.0";
 
@@ -95,7 +96,7 @@ serve(async (req) => {
 
     const { data: knowledgeData, error } = await supabaseClient
       .from('project_knowledge')
-      .select('created_at, content')
+      .select('content')
       .eq('project_id', projectId)
       .order('created_at', { ascending: true });
 
@@ -112,11 +113,15 @@ serve(async (req) => {
 
     console.log(`Returned ${knowledgeData?.length || 0} knowledge entries for project`);
 
+    // Concatenate all content into a single string
+    const combinedContent = knowledgeData 
+      ? knowledgeData.map(entry => entry.content).join('\n\n')
+      : '';
+
     return new Response(
       JSON.stringify({
-        knowledge: knowledgeData || [],
+        knowledge: combinedContent,
         meta: {
-          count: knowledgeData?.length || 0,
           projectId: projectId
         }
       }),
@@ -137,3 +142,4 @@ serve(async (req) => {
     );
   }
 });
+
