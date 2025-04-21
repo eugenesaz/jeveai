@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +11,7 @@ import { Project } from '@/types/supabase';
 import { toast } from '@/components/ui/use-toast';
 import { ProjectsHeader } from '@/components/projects/ProjectsHeader';
 import { ProjectTile } from '@/components/projects/ProjectTile';
+import { ProfileButton } from '@/components/profile/ProfileButton';
 
 const Projects = () => {
   const { t } = useTranslation();
