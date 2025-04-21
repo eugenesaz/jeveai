@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Course } from "@/types/supabase";
+import { toast } from "@/components/ui/use-toast";
 
 interface Enrollment {
   id: string;
@@ -19,7 +20,7 @@ interface Enrollment {
 }
 
 export default function EnrolledCourses() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, signOut } = useAuth();
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -53,6 +54,15 @@ export default function EnrolledCourses() {
     fetchData();
   }, [user]);
 
+  const handleLogout = async () => {
+    await signOut();
+    toast({
+      title: "Logged out",
+      description: "You have been logged out.",
+    });
+    navigate("/", { replace: true });
+  };
+
   if (isLoading || loading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -84,7 +94,9 @@ export default function EnrolledCourses() {
       <header className="bg-white shadow-sm">
         <div className="container mx-auto p-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">Enrolled Courses</h1>
-          <Button variant="ghost" onClick={() => navigate("/dashboard")}>Dashboard</Button>
+          <Button variant="destructive" onClick={handleLogout}>
+            Log out - {user.email}
+          </Button>
         </div>
       </header>
       <main className="container mx-auto py-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
@@ -99,7 +111,9 @@ export default function EnrolledCourses() {
           >
             <h2 className="font-semibold text-xl">{course.name}</h2>
             <div className="flex flex-col gap-1">
-              <span><span className="font-medium">Begin date:</span> {begin_date ? (new Date(begin_date)).toLocaleDateString() : "-"}</span>
+              <span>
+                <span className="font-medium">Begin date:</span> {begin_date ? (new Date(begin_date)).toLocaleDateString() : "-"}
+              </span>
               {end_date && (
                 <span>
                   <span className="font-medium">End date:</span> {(new Date(end_date)).toLocaleDateString()}
