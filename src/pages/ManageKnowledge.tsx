@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -119,6 +118,17 @@ const ManageKnowledge = () => {
 
   const uploadKnowledgeDocuments = async (projectId: string) => {
     if (knowledgeDocuments.length === 0) return [];
+    
+    // Check if bucket exists first
+    const { error: bucketError } = await supabase.storage
+      .getBucket('project-knowledge');
+    
+    // If bucket doesn't exist, create it
+    if (bucketError) {
+      await supabase.storage.createBucket('project-knowledge', {
+        public: true
+      });
+    }
     
     const uploadResults = await Promise.all(
       knowledgeDocuments.map(async (file) => {
@@ -289,7 +299,7 @@ const ManageKnowledge = () => {
           <div className="flex items-center space-x-4">
             <h1 className="text-2xl font-bold">{t('project.manageKnowledge')}</h1>
             <span className="text-gray-500">-</span>
-            <span className="font-medium">{project.name}</span>
+            <span className="font-medium">{project?.name}</span>
           </div>
           <div className="flex items-center gap-4">
             <Button variant="ghost" onClick={() => navigate('/projects')}>
@@ -345,7 +355,7 @@ const ManageKnowledge = () => {
                                   className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800"
                                 >
                                   <Download className="h-4 w-4 mr-1" />
-                                  Download
+                                  {t('download')}
                                 </a>
                               </div>
                             </div>
@@ -388,7 +398,7 @@ const ManageKnowledge = () => {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Textarea
-                placeholder="Enter knowledge information"
+                placeholder={t('project.enterKnowledgeInfo')}
                 value={newKnowledgeContent}
                 onChange={(e) => setNewKnowledgeContent(e.target.value)}
                 rows={5}
@@ -406,7 +416,7 @@ const ManageKnowledge = () => {
                 disabled={knowledgeDocuments.length >= 5}
               />
               <p className="text-xs text-gray-500">
-                Upload up to 5 documents to attach to your project knowledge
+                {t('project.uploadLimit')}
               </p>
 
               {knowledgeDocuments.length > 0 && (

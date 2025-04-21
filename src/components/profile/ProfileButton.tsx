@@ -49,12 +49,33 @@ export const ProfileButton = () => {
     
     setSaving(true);
     try {
-      const { error } = await supabase
+      // First check if profile exists
+      const { data: existingProfile, error: checkError } = await supabase
         .from('profiles')
-        .update({ telegram: telegramName })
-        .eq('id', user.id);
+        .select('id')
+        .eq('id', user.id)
+        .single();
       
-      if (error) throw error;
+      if (checkError && checkError.code === 'PGRST116') {
+        // Profile doesn't exist, create it
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            email: user.email,
+            telegram: telegramName
+          });
+        
+        if (insertError) throw insertError;
+      } else {
+        // Profile exists, update it
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ telegram: telegramName })
+          .eq('id', user.id);
+        
+        if (updateError) throw updateError;
+      }
       
       toast({
         title: 'Success',
