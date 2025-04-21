@@ -12,7 +12,6 @@ port = 54322
 [studio]
 port = 54324
 
-# Edge Functions
 [functions.check-course-access]
 verify_jwt = false
 
@@ -20,4 +19,10 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.project-knowledge]
+verify_jwt = false
+
+[functions.save-memory]
+verify_jwt = false
+
+[functions.get-memories]
 verify_jwt = false

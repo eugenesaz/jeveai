@@ -109,6 +109,27 @@ export type Database = {
           },
         ]
       }
+      memories: {
+        Row: {
+          created_at: string
+          id: string
+          memory: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          memory: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          memory?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
