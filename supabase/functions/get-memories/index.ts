@@ -45,6 +45,8 @@ serve(async (req) => {
       );
     }
 
+    console.log(`Fetching memories for user: ${userId}`);
+
     // Get all memories for the user
     const { data: memories, error } = await supabaseClient
       .from('memories')
@@ -62,6 +64,9 @@ serve(async (req) => {
         }
       );
     }
+
+    console.log(`Retrieved ${memories?.length || 0} memories`);
+    console.log('Memories data:', memories);
 
     return new Response(
       JSON.stringify({ memories: memories || [] }),
