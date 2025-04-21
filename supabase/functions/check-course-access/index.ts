@@ -7,8 +7,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const API_TOKEN = "SAdasdad231sdagkjLLP;.";
-
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -16,21 +14,6 @@ serve(async (req) => {
   }
 
   try {
-    // Verify API token
-    const authHeader = req.headers.get("authorization");
-    const token = authHeader?.split(" ")[1];
-    
-    if (token !== API_TOKEN) {
-      console.log("Invalid token:", token);
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { 
-          status: 401, 
-          headers: { ...corsHeaders, "Content-Type": "application/json" } 
-        }
-      );
-    }
-
     // Parse request body
     const { telegramUsername, botUsername } = await req.json();
     
