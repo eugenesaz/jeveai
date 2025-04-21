@@ -54,10 +54,10 @@ serve(async (req) => {
 
     console.log(`Fetching knowledge for project ID: ${projectId}`);
 
-    // Check if project exists first
+    // Debug: Check if project exists first and log project data
     const { data: projectData, error: projectError } = await supabaseClient
       .from('projects')
-      .select('id')
+      .select('id, name')
       .eq('id', projectId)
       .single();
 
@@ -83,7 +83,24 @@ serve(async (req) => {
       );
     }
 
-    // Get project knowledge sorted ascending
+    console.log(`Found project: ${projectData.name} (${projectData.id})`);
+
+    // Debug: Log the query we're about to execute
+    console.log(`Executing query: SELECT * FROM project_knowledge WHERE project_id = '${projectId}' ORDER BY created_at ASC`);
+
+    // Get project knowledge with direct query to see all returned fields for debugging
+    const { data: debugData, error: debugError } = await supabaseClient
+      .from('project_knowledge')
+      .select('*')
+      .eq('project_id', projectId);
+      
+    // Log raw data for debugging
+    console.log(`Debug query returned ${debugData?.length || 0} rows, error: ${debugError ? JSON.stringify(debugError) : 'none'}`);
+    if (debugData && debugData.length > 0) {
+      console.log(`First row sample:`, JSON.stringify(debugData[0]));
+    }
+    
+    // Get project knowledge for actual use (sorted ascending)
     const { data: knowledgeData, error } = await supabaseClient
       .from('project_knowledge')
       .select('id, content, created_at, document_url')
@@ -111,7 +128,7 @@ serve(async (req) => {
         // Log each entry to help debug
         console.log(`Added knowledge entry: ${item.id}, content length: ${item.content.length}`);
       } else {
-        console.log(`Skipped invalid knowledge entry:`, item);
+        console.log(`Skipped invalid knowledge entry:`, JSON.stringify(item));
       }
     });
 

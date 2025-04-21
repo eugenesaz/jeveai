@@ -44,6 +44,26 @@ serve(async (req) => {
 
       console.log(`Fetching knowledge for project ID: ${projectId}`);
 
+      // Debug: Check if project exists first
+      const { data: projectData, error: projectError } = await supabaseClient
+        .from('projects')
+        .select('id')
+        .eq('id', projectId)
+        .single();
+
+      if (projectError || !projectData) {
+        console.error('Error checking if project exists:', projectError);
+        return new Response(
+          JSON.stringify({ error: "Project not found or error verifying project", details: projectError }),
+          { 
+            status: projectError ? 500 : 404, 
+            headers: { ...corsHeaders, "Content-Type": "application/json" } 
+          }
+        );
+      }
+
+      console.log(`Project with ID ${projectId} found, proceeding to fetch knowledge`);
+
       // Get project knowledge
       const { data: knowledgeData, error } = await supabaseClient
         .from('project_knowledge')
@@ -63,6 +83,9 @@ serve(async (req) => {
       }
 
       console.log(`Retrieved ${knowledgeData?.length || 0} knowledge entries for project ${projectId}`);
+      if (knowledgeData && knowledgeData.length > 0) {
+        console.log(`Sample first entry: ${JSON.stringify(knowledgeData[0])}`);
+      }
 
       return new Response(
         JSON.stringify({ knowledge: knowledgeData || [] }),
