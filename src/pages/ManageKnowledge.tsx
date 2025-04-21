@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,7 +13,12 @@ import { ProjectKnowledge, Project } from '@/types/supabase';
 import { FileText, Trash2, Plus, Download, ExternalLink } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ProfileButton } from '@/components/profile/ProfileButton';
-import { createBucket, uploadFile, listFiles } from '@/lib/StorageUtils';
+import { 
+  createBucket, 
+  testBucketAccess, 
+  listFiles,
+  uploadKnowledgeDocument
+} from '@/lib/StorageUtils';
 
 const ManageKnowledge = () => {
   const { t } = useTranslation();
@@ -146,23 +150,7 @@ const ManageKnowledge = () => {
     const uploadResults = await Promise.all(
       knowledgeDocuments.map(async (file) => {
         try {
-          // Construct file path with project ID prefix for better organization
-          const fileName = `${projectId}/${Date.now()}_${file.name}`;
-          console.log(`Uploading document: ${fileName}`);
-          
-          // Use the improved uploadFile utility
-          const fileUrl = await uploadFile('project-knowledge', fileName, file);
-          
-          if (!fileUrl) {
-            console.error(`Failed to upload document: ${file.name}`);
-            return null;
-          }
-          
-          console.log(`Successfully uploaded document: ${file.name}, URL: ${fileUrl}`);
-          return {
-            fileName: file.name,
-            url: fileUrl
-          };
+          return await uploadKnowledgeDocument(file, projectId);
         } catch (error) {
           console.error(`Exception uploading document ${file.name}:`, error);
           return null;

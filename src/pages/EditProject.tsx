@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,7 +11,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { Spinner } from '@/components/ui/spinner';
-import { uploadProjectImage, testBucketAccess } from '@/lib/StorageUtils';
+import { uploadProjectImage, testBucketAccess, uploadKnowledgeDocument } from '@/lib/StorageUtils';
 import { Project, ProjectKnowledge } from '@/types/supabase';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -178,26 +177,16 @@ const EditProject = () => {
   const uploadKnowledgeDocuments = async (projectId: string) => {
     if (knowledgeDocuments.length === 0) return [];
     
+    console.log(`Processing ${knowledgeDocuments.length} knowledge documents for project ${projectId}`);
+    
     const uploadResults = await Promise.all(
       knowledgeDocuments.map(async (file) => {
-        const fileName = `${projectId}/${Date.now()}_${file.name}`;
-        const { data, error } = await supabase.storage
-          .from('project-knowledge')
-          .upload(fileName, file);
-        
-        if (error) {
-          console.error('Error uploading knowledge document:', error);
+        try {
+          return await uploadKnowledgeDocument(file, projectId);
+        } catch (error) {
+          console.error(`Error uploading document ${file.name}:`, error);
           return null;
         }
-        
-        const { data: urlData } = supabase.storage
-          .from('project-knowledge')
-          .getPublicUrl(fileName);
-          
-        return {
-          fileName: file.name,
-          url: urlData.publicUrl
-        };
       })
     );
     

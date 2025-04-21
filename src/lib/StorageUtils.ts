@@ -60,10 +60,15 @@ export const createBucket = async (bucketName: string): Promise<boolean> => {
 
 // Function to sanitize file names to ensure they're valid for storage
 export const sanitizeFileName = (fileName: string): string => {
-  // Replace characters that might cause issues in URLs and file paths
-  return fileName
-    .replace(/[^\w\s.-]/g, '') // Remove special characters
-    .replace(/\s+/g, '_');     // Replace spaces with underscores
+  // More aggressive sanitization to handle international characters
+  // First transliterate or remove non-ASCII characters
+  const asciiOnly = fileName.replace(/[^\x00-\x7F]/g, '');
+  
+  // Then replace any remaining problematic characters
+  return asciiOnly
+    .replace(/[^\w.-]/g, '_') // Replace any non-alphanumeric, period, or hyphen with underscore
+    .replace(/\s+/g, '_')     // Replace spaces with underscores
+    .replace(/__+/g, '_');    // Replace multiple consecutive underscores with a single one
 };
 
 // Function to upload project image to storage
@@ -71,7 +76,8 @@ export const uploadProjectImage = async (image: File, userId: string): Promise<s
   try {
     // Create a unique file path including user ID for better organization
     const fileExt = image.name.split('.').pop();
-    const fileName = `${userId}/${Date.now()}_${sanitizeFileName(image.name)}`;
+    const safeName = sanitizeFileName(image.name.split('.')[0]);
+    const fileName = `${userId}/${Date.now()}_${safeName}.${fileExt}`;
     
     // Make sure the bucket exists
     const bucketExists = await createBucket('project-images');
@@ -114,15 +120,85 @@ export const uploadProjectImage = async (image: File, userId: string): Promise<s
   }
 };
 
+// Function to generate a storage key for a knowledge document
+export const generateKnowledgeStorageKey = (projectId: string, originalFileName: string): string => {
+  const fileExt = originalFileName.split('.').pop() || '';
+  const baseName = originalFileName.substring(0, originalFileName.lastIndexOf('.')) || originalFileName;
+  const sanitizedName = sanitizeFileName(baseName);
+  return `${projectId}/${Date.now()}_${sanitizedName}.${fileExt}`;
+};
+
+// Upload knowledge document to project-knowledge bucket
+export const uploadKnowledgeDocument = async (file: File, projectId: string): Promise<{fileName: string, url: string} | null> => {
+  try {
+    // Create a storage key that avoids problematic characters
+    const storageKey = generateKnowledgeStorageKey(projectId, file.name);
+    console.log(`Attempting to upload document with storage key: ${storageKey}`);
+    
+    // Ensure bucket exists
+    const bucketExists = await createBucket('project-knowledge');
+    if (!bucketExists) {
+      console.error('Failed to create or access project-knowledge bucket');
+      toast({
+        title: 'Storage Error',
+        description: 'Could not access storage bucket. Please try again later.',
+        variant: 'destructive',
+      });
+      return null;
+    }
+    
+    // Upload the file
+    const { error: uploadError } = await supabase.storage
+      .from('project-knowledge')
+      .upload(storageKey, file, {
+        upsert: true,
+        cacheControl: '3600'
+      });
+    
+    if (uploadError) {
+      console.error('Knowledge document upload error:', uploadError);
+      toast({
+        title: 'Upload Failed',
+        description: `Could not upload: ${uploadError.message}`,
+        variant: 'destructive',
+      });
+      return null;
+    }
+    
+    // Get the public URL
+    const { data: urlData } = supabase.storage
+      .from('project-knowledge')
+      .getPublicUrl(storageKey);
+    
+    console.log('Knowledge document uploaded successfully. Public URL:', urlData.publicUrl);
+    return {
+      fileName: file.name,
+      url: urlData.publicUrl
+    };
+  } catch (error) {
+    console.error('Exception during knowledge document upload:', error);
+    toast({
+      title: 'Upload Error',
+      description: 'An unexpected error occurred during document upload.',
+      variant: 'destructive',
+    });
+    return null;
+  }
+};
+
 // Generic function to upload a file to a bucket
 export const uploadFile = async (bucket: string, filePath: string, file: File): Promise<string | null> => {
   try {
     console.log(`Attempting to upload file to bucket: ${bucket}, path: ${filePath}`);
     
+    // Get file extension
+    const fileExt = file.name.split('.').pop() || '';
+    
     // Sanitize the file name part of the path
     const pathParts = filePath.split('/');
     const fileName = pathParts.pop() || '';
-    const sanitizedFileName = sanitizeFileName(fileName);
+    const baseName = fileName.substring(0, fileName.lastIndexOf('.')) || fileName;
+    const sanitizedFileName = sanitizeFileName(baseName) + '.' + fileExt;
     const sanitizedPath = [...pathParts, sanitizedFileName].join('/');
     
     // Try to create the bucket if it doesn't exist
