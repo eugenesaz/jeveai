@@ -47,7 +47,7 @@ serve(async (req) => {
 
     console.log(`Fetching memories for user: ${userId}`);
 
-    // Get all memories for the user
+    // Get all memories for the user - use the service role key to bypass RLS policies for debugging
     const { data: memories, error } = await supabaseClient
       .from('memories')
       .select('*')
@@ -68,8 +68,15 @@ serve(async (req) => {
     console.log(`Retrieved ${memories?.length || 0} memories`);
     console.log('Memories data:', memories);
 
+    // Explicitly format the response for clarity
+    const responseBody = {
+      success: true,
+      count: memories?.length || 0,
+      memories: memories || []
+    };
+
     return new Response(
-      JSON.stringify({ memories: memories || [] }),
+      JSON.stringify(responseBody),
       { 
         status: 200, 
         headers: { ...corsHeaders, "Content-Type": "application/json" } 
