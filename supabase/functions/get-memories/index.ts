@@ -59,7 +59,7 @@ serve(async (req) => {
 
     console.log(`Fetching memories for user: ${userId}`);
 
-    // Get all memories for the user - use the service role key to bypass RLS policies
+    // Get all memories for the user and order by created_at descending (newest first)
     const { data: memories, error } = await supabaseClient
       .from('memories')
       .select('*')
@@ -80,11 +80,21 @@ serve(async (req) => {
     console.log(`Retrieved ${memories?.length || 0} memories`);
     console.log('Memories data:', memories);
 
+    // Format the response to include properly formatted dates
+    const formattedMemories = memories?.map(memory => ({
+      id: memory.id,
+      memory: memory.memory,
+      user_id: memory.user_id,
+      created_at: memory.created_at,
+      // Add a formatted date string for easier frontend display
+      created_at_formatted: new Date(memory.created_at).toLocaleString()
+    })) || [];
+
     // Explicitly format the response for clarity
     const responseBody = {
       success: true,
-      count: memories?.length || 0,
-      memories: memories || [],
+      count: formattedMemories.length,
+      memories: formattedMemories,
       fetchedAt: new Date().toISOString()
     };
 
@@ -106,3 +116,4 @@ serve(async (req) => {
     );
   }
 });
+
