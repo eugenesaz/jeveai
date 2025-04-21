@@ -27,9 +27,14 @@ serve(async (req) => {
 
   try {
     // Initialize Supabase client
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+    
+    console.log(`Initializing Supabase client with URL: ${supabaseUrl.substring(0, 10)}... and key length: ${supabaseKey.length}`);
+    
     const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      supabaseUrl,
+      supabaseKey,
       {
         auth: {
           autoRefreshToken: false,
@@ -85,8 +90,33 @@ serve(async (req) => {
 
     console.log(`Found project: ${projectData.name} (${projectData.id})`);
 
-    // Debug: Log the query we're about to execute
-    console.log(`Executing query: SELECT * FROM project_knowledge WHERE project_id = '${projectId}' ORDER BY created_at ASC`);
+    // Try a direct query for all fields to diagnose if there's an issue with RLS
+    console.log(`Testing direct RLS access with Service Role for project_knowledge...`);
+    try {
+      // Use the authorization headers from the request if available for debugging
+      const authHeader = req.headers.get('Authorization');
+      console.log(`Authorization header present: ${!!authHeader}`);
+      
+      // Debug: Log the query we're about to execute
+      console.log(`Executing query: SELECT * FROM project_knowledge WHERE project_id = '${projectId}' ORDER BY created_at ASC`);
+
+      // Extra test: Use a raw query to bypass potential RLS issues (for diagnostic purposes)
+      const { data: rawData, error: rawError } = await supabaseClient.rpc(
+        'get_project_knowledge_direct',
+        { p_project_id: projectId }
+      );
+      
+      if (rawError) {
+        console.error('RPC Error:', rawError);
+      } else {
+        console.log(`RPC query returned ${rawData?.length || 0} rows`);
+        if (rawData && rawData.length > 0) {
+          console.log(`Sample from RPC: ${JSON.stringify(rawData[0])}`);
+        }
+      }
+    } catch (rpcError) {
+      console.error('Error testing RPC function:', rpcError);
+    }
 
     // Get project knowledge with direct query to see all returned fields for debugging
     const { data: debugData, error: debugError } = await supabaseClient
@@ -98,6 +128,15 @@ serve(async (req) => {
     console.log(`Debug query returned ${debugData?.length || 0} rows, error: ${debugError ? JSON.stringify(debugError) : 'none'}`);
     if (debugData && debugData.length > 0) {
       console.log(`First row sample:`, JSON.stringify(debugData[0]));
+    } else {
+      console.log('No debug data found, checking if there are any entries in the project_knowledge table at all');
+      
+      // Check if there are any entries in the table (diagnostic only)
+      const { count, error: countError } = await supabaseClient
+        .from('project_knowledge')
+        .select('*', { count: 'exact', head: true });
+        
+      console.log(`Total count in project_knowledge table: ${count}, error: ${countError ? JSON.stringify(countError) : 'none'}`);
     }
     
     // Get project knowledge for actual use (sorted ascending)

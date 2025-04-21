@@ -16,9 +16,14 @@ serve(async (req) => {
 
   try {
     // Initialize Supabase client
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+    
+    console.log(`Initializing Supabase client with URL: ${supabaseUrl.substring(0, 10)}... and key length: ${supabaseKey.length}`);
+    
     const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      supabaseUrl,
+      supabaseKey,
       {
         auth: {
           autoRefreshToken: false,
@@ -47,7 +52,7 @@ serve(async (req) => {
       // Debug: Check if project exists first
       const { data: projectData, error: projectError } = await supabaseClient
         .from('projects')
-        .select('id')
+        .select('id, name')
         .eq('id', projectId)
         .single();
 
@@ -62,7 +67,23 @@ serve(async (req) => {
         );
       }
 
-      console.log(`Project with ID ${projectId} found, proceeding to fetch knowledge`);
+      console.log(`Project with ID ${projectId} found (${projectData.name}), proceeding to fetch knowledge`);
+
+      // Try to get project knowledge with the RPC function first
+      try {
+        const { data: rpcData, error: rpcError } = await supabaseClient.rpc(
+          'get_project_knowledge_direct',
+          { p_project_id: projectId }
+        );
+        
+        if (rpcError) {
+          console.error('RPC Error:', rpcError);
+        } else {
+          console.log(`RPC query returned ${rpcData?.length || 0} rows`);
+        }
+      } catch (rpcError) {
+        console.error('Error testing RPC function:', rpcError);
+      }
 
       // Get project knowledge
       const { data: knowledgeData, error } = await supabaseClient
@@ -85,6 +106,13 @@ serve(async (req) => {
       console.log(`Retrieved ${knowledgeData?.length || 0} knowledge entries for project ${projectId}`);
       if (knowledgeData && knowledgeData.length > 0) {
         console.log(`Sample first entry: ${JSON.stringify(knowledgeData[0])}`);
+      } else {
+        // Check if there are any entries in the table (diagnostic only)
+        const { count, error: countError } = await supabaseClient
+          .from('project_knowledge')
+          .select('*', { count: 'exact', head: true });
+          
+        console.log(`Total count in project_knowledge table: ${count}, error: ${countError ? JSON.stringify(countError) : 'none'}`);
       }
 
       return new Response(
