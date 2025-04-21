@@ -10,25 +10,81 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { Course } from "@/types/supabase";
 
 interface FakePaymentDialogProps {
   open: boolean;
   onClose: () => void;
+  course: Course | null;
+  userId: string | null;
 }
 
-export function FakePaymentDialog({ open, onClose }: FakePaymentDialogProps) {
+export function FakePaymentDialog({
+  open,
+  onClose,
+  course,
+  userId,
+}: FakePaymentDialogProps) {
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const handlePay = () => {
-    setLoading(true);
-    setTimeout(() => {
+  const handlePay = async () => {
+    if (!userId || !course) {
       toast({
-        title: "Payment successful!",
-        description: "You have been enrolled in the course.",
+        title: "Payment failed",
+        description: "User or course information missing.",
+        variant: "destructive",
+      });
+      onClose();
+      return;
+    }
+    setLoading(true);
+
+    // Calculate dates
+    const now = new Date();
+    const begin_date = now.toISOString();
+    let end_date: string | null = null;
+    if (course.duration && course.duration > 0) {
+      const end = new Date(now);
+      end.setDate(end.getDate() + course.duration);
+      end_date = end.toISOString();
+    }
+
+    // Insert enrollment
+    const { error } = await supabase.from('enrollments').insert([
+      {
+        user_id: userId,
+        course_id: course.id,
+        is_paid: true,
+        begin_date,
+        end_date,
+      }
+    ]);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to record enrollment",
+        variant: "destructive",
       });
       setLoading(false);
-      onClose();
-    }, 800);
+      return;
+    }
+
+    toast({
+      title: "Payment successful!",
+      description: "You have been enrolled in the course.",
+    });
+
+    setLoading(false);
+    onClose();
+
+    // Redirect after a short pause
+    setTimeout(() => {
+      navigate('/enrolled-courses');
+    }, 600);
   };
 
   return (

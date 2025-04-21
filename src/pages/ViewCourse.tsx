@@ -194,6 +194,8 @@ const ViewCourse = () => {
       <FakePaymentDialog
         open={isPaymentOpen}
         onClose={() => setIsPaymentOpen(false)}
+        course={course}
+        userId={user?.id ?? null}
       />
     </>
   );

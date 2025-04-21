@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,6 +18,7 @@ import ViewCourse from "@/pages/ViewCourse";
 import ProjectLanding from "@/pages/ProjectLanding";
 import Admin from "@/pages/Admin";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import EnrolledCourses from "@/pages/EnrolledCourses";
 
 const queryClient = new QueryClient();
 
@@ -82,6 +82,7 @@ const App = () => {
                 } />
                 
                 {/* Catch-all route */}
+                <Route path="/enrolled-courses" element={<EnrolledCourses />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
