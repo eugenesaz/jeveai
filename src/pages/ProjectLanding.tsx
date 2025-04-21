@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +8,6 @@ import { ErrorState } from '@/components/landing/ErrorState';
 import { ProjectHeader } from '@/components/landing/ProjectHeader';
 import { ProjectHero } from '@/components/landing/ProjectHero';
 import { CourseGrid } from '@/components/landing/CourseGrid';
-import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Course {
@@ -56,7 +54,6 @@ const ProjectLanding = () => {
         
         setProject(projectData as Project);
 
-        // Make sure to only fetch courses that belong to this specific project
         const { data: coursesData, error: coursesError } = await supabase
           .from('courses')
           .select('id, name, description, price, duration, project_id')
@@ -66,7 +63,6 @@ const ProjectLanding = () => {
         if (coursesError) {
           console.error('Error fetching courses:', coursesError);
         } else {
-          // Double check that we're only setting courses that belong to this project
           const filteredCourses = coursesData?.filter(course => course.project_id === projectData.id) || [];
           console.log('Filtered courses for project', projectData.id, ':', filteredCourses);
           setCourses(filteredCourses);
@@ -90,18 +86,6 @@ const ProjectLanding = () => {
       <ProjectHeader projectName={project.name} colorScheme={project.color_scheme} />
       <main className="flex-grow">
         <ProjectHero project={project} />
-        {/* Enrolled Courses button for logged-in users */}
-        {user && (
-          <div className="container mx-auto px-4 flex justify-end mb-8">
-            <Button
-              variant="outline"
-              onClick={() => navigate('/enrolled-courses')}
-              className="flex items-center gap-2"
-            >
-              <span className="relative top-[-1px]">Enrolled courses</span>
-            </Button>
-          </div>
-        )}
         <CourseGrid courses={courses} projectId={project.id} />
       </main>
       <footer className={`bg-gray-900 text-white py-8`}>
@@ -116,4 +100,3 @@ const ProjectLanding = () => {
 };
 
 export default ProjectLanding;
-

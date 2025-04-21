@@ -1,102 +1,134 @@
 
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useAuth } from '@/contexts/AuthContext';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { toast } from '@/components/ui/use-toast';
+import { Input } from '@/components/ui/input';
+import { toast } from '@/components/ui/sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
 
 interface AuthDialogsProps {
   isLoginOpen: boolean;
-  setIsLoginOpen: (isOpen: boolean) => void;
+  setIsLoginOpen: (value: boolean) => void;
   isSignUpOpen: boolean;
-  setIsSignUpOpen: (isOpen: boolean) => void;
+  setIsSignUpOpen: (value: boolean) => void;
 }
 
 export const AuthDialogs = ({
   isLoginOpen,
   setIsLoginOpen,
   isSignUpOpen,
-  setIsSignUpOpen
+  setIsSignUpOpen,
 }: AuthDialogsProps) => {
   const { t } = useTranslation();
-  const { signIn, signUp, signInWithGoogle } = useAuth();
-  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [authError, setAuthError] = useState('');
-  const [loginLoading, setLoginLoading] = useState(false);
-  const [signupLoading, setSignupLoading] = useState(false);
+  const [telegram, setTelegram] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleAuth = async (isSignUp: boolean) => {
-    setAuthError('');
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
     
-    if (isSignUp) {
-      setSignupLoading(true);
+    if (!email || !password) {
+      toast.error(t('auth.errors.missing_fields'));
+      return;
+    }
+    
+    setLoading(true);
+    
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
       
-      if (password !== confirmPassword) {
-        setAuthError(t('errors.passwordMatch'));
-        setSignupLoading(false);
-        return;
-      }
+      if (error) throw error;
       
-      const { error } = await signUp(email, password, 'influencer');
-      
-      if (error) {
-        setAuthError(error.message);
-        setSignupLoading(false);
-      } else {
-        setIsSignUpOpen(false);
-        setSignupLoading(false);
-        toast({
-          title: 'Success',
-          description: 'Account created successfully!',
-        });
-      }
-    } else {
-      setLoginLoading(true);
-      
-      try {
-        const { error } = await signIn(email, password);
-        
-        if (error) {
-          console.error('Login error:', error);
-          setAuthError(error.message);
-          setLoginLoading(false);
-        } else {
-          console.log('Login successful, dialog closing');
-          setIsLoginOpen(false);
-        }
-      } catch (err) {
-        console.error('Login error:', err);
-        setAuthError('An unexpected error occurred');
-        setLoginLoading(false);
-      }
+      toast.success(t('auth.success.login'));
+      setIsLoginOpen(false);
+      setEmail('');
+      setPassword('');
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error(error instanceof Error ? error.message : t('auth.errors.unknown'));
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleGoogleAuth = async () => {
-    try {
-      await signInWithGoogle();
-    } catch (error) {
-      console.error('Error signing in with Google:', error);
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email || !password) {
+      toast.error(t('auth.errors.missing_fields'));
+      return;
     }
+    
+    setLoading(true);
+    
+    try {
+      // Create auth user
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            telegram: telegram || null,
+          },
+        },
+      });
+      
+      if (signUpError) throw signUpError;
+
+      // Create profile
+      if (authData.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: authData.user.id,
+            email: email,
+            telegram: telegram || null,
+            role: 'customer',
+          });
+
+        if (profileError) {
+          console.error('Error creating profile:', profileError);
+        }
+      }
+      
+      toast.success(t('auth.success.signup'));
+      setIsSignUpOpen(false);
+      setEmail('');
+      setPassword('');
+      setTelegram('');
+    } catch (error) {
+      console.error('Signup error:', error);
+      toast.error(error instanceof Error ? error.message : t('auth.errors.unknown'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleDialogs = () => {
+    setIsLoginOpen(!isLoginOpen);
+    setIsSignUpOpen(!isSignUpOpen);
+    setEmail('');
+    setPassword('');
+    setTelegram('');
   };
 
   return (
     <>
       <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>{t('navigation.login')}</DialogTitle>
+            <DialogTitle>{t('auth.login')}</DialogTitle>
             <DialogDescription>
-              {t('auth.hasAccount')}
+              {t('auth.login_description')}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <form onSubmit={handleLogin} className="space-y-4 pt-4">
             <div className="space-y-2">
               <Label htmlFor="email">{t('auth.email')}</Label>
               <Input
@@ -105,6 +137,7 @@ export const AuthDialogs = ({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
+                required
               />
             </div>
             <div className="space-y-2">
@@ -114,108 +147,87 @@ export const AuthDialogs = ({
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                required
               />
             </div>
-            {authError && (
-              <p className="text-sm text-red-500">{authError}</p>
-            )}
-            <Button
-              onClick={handleGoogleAuth}
-              variant="outline"
-              className="w-full"
-            >
-              {t('auth.googleLogin')}
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? t('auth.loading') : t('auth.login')}
             </Button>
-          </div>
-          <DialogFooter className="flex flex-col sm:flex-row gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setIsLoginOpen(false);
-                setIsSignUpOpen(true);
-              }}
-              className="sm:order-1"
-            >
-              {t('auth.signupNow')}
-            </Button>
-            <Button 
-              onClick={() => handleAuth(false)} 
-              disabled={loginLoading}
-              className="sm:order-2"
-            >
-              {loginLoading ? 'Loading...' : t('navigation.login')}
-            </Button>
-          </DialogFooter>
+            <div className="text-center text-sm">
+              <span className="text-gray-500">
+                {t('auth.no_account')}{' '}
+              </span>
+              <button
+                type="button"
+                className="text-blue-600 hover:underline"
+                onClick={toggleDialogs}
+              >
+                {t('auth.create_account')}
+              </button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
 
       <Dialog open={isSignUpOpen} onOpenChange={setIsSignUpOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>{t('navigation.signup')}</DialogTitle>
+            <DialogTitle>{t('auth.signup')}</DialogTitle>
             <DialogDescription>
-              {t('auth.noAccount')}
+              {t('auth.signup_description')}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <form onSubmit={handleSignUp} className="space-y-4 pt-4">
             <div className="space-y-2">
-              <Label htmlFor="signup-email">{t('auth.email')}</Label>
+              <Label htmlFor="signupEmail">{t('auth.email')}</Label>
               <Input
-                id="signup-email"
+                id="signupEmail"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
+                required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="signup-password">{t('auth.password')}</Label>
+              <Label htmlFor="signupPassword">{t('auth.password')}</Label>
               <Input
-                id="signup-password"
+                id="signupPassword"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirm-password">{t('auth.confirmPassword')}</Label>
+              <Label htmlFor="telegram">
+                Telegram Username (optional)
+                <span className="text-xs text-gray-500 ml-1">without @</span>
+              </Label>
               <Input
-                id="confirm-password"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                id="telegram"
+                type="text"
+                value={telegram}
+                onChange={(e) => setTelegram(e.target.value)}
+                placeholder="yourusername"
               />
             </div>
-            {authError && (
-              <p className="text-sm text-red-500">{authError}</p>
-            )}
-            <Button
-              onClick={handleGoogleAuth}
-              variant="outline"
-              className="w-full"
-            >
-              {t('auth.googleLogin')}
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? t('auth.loading') : t('auth.signup')}
             </Button>
-          </div>
-          <DialogFooter className="flex flex-col sm:flex-row gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setIsSignUpOpen(false);
-                setIsLoginOpen(true);
-              }}
-              className="sm:order-1"
-            >
-              {t('auth.loginNow')}
-            </Button>
-            <Button 
-              onClick={() => handleAuth(true)} 
-              disabled={signupLoading}
-              className="sm:order-2"
-            >
-              {signupLoading ? 'Loading...' : t('navigation.signup')}
-            </Button>
-          </DialogFooter>
+            <div className="text-center text-sm">
+              <span className="text-gray-500">
+                {t('auth.have_account')}{' '}
+              </span>
+              <button
+                type="button"
+                className="text-blue-600 hover:underline"
+                onClick={toggleDialogs}
+              >
+                {t('auth.login')}
+              </button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </>

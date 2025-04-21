@@ -48,6 +48,16 @@ export const ProjectHeader = ({ projectName, colorScheme = 'blue' }: ProjectHead
                     "text-white border-white/30 hover:border-white/50 bg-white/10 hover:bg-white/20",
                     "transition-all duration-300 ease-in-out"
                   )}
+                  onClick={() => window.location.href = '/enrolled-courses'}
+                >
+                  {t('navigation.my_courses', 'My courses')}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className={cn(
+                    "text-white border-white/30 hover:border-white/50 bg-white/10 hover:bg-white/20",
+                    "transition-all duration-300 ease-in-out"
+                  )}
                   onClick={handleLogout}
                 >
                   {t('navigation.logout')}

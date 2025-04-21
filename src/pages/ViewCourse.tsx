@@ -1,17 +1,26 @@
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import ReactMarkdown from 'react-markdown';
 import { Course } from '@/types/supabase';
 import { AuthDialogs } from '@/components/auth/AuthDialogs';
 import { toast } from '@/components/ui/use-toast';
 import { FakePaymentDialog } from "@/components/FakePaymentDialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { MessageSquare } from 'lucide-react';
 
 interface CourseWithDates extends Course {
+  begin_date?: string;
+  end_date?: string;
+}
+
+interface EnrollmentInfo {
+  is_enrolled: boolean;
   begin_date?: string;
   end_date?: string;
 }
@@ -24,6 +33,7 @@ const ViewCourse = () => {
   const navigate = useNavigate();
   const [course, setCourse] = useState<CourseWithDates | null>(null);
   const [loading, setLoading] = useState(true);
+  const [enrollmentInfo, setEnrollmentInfo] = useState<EnrollmentInfo>({ is_enrolled: false });
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isSignUpOpen, setIsSignUpOpen] = useState(false);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
@@ -31,32 +41,50 @@ const ViewCourse = () => {
   const isFromProjectLanding = location.state?.fromProjectLanding || false;
 
   useEffect(() => {
-    const fetchCourse = async () => {
+    const fetchCourseAndEnrollment = async () => {
       if (!id) return;
 
       try {
-        const { data, error } = await supabase
+        // Fetch course data
+        const { data: courseData, error: courseError } = await supabase
           .from('courses')
           .select('*')
           .eq('id', id)
           .single();
 
-        if (error) {
-          throw error;
+        if (courseError) {
+          throw courseError;
         }
 
-        if (data) {
-          setCourse(data as CourseWithDates);
+        setCourse(courseData as CourseWithDates);
+        
+        // Check if user is enrolled
+        if (user) {
+          const { data: enrollmentData, error: enrollmentError } = await supabase
+            .from('enrollments')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('course_id', id)
+            .eq('is_paid', true)
+            .single();
+            
+          if (!enrollmentError && enrollmentData) {
+            setEnrollmentInfo({
+              is_enrolled: true,
+              begin_date: enrollmentData.begin_date,
+              end_date: enrollmentData.end_date
+            });
+          }
         }
       } catch (error) {
-        console.error('Error fetching course:', error);
+        console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCourse();
-  }, [id]);
+    fetchCourseAndEnrollment();
+  }, [id, user]);
 
   const getTypeTranslation = (type: string) => {
     return t(`influencer.course.types.${type.toLowerCase()}`) || type;
@@ -95,6 +123,91 @@ const ViewCourse = () => {
     );
   }
 
+  // If user is enrolled, show the course content view
+  if (enrollmentInfo.is_enrolled) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-white shadow-sm">
+          <div className="container mx-auto p-4 flex justify-between items-center">
+            <h1 className="text-2xl font-bold">{course.name}</h1>
+            <Button variant="outline" onClick={() => navigate('/enrolled-courses')}>
+              Back to My Courses
+            </Button>
+          </div>
+        </header>
+
+        <main className="container mx-auto py-8">
+          <Card className="mb-8">
+            <CardContent className="p-6">
+              <h2 className="text-2xl font-bold mb-4">Course Information</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-1">Begin Date</p>
+                  <p className="text-lg">{enrollmentInfo.begin_date ? new Date(enrollmentInfo.begin_date).toLocaleDateString() : '-'}</p>
+                </div>
+                {enrollmentInfo.end_date && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-500 mb-1">End Date</p>
+                    <p className="text-lg">{new Date(enrollmentInfo.end_date).toLocaleDateString()}</p>
+                  </div>
+                )}
+              </div>
+              
+              {course.description && (
+                <div className="mb-6">
+                  <p className="text-sm font-medium text-gray-500 mb-1">Description</p>
+                  <p className="text-lg">{course.description}</p>
+                </div>
+              )}
+              
+              {/* Telegram Bot Section */}
+              {course.telegram_bot && (
+                <div className="mt-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-start gap-4">
+                    <MessageSquare className="h-10 w-10 text-blue-500" />
+                    <div>
+                      <h3 className="text-xl font-bold mb-2">Telegram Bot Support</h3>
+                      <p className="mb-4">This course includes a Telegram bot assistant. Connect with the bot to get additional support and materials.</p>
+                      
+                      <Alert className="mb-4">
+                        <AlertTitle>Instructions:</AlertTitle>
+                        <AlertDescription>
+                          1. Click the link below to open Telegram<br />
+                          2. Send any message to the bot to activate it<br />
+                          3. The bot will verify your enrollment automatically
+                        </AlertDescription>
+                      </Alert>
+                      
+                      <Button className="flex gap-2 items-center" asChild>
+                        <a href={`https://t.me/${course.telegram_bot}`} target="_blank" rel="noopener noreferrer">
+                          <MessageSquare className="h-4 w-4" />
+                          Connect to Telegram Bot
+                        </a>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          
+          {course.details && (
+            <Card>
+              <CardContent className="p-6">
+                <h2 className="text-2xl font-bold mb-4">Course Details</h2>
+                <div className="prose max-w-none">
+                  <ReactMarkdown>{course.details}</ReactMarkdown>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </main>
+      </div>
+    );
+  }
+
+  // For non-enrolled users, show the original view
   return (
     <>
       <div className="min-h-screen bg-gray-50">
@@ -109,10 +222,7 @@ const ViewCourse = () => {
 
         <main className="container mx-auto p-6">
           <Card className="max-w-4xl mx-auto">
-            <CardHeader>
-              <CardTitle>{course.name}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 p-6">
               <div className="bg-gray-50 p-4 rounded-md">
                 <p className="text-lg">{course.description}</p>
               </div>

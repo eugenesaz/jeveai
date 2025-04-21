@@ -19,7 +19,7 @@ export const ProjectsHeader = () => {
             className="flex items-center gap-2"
           >
             <BookOpen className="w-4 h-4" />
-            Enrolled courses
+            My courses
           </Button>
           <Button 
             onClick={() => navigate('/courses')} 

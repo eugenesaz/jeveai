@@ -120,7 +120,7 @@ export default function EnrolledCourses() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">
         <div className="container mx-auto p-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Enrolled Courses</h1>
+          <h1 className="text-2xl font-bold">My Courses</h1>
           <Button variant="destructive" onClick={handleLogout}>
             Log out - {user.email}
           </Button>
