@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,6 +12,7 @@ import Dashboard from "@/pages/Dashboard";
 import Projects from "@/pages/Projects";
 import CreateProject from "@/pages/CreateProject";
 import EditProject from "@/pages/EditProject";
+import ManageKnowledge from "@/pages/ManageKnowledge";
 import Courses from "@/pages/Courses";
 import CreateCourse from "@/pages/CreateCourse";
 import EditCourse from "@/pages/EditCourse";
@@ -56,6 +58,11 @@ const App = () => {
                 <Route path="/edit-project/:id" element={
                   <ProtectedRoute allowedRoles={['influencer', 'admin']}>
                     <EditProject />
+                  </ProtectedRoute>
+                } />
+                <Route path="/manage-knowledge/:id" element={
+                  <ProtectedRoute allowedRoles={['influencer', 'admin']}>
+                    <ManageKnowledge />
                   </ProtectedRoute>
                 } />
                 <Route path="/courses" element={

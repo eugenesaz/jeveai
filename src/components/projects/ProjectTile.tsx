@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Project } from '@/types/supabase';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, FileText } from 'lucide-react';
 
 interface ProjectTileProps {
   project: Project;
@@ -75,6 +75,13 @@ export const ProjectTile = ({ project, onCopyUrl }: ProjectTileProps) => {
         >
           <BookOpen className="mr-2 h-4 w-4" />
           {t('navigation.courses')}
+        </Button>
+        <Button 
+          variant="outline"
+          onClick={() => navigate(`/manage-knowledge/${project.id}`)}
+        >
+          <FileText className="mr-2 h-4 w-4" />
+          {t('project.manageKnowledge')}
         </Button>
         <Button 
           onClick={() => navigate(`/edit-project/${project.id}`)}

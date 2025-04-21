@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
+import { ProfileButton } from '@/components/profile/ProfileButton';
 
 interface LandingHeaderProps {
   onLoginClick?: () => void;
@@ -77,6 +78,7 @@ export const LandingHeader = ({
                   {t('influencer.dashboard.title')}
                 </Button>
               </Link>
+              <ProfileButton />
             </>
           ) : (
             <>

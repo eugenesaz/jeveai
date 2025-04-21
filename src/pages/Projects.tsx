@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,7 +13,7 @@ import { ProjectTile } from '@/components/projects/ProjectTile';
 
 const Projects = () => {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -95,7 +94,27 @@ const Projects = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <ProjectsHeader />
+      <header className="bg-white shadow-sm">
+        <div className="container mx-auto p-4 flex justify-between items-center">
+          <h1 className="text-2xl font-bold">{t('influencer.projects.title')}</h1>
+          <div className="flex gap-4 items-center">
+            <Button variant="ghost" onClick={() => navigate('/')}>
+              {t('navigation.home')}
+            </Button>
+            <Button variant="ghost" onClick={() => navigate('/dashboard')}>
+              {t('influencer.dashboard.title')}
+            </Button>
+            <Button variant="ghost" onClick={() => navigate('/courses')}>
+              {t('navigation.courses')}
+            </Button>
+            <Button variant="ghost" onClick={signOut}>
+              {t('navigation.logout')}
+            </Button>
+            <ProfileButton />
+          </div>
+        </div>
+      </header>
+
       <main className="container mx-auto p-6 space-y-6">
         {loading ? (
           <div className="flex justify-center items-center h-40">

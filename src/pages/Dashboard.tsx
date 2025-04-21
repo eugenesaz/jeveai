@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +11,7 @@ import { Project } from '@/types/supabase';
 import { toast } from '@/components/ui/use-toast';
 import { ProjectTile } from '@/components/projects/ProjectTile';
 import { EarningsChart } from '@/components/dashboard/EarningsChart';
+import { ProfileButton } from '@/components/profile/ProfileButton';
 
 const Dashboard = () => {
   const { t } = useTranslation();
@@ -44,7 +46,7 @@ const Dashboard = () => {
                          project.color_scheme === 'green') 
                          ? project.color_scheme as 'blue' | 'red' | 'orange' | 'green'
                          : null,
-          telegram_bot: Object.prototype.hasOwnProperty.call(project, 'telegram_bot') ? project.telegram_bot : null,
+          telegram_bot: project.telegram_bot || null,
         })) || [];
         
         setProjects(typedProjects);
@@ -102,7 +104,7 @@ const Dashboard = () => {
       <header className="bg-white shadow-sm">
         <div className="container mx-auto p-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">{t('influencer.dashboard.title')}</h1>
-          <div className="flex gap-4">
+          <div className="flex gap-4 items-center">
             <Button variant="ghost" onClick={() => navigate('/')}>
               {t('navigation.home')}
             </Button>
@@ -115,6 +117,7 @@ const Dashboard = () => {
             <Button variant="ghost" onClick={signOut}>
               {t('navigation.logout')}
             </Button>
+            <ProfileButton />
           </div>
         </div>
       </header>
