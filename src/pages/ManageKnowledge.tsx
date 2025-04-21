@@ -34,7 +34,6 @@ const ManageKnowledge = () => {
       if (!user || !id) return;
 
       try {
-        // Fetch project data
         const { data: projectData, error: projectError } = await supabase
           .from('projects')
           .select('*')
@@ -77,7 +76,6 @@ const ManageKnowledge = () => {
         
         setProject(typedProject);
 
-        // Fetch existing knowledge
         const { data: knowledgeData, error: knowledgeError } = await supabase
           .from('project_knowledge')
           .select('*')
@@ -119,11 +117,9 @@ const ManageKnowledge = () => {
   const uploadKnowledgeDocuments = async (projectId: string) => {
     if (knowledgeDocuments.length === 0) return [];
     
-    // Check if bucket exists first
     const { error: bucketError } = await supabase.storage
       .getBucket('project-knowledge');
     
-    // If bucket doesn't exist, create it
     if (bucketError) {
       await supabase.storage.createBucket('project-knowledge', {
         public: true
@@ -163,7 +159,6 @@ const ManageKnowledge = () => {
 
     setSaving(true);
     try {
-      // Add text knowledge if provided
       if (newKnowledgeContent.trim()) {
         const { error } = await supabase.from('project_knowledge').insert({
           project_id: id,
@@ -176,7 +171,6 @@ const ManageKnowledge = () => {
         }
       }
 
-      // Upload and add document knowledge if any
       if (knowledgeDocuments.length > 0) {
         const documents = await uploadKnowledgeDocuments(id);
         
@@ -195,7 +189,6 @@ const ManageKnowledge = () => {
         }
       }
 
-      // Refresh knowledge list
       const { data, error } = await supabase
         .from('project_knowledge')
         .select('*')
@@ -208,7 +201,6 @@ const ManageKnowledge = () => {
         setKnowledge(data);
       }
 
-      // Reset form
       setNewKnowledgeContent('');
       setKnowledgeDocuments([]);
       setIsAddingKnowledge(false);
@@ -245,7 +237,6 @@ const ManageKnowledge = () => {
         throw error;
       }
 
-      // Update the local state to remove the deleted item
       setKnowledge(prev => prev.filter(k => k.id !== knowledgeId));
 
       toast({
@@ -297,13 +288,13 @@ const ManageKnowledge = () => {
       <header className="bg-white shadow-sm">
         <div className="container mx-auto p-4 flex justify-between items-center">
           <div className="flex items-center space-x-4">
-            <h1 className="text-2xl font-bold">{t('project.manageKnowledge')}</h1>
+            <h1 className="text-2xl font-bold">{t('project.manageKnowledge', { defaultValue: 'Manage Knowledge' })}</h1>
             <span className="text-gray-500">-</span>
             <span className="font-medium">{project?.name}</span>
           </div>
           <div className="flex items-center gap-4">
             <Button variant="ghost" onClick={() => navigate('/projects')}>
-              {t('goBack')}
+              {t('goBack', { defaultValue: 'Go back' })}
             </Button>
             <ProfileButton />
           </div>
@@ -313,16 +304,16 @@ const ManageKnowledge = () => {
       <main className="container mx-auto p-6 space-y-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>{t('project.knowledge')}</CardTitle>
+            <CardTitle>{t('project.knowledge', { defaultValue: 'Knowledge' })}</CardTitle>
             <Button onClick={() => setIsAddingKnowledge(true)}>
               <Plus className="mr-2 h-4 w-4" />
-              {t('project.addKnowledge')}
+              {t('project.addKnowledge', { defaultValue: 'Add Knowledge' })}
             </Button>
           </CardHeader>
           <CardContent>
             {knowledge.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-gray-500">{t('project.noKnowledge')}</p>
+                <p className="text-gray-500">{t('project.noKnowledge', { defaultValue: 'No knowledge entries yet.' })}</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -340,22 +331,22 @@ const ManageKnowledge = () => {
                                 </span>
                               </div>
                               <div className="flex space-x-2">
-                                <a 
-                                  href={item.document_url} 
-                                  target="_blank" 
+                                <a
+                                  href={item.document_url}
+                                  target="_blank"
                                   rel="noopener noreferrer"
                                   className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800"
                                 >
                                   <ExternalLink className="h-4 w-4 mr-1" />
-                                  {t('view')}
+                                  {t('view', { defaultValue: 'View' })}
                                 </a>
-                                <a 
-                                  href={item.document_url} 
+                                <a
+                                  href={item.document_url}
                                   download
                                   className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800"
                                 >
                                   <Download className="h-4 w-4 mr-1" />
-                                  {t('download')}
+                                  {t('download', { defaultValue: 'Download' })}
                                 </a>
                               </div>
                             </div>
@@ -366,12 +357,13 @@ const ManageKnowledge = () => {
                             {new Date(item.created_at).toLocaleString()}
                           </div>
                         </div>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           className="text-red-500 hover:text-red-700"
                           onClick={() => handleDeleteKnowledge(item.id)}
                           disabled={deleting === item.id}
+                          aria-label={t('delete', { defaultValue: 'Delete' })}
                         >
                           {deleting === item.id ? (
                             <Spinner className="h-4 w-4" />
@@ -392,21 +384,19 @@ const ManageKnowledge = () => {
       <Dialog open={isAddingKnowledge} onOpenChange={setIsAddingKnowledge}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t('project.addKnowledge')}</DialogTitle>
+            <DialogTitle>{t('project.addKnowledge', { defaultValue: 'Add Knowledge' })}</DialogTitle>
           </DialogHeader>
-          
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Textarea
-                placeholder={t('project.enterKnowledgeInfo')}
+                placeholder={t('project.enterKnowledgeInfo', { defaultValue: 'Enter text knowledge here' })}
                 value={newKnowledgeContent}
                 onChange={(e) => setNewKnowledgeContent(e.target.value)}
                 rows={5}
               />
             </div>
-            
             <div className="space-y-2">
-              <p className="text-sm font-medium">{t('project.orUploadDocuments')}</p>
+              <p className="text-sm font-medium">{t('project.orUploadDocuments', { defaultValue: 'Or upload documents' })}</p>
               <Input
                 type="file"
                 accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
@@ -416,14 +406,13 @@ const ManageKnowledge = () => {
                 disabled={knowledgeDocuments.length >= 5}
               />
               <p className="text-xs text-gray-500">
-                {t('project.uploadLimit')}
+                {t('project.uploadLimit', { defaultValue: 'You can upload up to 5 documents.' })}
               </p>
-
               {knowledgeDocuments.length > 0 && (
                 <div className="mt-2 space-y-2">
                   {knowledgeDocuments.map((file, index) => (
-                    <div 
-                      key={index} 
+                    <div
+                      key={index}
                       className="flex justify-between items-center bg-gray-100 p-2 rounded"
                     >
                       <span>{file.name}</span>
@@ -433,7 +422,7 @@ const ManageKnowledge = () => {
                         size="sm"
                         onClick={() => removeKnowledgeDocument(index)}
                       >
-                        {t('cancel')}
+                        {t('cancel', { defaultValue: 'Cancel' })}
                       </Button>
                     </div>
                   ))}
@@ -441,24 +430,23 @@ const ManageKnowledge = () => {
               )}
             </div>
           </div>
-          
           <DialogFooter>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => {
                 setNewKnowledgeContent('');
                 setKnowledgeDocuments([]);
                 setIsAddingKnowledge(false);
               }}
             >
-              {t('cancel')}
+              {t('cancel', { defaultValue: 'Cancel' })}
             </Button>
-            <Button 
-              onClick={handleAddKnowledge} 
+            <Button
+              onClick={handleAddKnowledge}
               disabled={saving || (!newKnowledgeContent.trim() && knowledgeDocuments.length === 0)}
             >
               {saving ? <Spinner className="mr-2 h-4 w-4" /> : null}
-              {t('save')}
+              {t('save', { defaultValue: 'Save' })}
             </Button>
           </DialogFooter>
         </DialogContent>

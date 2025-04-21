@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,7 +20,7 @@ export const ProfileButton = () => {
 
   const handleOpenDialog = async () => {
     setIsOpen(true);
-    
+
     if (user) {
       setLoading(true);
       try {
@@ -29,15 +28,14 @@ export const ProfileButton = () => {
           .from('profiles')
           .select('telegram')
           .eq('id', user.id)
-          .single();
-        
+          .maybeSingle();
+
         if (error) throw error;
-        
-        if (data && data.telegram) {
-          setTelegramName(data.telegram);
-        }
+
+        setTelegramName(data?.telegram || '');
       } catch (error) {
         console.error('Error fetching profile:', error);
+        setTelegramName('');
       } finally {
         setLoading(false);
       }
@@ -46,48 +44,30 @@ export const ProfileButton = () => {
 
   const handleSave = async () => {
     if (!user) return;
-    
+
     setSaving(true);
     try {
-      // First check if profile exists
-      const { data: existingProfile, error: checkError } = await supabase
+      const { error } = await supabase
         .from('profiles')
-        .select('id')
-        .eq('id', user.id)
-        .single();
-      
-      if (checkError && checkError.code === 'PGRST116') {
-        // Profile doesn't exist, create it
-        const { error: insertError } = await supabase
-          .from('profiles')
-          .insert({
-            id: user.id,
-            email: user.email,
-            telegram: telegramName
-          });
-        
-        if (insertError) throw insertError;
-      } else {
-        // Profile exists, update it
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ telegram: telegramName })
-          .eq('id', user.id);
-        
-        if (updateError) throw updateError;
-      }
-      
+        .upsert({
+          id: user.id,
+          email: user.email,
+          telegram: telegramName
+        }, { onConflict: 'id' });
+
+      if (error) throw error;
+
       toast({
-        title: 'Success',
-        description: 'Profile updated successfully',
+        title: t('profile.successTitle', { defaultValue: 'Success' }),
+        description: t('profile.successDesc', { defaultValue: 'Profile updated successfully' }),
       });
-      
+
       setIsOpen(false);
     } catch (error) {
       console.error('Error updating profile:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to update profile',
+        title: t('profile.errorTitle', { defaultValue: 'Error' }),
+        description: t('profile.errorDesc', { defaultValue: 'Failed to update profile' }),
         variant: 'destructive',
       });
     } finally {
@@ -104,10 +84,11 @@ export const ProfileButton = () => {
 
   return (
     <>
-      <Button 
-        variant="ghost" 
+      <Button
+        variant="ghost"
         className="rounded-full p-0 h-10 w-10 overflow-hidden"
         onClick={handleOpenDialog}
+        aria-label={t('profile.openProfile', { defaultValue: 'Open Profile' })}
       >
         <Avatar>
           <AvatarFallback className="bg-primary text-primary-foreground">
@@ -119,9 +100,9 @@ export const ProfileButton = () => {
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t('profile.title')}</DialogTitle>
+            <DialogTitle>{t('profile.title', { defaultValue: 'Profile' })}</DialogTitle>
           </DialogHeader>
-          
+
           {loading ? (
             <div className="flex justify-center py-4">
               <Spinner />
@@ -129,7 +110,7 @@ export const ProfileButton = () => {
           ) : (
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="email">{t('profile.email')}</Label>
+                <Label htmlFor="email">{t('profile.email', { defaultValue: 'Email' })}</Label>
                 <Input
                   id="email"
                   value={user.email || ''}
@@ -137,26 +118,25 @@ export const ProfileButton = () => {
                   disabled
                 />
               </div>
-              
               <div className="space-y-2">
-                <Label htmlFor="telegram">{t('profile.telegram')}</Label>
+                <Label htmlFor="telegram">{t('profile.telegram', { defaultValue: 'Telegram' })}</Label>
                 <Input
                   id="telegram"
                   value={telegramName}
                   onChange={(e) => setTelegramName(e.target.value)}
-                  placeholder="Your Telegram username"
+                  placeholder={t('profile.telegramPlaceholder', { defaultValue: 'Your Telegram username' })}
                 />
               </div>
             </div>
           )}
-          
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsOpen(false)}>
-              {t('cancel')}
+              {t('cancel', { defaultValue: 'Cancel' })}
             </Button>
             <Button onClick={handleSave} disabled={saving}>
               {saving ? <Spinner className="mr-2 h-4 w-4" /> : null}
-              {t('save')}
+              {t('save', { defaultValue: 'Save' })}
             </Button>
           </DialogFooter>
         </DialogContent>
