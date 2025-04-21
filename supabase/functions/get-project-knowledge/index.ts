@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.31.0";
 
@@ -91,127 +90,17 @@ serve(async (req) => {
 
     console.log(`Found project: ${projectData.name} (${projectData.id})`);
 
-    // First try: Direct SQL query to bypass RLS entirely
-    try {
-      console.log(`Executing direct SQL query for project knowledge...`);
-      const { data, error } = await supabaseClient.from('project_knowledge')
-        .select('*')
-        .eq('project_id', projectId)
-        .order('created_at', { ascending: true });
-      
-      if (error) {
-        console.error('Direct SQL query error:', error);
-      } else {
-        console.log(`Direct SQL query returned ${data?.length || 0} rows`);
-        if (data && data.length > 0) {
-          console.log(`First row sample: ${JSON.stringify(data[0])}`);
-        }
-      }
-    } catch (directError) {
-      console.error('Exception during direct SQL query:', directError);
-    }
+    // Get all knowledge entries for the project
+    console.log(`Fetching knowledge entries for project ID: ${projectId}`);
 
-    // Second try: Manual SQL query approach
-    try {
-      console.log(`Trying raw SQL query approach...`);
-      const { data, error } = await supabaseClient.rpc(
-        'get_project_knowledge_direct',
-        { p_project_id: projectId }
-      );
-      
-      if (error) {
-        console.error('RPC Error details:', JSON.stringify(error));
-        
-        // If the function doesn't exist, try a direct SELECT
-        console.log('Fallback to direct parameterized query...');
-        const { data: fallbackData, error: fallbackError } = await supabaseClient
-          .from('project_knowledge')
-          .select('id, content, created_at, document_url')
-          .eq('project_id', projectId)
-          .order('created_at', { ascending: true });
-          
-        if (fallbackError) {
-          console.error('Fallback query error:', fallbackError);
-        } else {
-          console.log(`Fallback query returned ${fallbackData?.length || 0} rows`);
-          
-          // Format as { [id]: content }
-          const obj: Record<string, string> = {};
-          (fallbackData || []).forEach((item: any) => {
-            if (item && item.id && typeof item.content === 'string') {
-              obj[item.id] = item.content;
-              console.log(`Added knowledge entry: ${item.id}, content length: ${item.content.length}`);
-            } else {
-              console.log(`Skipped invalid knowledge entry:`, JSON.stringify(item));
-            }
-          });
-          
-          const resultCount = Object.keys(obj).length;
-          console.log(`Returning ${resultCount} knowledge entries as an object from fallback query`);
-          
-          return new Response(
-            JSON.stringify({ 
-              knowledge: obj,
-              meta: {
-                count: resultCount,
-                projectId: projectId,
-                rawCount: fallbackData?.length || 0,
-                method: "fallback_direct_query"
-              }
-            }),
-            { 
-              status: 200, 
-              headers: { ...corsHeaders, "Content-Type": "application/json" } 
-            }
-          );
-        }
-      } else {
-        console.log(`RPC query returned ${data?.length || 0} rows`);
-        
-        // Format as { [id]: content }
-        const obj: Record<string, string> = {};
-        (data || []).forEach((item: any) => {
-          if (item && item.id && typeof item.content === 'string') {
-            obj[item.id] = item.content;
-            console.log(`Added knowledge entry from RPC: ${item.id}, content length: ${item.content.length}`);
-          } else {
-            console.log(`Skipped invalid knowledge entry from RPC:`, JSON.stringify(item));
-          }
-        });
-        
-        const resultCount = Object.keys(obj).length;
-        console.log(`Returning ${resultCount} knowledge entries as an object from RPC`);
-        
-        return new Response(
-          JSON.stringify({ 
-            knowledge: obj,
-            meta: {
-              count: resultCount,
-              projectId: projectId,
-              rawCount: data?.length || 0,
-              method: "rpc_function"
-            }
-          }),
-          { 
-            status: 200, 
-            headers: { ...corsHeaders, "Content-Type": "application/json" } 
-          }
-        );
-      }
-    } catch (rpcError) {
-      console.error('Exception during RPC function call:', rpcError);
-    }
-    
-    // Final fallback: Get project knowledge with direct query
-    console.log(`Using final fallback method...`);
     const { data: knowledgeData, error } = await supabaseClient
       .from('project_knowledge')
-      .select('id, content, created_at, document_url')
+      .select('created_at, content')
       .eq('project_id', projectId)
       .order('created_at', { ascending: true });
 
     if (error) {
-      console.error('Error in final fallback query:', error);
+      console.error('Error fetching project knowledge:', error);
       return new Response(
         JSON.stringify({ error: "Failed to fetch project knowledge", details: error }),
         { 
@@ -221,31 +110,14 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Final fallback query retrieved ${knowledgeData?.length || 0} knowledge entries`);
-
-    // Format as { [id]: content }
-    const obj: Record<string, string> = {};
-    (knowledgeData || []).forEach((item: any) => {
-      if (item && item.id && typeof item.content === 'string') {
-        obj[item.id] = item.content;
-        console.log(`Added knowledge entry: ${item.id}, content length: ${item.content.length}`);
-      } else {
-        console.log(`Skipped invalid knowledge entry:`, JSON.stringify(item));
-      }
-    });
-
-    // Check if we have any results
-    const resultCount = Object.keys(obj).length;
-    console.log(`Returning ${resultCount} knowledge entries from final fallback`);
+    console.log(`Returned ${knowledgeData?.length || 0} knowledge entries for project`);
 
     return new Response(
-      JSON.stringify({ 
-        knowledge: obj,
+      JSON.stringify({
+        knowledge: knowledgeData || [],
         meta: {
-          count: resultCount,
-          projectId: projectId,
-          rawCount: knowledgeData?.length || 0,
-          method: "final_fallback"
+          count: knowledgeData?.length || 0,
+          projectId: projectId
         }
       }),
       { 
