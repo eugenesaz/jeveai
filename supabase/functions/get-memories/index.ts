@@ -27,9 +27,21 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     
-    const supabaseClient = createClient(supabaseUrl, supabaseKey);
+    if (!supabaseUrl || !serviceRoleKey) {
+      console.error("SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing");
+      return new Response(
+        JSON.stringify({ error: "Server configuration error" }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+    }
+
+    console.log("Creating Supabase client with service role key");
+    const supabaseClient = createClient(supabaseUrl, serviceRoleKey);
 
     // Get userId from URL parameters
     const url = new URL(req.url);
@@ -47,7 +59,7 @@ serve(async (req) => {
 
     console.log(`Fetching memories for user: ${userId}`);
 
-    // Get all memories for the user - use the service role key to bypass RLS policies for debugging
+    // Get all memories for the user - use the service role key to bypass RLS policies
     const { data: memories, error } = await supabaseClient
       .from('memories')
       .select('*')
@@ -57,7 +69,7 @@ serve(async (req) => {
     if (error) {
       console.error('Error fetching memories:', error);
       return new Response(
-        JSON.stringify({ error: "Failed to fetch memories" }),
+        JSON.stringify({ error: "Failed to fetch memories", details: error }),
         { 
           status: 500, 
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
@@ -72,7 +84,8 @@ serve(async (req) => {
     const responseBody = {
       success: true,
       count: memories?.length || 0,
-      memories: memories || []
+      memories: memories || [],
+      fetchedAt: new Date().toISOString()
     };
 
     return new Response(
@@ -85,7 +98,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error:', error);
     return new Response(
-      JSON.stringify({ error: "Internal server error" }),
+      JSON.stringify({ error: "Internal server error", details: String(error) }),
       { 
         status: 500, 
         headers: { ...corsHeaders, "Content-Type": "application/json" } 

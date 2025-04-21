@@ -27,9 +27,20 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     
-    const supabaseClient = createClient(supabaseUrl, supabaseKey);
+    if (!supabaseUrl || !serviceRoleKey) {
+      console.error("SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing");
+      return new Response(
+        JSON.stringify({ error: "Server configuration error" }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+    }
+
+    const supabaseClient = createClient(supabaseUrl, serviceRoleKey);
 
     // Get the request body
     const { memory, userId } = await req.json();
@@ -44,6 +55,9 @@ serve(async (req) => {
       );
     }
 
+    console.log(`Saving memory for user: ${userId}`);
+    console.log('Memory content:', memory);
+
     // Insert the memory
     const { data, error } = await supabaseClient
       .from('memories')
@@ -54,13 +68,15 @@ serve(async (req) => {
     if (error) {
       console.error('Error saving memory:', error);
       return new Response(
-        JSON.stringify({ error: "Failed to save memory" }),
+        JSON.stringify({ error: "Failed to save memory", details: error }),
         { 
           status: 500, 
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
         }
       );
     }
+
+    console.log('Memory saved successfully:', data);
 
     return new Response(
       JSON.stringify({ success: true, memory: data }),
@@ -72,7 +88,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error:', error);
     return new Response(
-      JSON.stringify({ error: "Internal server error" }),
+      JSON.stringify({ error: "Internal server error", details: String(error) }),
       { 
         status: 500, 
         headers: { ...corsHeaders, "Content-Type": "application/json" } 
