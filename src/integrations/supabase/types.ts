@@ -308,6 +308,10 @@ export type Database = {
         Args: { owner_id: string; project_id: string }
         Returns: undefined
       }
+      get_user_id_by_telegram: {
+        Args: { telegram_name: string }
+        Returns: string
+      }
       get_user_owned_project_ids: {
         Args: { owner_id: string }
         Returns: string[]
