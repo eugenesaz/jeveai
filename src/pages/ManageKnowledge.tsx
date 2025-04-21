@@ -11,11 +11,12 @@ import { toast } from '@/components/ui/use-toast';
 import { Spinner } from '@/components/ui/spinner';
 import { ProjectKnowledge, Project } from '@/types/supabase';
 import { FileText, Trash2, Plus, Download, ExternalLink } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { ProfileButton } from '@/components/profile/ProfileButton';
 import { 
   initializeStorage,
-  uploadKnowledgeDocument
+  uploadKnowledgeDocument,
+  testBucketAccess
 } from '@/lib/StorageUtils';
 
 const ManageKnowledge = () => {
@@ -33,14 +34,20 @@ const ManageKnowledge = () => {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [bucketStatus, setBucketStatus] = useState<string>('');
+  const [uploadStatus, setUploadStatus] = useState<string>('');
 
   useEffect(() => {
     const fetchData = async () => {
       if (!user || !id) return;
 
       try {
+        console.log('Initializing storage...');
         await initializeStorage();
         console.log('Storage initialized');
+        
+        // Check bucket access
+        const hasAccess = await testBucketAccess('project-knowledge');
+        setBucketStatus(hasAccess ? 'accessible' : 'inaccessible');
         
         const { data: projectData, error: projectError } = await supabase
           .from('projects')
@@ -126,15 +133,18 @@ const ManageKnowledge = () => {
     if (knowledgeDocuments.length === 0) return [];
     
     console.log(`Uploading ${knowledgeDocuments.length} knowledge documents for project ${projectId}`);
+    setUploadStatus(`Starting upload of ${knowledgeDocuments.length} documents...`);
     
     const uploadResults = await Promise.all(
-      knowledgeDocuments.map(async (file) => {
+      knowledgeDocuments.map(async (file, index) => {
         try {
+          setUploadStatus(`Uploading document ${index + 1}/${knowledgeDocuments.length}: ${file.name}...`);
           const result = await uploadKnowledgeDocument(file, projectId);
-          console.log("Document upload result:", result);
+          console.log(`Document ${index + 1} upload result:`, result);
           return result;
         } catch (error) {
           console.error(`Exception uploading document ${file.name}:`, error);
+          setUploadStatus(`Error uploading ${file.name}: ${error.message}`);
           return null;
         }
       })
@@ -142,6 +152,7 @@ const ManageKnowledge = () => {
     
     const successfulUploads = uploadResults.filter(Boolean);
     console.log(`Successfully uploaded ${successfulUploads.length} of ${knowledgeDocuments.length} documents`);
+    setUploadStatus(`Completed: ${successfulUploads.length}/${knowledgeDocuments.length} documents uploaded successfully.`);
     
     return successfulUploads;
   };
@@ -212,11 +223,12 @@ const ManageKnowledge = () => {
       console.error('Error adding knowledge:', error);
       toast({
         title: 'Error',
-        description: 'Failed to add knowledge',
+        description: `Failed to add knowledge: ${error.message}`,
         variant: 'destructive',
       });
     } finally {
       setSaving(false);
+      setUploadStatus('');
     }
   };
 
@@ -384,6 +396,9 @@ const ManageKnowledge = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('project.addKnowledge', { defaultValue: 'Add Knowledge' })}</DialogTitle>
+            <DialogDescription>
+              Add text or document knowledge to your project. Storage bucket status: {bucketStatus}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -406,8 +421,12 @@ const ManageKnowledge = () => {
               />
               <p className="text-xs text-gray-500">
                 {t('project.uploadLimit', { defaultValue: 'You can upload up to 5 documents.' })}
-                {bucketStatus && ` Bucket status: ${bucketStatus}`}
               </p>
+              {uploadStatus && (
+                <p className="text-xs text-blue-600">
+                  Upload status: {uploadStatus}
+                </p>
+              )}
               {knowledgeDocuments.length > 0 && (
                 <div className="mt-2 space-y-2">
                   {knowledgeDocuments.map((file, index) => (

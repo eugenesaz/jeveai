@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 
@@ -6,17 +5,27 @@ import { toast } from '@/components/ui/use-toast';
 export const ensureStorageBuckets = async (): Promise<boolean> => {
   try {
     const { data: authData } = await supabase.auth.getSession();
+    if (!authData.session?.access_token) {
+      console.error('No authentication token available');
+      return false;
+    }
     
+    console.log('Invoking manage-knowledge-buckets edge function...');
     const { data, error } = await supabase.functions.invoke('manage-knowledge-buckets', {
       method: 'POST',
       body: { action: 'ensure_buckets' },
       headers: {
-        Authorization: `Bearer ${authData.session?.access_token || ''}`,
+        Authorization: `Bearer ${authData.session.access_token}`,
       }
     });
 
     if (error) {
       console.error('Error ensuring storage buckets:', error);
+      toast({
+        title: 'Storage Error',
+        description: `Error configuring storage: ${error.message}`,
+        variant: 'destructive',
+      });
       return false;
     }
 
@@ -24,6 +33,11 @@ export const ensureStorageBuckets = async (): Promise<boolean> => {
     return true;
   } catch (error) {
     console.error('Exception ensuring buckets:', error);
+    toast({
+      title: 'Storage Error',
+      description: `Exception configuring storage: ${error.message}`,
+      variant: 'destructive',
+    });
     return false;
   }
 };
@@ -112,7 +126,7 @@ export const uploadProjectImage = async (image: File, userId: string): Promise<s
       console.error('Project image upload error:', uploadError);
       toast({
         title: 'Upload Failed',
-        description: 'Could not upload the project image. Please try again.',
+        description: `Could not upload the project image: ${uploadError.message}`,
         variant: 'destructive',
       });
       return null;
@@ -128,7 +142,7 @@ export const uploadProjectImage = async (image: File, userId: string): Promise<s
     console.error('Exception during project image upload:', error);
     toast({
       title: 'Upload Error',
-      description: 'An unexpected error occurred during image upload.',
+      description: `An unexpected error occurred during image upload: ${error.message}`,
       variant: 'destructive',
     });
     return null;
@@ -146,7 +160,10 @@ export const generateKnowledgeStorageKey = (projectId: string, originalFileName:
 // Upload knowledge document to project-knowledge bucket
 export const uploadKnowledgeDocument = async (file: File, projectId: string): Promise<{fileName: string, url: string} | null> => {
   try {
+    console.log(`Starting upload for document: ${file.name} for project ${projectId}`);
+    
     // Ensure buckets are properly configured first
+    console.log('Ensuring storage buckets are configured...');
     const bucketsConfigured = await ensureStorageBuckets();
     if (!bucketsConfigured) {
       console.error('Failed to configure storage buckets');
@@ -162,8 +179,22 @@ export const uploadKnowledgeDocument = async (file: File, projectId: string): Pr
     const storageKey = generateKnowledgeStorageKey(projectId, file.name);
     console.log(`Attempting to upload document with storage key: ${storageKey}`);
     
+    // Test bucket access before attempting upload
+    console.log('Testing bucket access...');
+    const hasAccess = await testBucketAccess('project-knowledge');
+    if (!hasAccess) {
+      console.error('No access to project-knowledge bucket');
+      toast({
+        title: 'Storage Error',
+        description: 'Could not access project knowledge storage.',
+        variant: 'destructive',
+      });
+      return null;
+    }
+    
     // Upload the file
-    const { error: uploadError } = await supabase.storage
+    console.log('Uploading file...');
+    const { data, error: uploadError } = await supabase.storage
       .from('project-knowledge')
       .upload(storageKey, file, {
         upsert: true,
@@ -194,7 +225,7 @@ export const uploadKnowledgeDocument = async (file: File, projectId: string): Pr
     console.error('Exception during knowledge document upload:', error);
     toast({
       title: 'Upload Error',
-      description: 'An unexpected error occurred during document upload.',
+      description: `An unexpected error occurred during document upload: ${error.message}`,
       variant: 'destructive',
     });
     return null;
