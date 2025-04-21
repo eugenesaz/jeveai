@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
@@ -10,6 +9,7 @@ import ReactMarkdown from 'react-markdown';
 import { Course } from '@/types/supabase';
 import { AuthDialogs } from '@/components/auth/AuthDialogs';
 import { toast } from '@/components/ui/use-toast';
+import { FakePaymentDialog } from "@/components/FakePaymentDialog";
 
 interface CourseWithDates extends Course {
   begin_date?: string;
@@ -26,6 +26,7 @@ const ViewCourse = () => {
   const [loading, setLoading] = useState(true);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isSignUpOpen, setIsSignUpOpen] = useState(false);
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 
   const isFromProjectLanding = location.state?.fromProjectLanding || false;
 
@@ -66,20 +67,7 @@ const ViewCourse = () => {
       setIsLoginOpen(true);
       return;
     }
-
-    try {
-      toast({
-        title: t('info.coming_soon'),
-        description: "Payment integration coming soon",
-      });
-    } catch (error) {
-      console.error('Error processing payment:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to process payment',
-        variant: 'destructive',
-      });
-    }
+    setIsPaymentOpen(true);
   };
 
   const handleGoBack = () => {
@@ -202,6 +190,10 @@ const ViewCourse = () => {
         setIsLoginOpen={setIsLoginOpen}
         isSignUpOpen={isSignUpOpen}
         setIsSignUpOpen={setIsSignUpOpen}
+      />
+      <FakePaymentDialog
+        open={isPaymentOpen}
+        onClose={() => setIsPaymentOpen(false)}
       />
     </>
   );
