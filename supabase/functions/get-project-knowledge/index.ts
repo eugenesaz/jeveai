@@ -52,17 +52,19 @@ serve(async (req) => {
       );
     }
 
-    // Get project knowledge sorted ascending
-    const { data: knowledgeData, error } = await supabaseClient
-      .from('project_knowledge')
-      .select('id, content, created_at')
-      .eq('project_id', projectId)
-      .order('created_at', { ascending: true });
+    console.log(`Fetching knowledge for project ID: ${projectId}`);
 
-    if (error) {
-      console.error('Error fetching project knowledge:', error);
+    // Check if project exists first
+    const { data: projectData, error: projectError } = await supabaseClient
+      .from('projects')
+      .select('id')
+      .eq('id', projectId)
+      .single();
+
+    if (projectError) {
+      console.error('Error checking if project exists:', projectError);
       return new Response(
-        JSON.stringify({ error: "Failed to fetch project knowledge" }),
+        JSON.stringify({ error: "Failed to verify project", details: projectError }),
         { 
           status: 500, 
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
@@ -70,16 +72,62 @@ serve(async (req) => {
       );
     }
 
+    if (!projectData) {
+      console.log(`Project with ID ${projectId} not found`);
+      return new Response(
+        JSON.stringify({ error: "Project not found" }),
+        { 
+          status: 404, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+    }
+
+    // Get project knowledge sorted ascending
+    const { data: knowledgeData, error } = await supabaseClient
+      .from('project_knowledge')
+      .select('id, content, created_at, document_url')
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching project knowledge:', error);
+      return new Response(
+        JSON.stringify({ error: "Failed to fetch project knowledge", details: error }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+    }
+
+    console.log(`Retrieved ${knowledgeData?.length || 0} knowledge entries for project ${projectId}`);
+
     // Format as { [id]: content }
     const obj: Record<string, string> = {};
     (knowledgeData || []).forEach((item: any) => {
       if (item && item.id && typeof item.content === 'string') {
         obj[item.id] = item.content;
+        // Log each entry to help debug
+        console.log(`Added knowledge entry: ${item.id}, content length: ${item.content.length}`);
+      } else {
+        console.log(`Skipped invalid knowledge entry:`, item);
       }
     });
 
+    // Check if we have any results
+    const resultCount = Object.keys(obj).length;
+    console.log(`Returning ${resultCount} knowledge entries as an object`);
+
     return new Response(
-      JSON.stringify({ knowledge: obj }),
+      JSON.stringify({ 
+        knowledge: obj,
+        meta: {
+          count: resultCount,
+          projectId: projectId,
+          rawCount: knowledgeData?.length || 0
+        }
+      }),
       { 
         status: 200, 
         headers: { ...corsHeaders, "Content-Type": "application/json" } 
@@ -89,7 +137,7 @@ serve(async (req) => {
     console.error('Error processing request:', error);
     
     return new Response(
-      JSON.stringify({ error: "Internal Server Error" }),
+      JSON.stringify({ error: "Internal Server Error", details: error.message }),
       { 
         status: 500, 
         headers: { ...corsHeaders, "Content-Type": "application/json" } 

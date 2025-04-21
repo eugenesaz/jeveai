@@ -42,6 +42,8 @@ serve(async (req) => {
         );
       }
 
+      console.log(`Fetching knowledge for project ID: ${projectId}`);
+
       // Get project knowledge
       const { data: knowledgeData, error } = await supabaseClient
         .from('project_knowledge')
@@ -60,6 +62,8 @@ serve(async (req) => {
         );
       }
 
+      console.log(`Retrieved ${knowledgeData?.length || 0} knowledge entries for project ${projectId}`);
+
       return new Response(
         JSON.stringify({ knowledge: knowledgeData || [] }),
         { 
@@ -72,6 +76,8 @@ serve(async (req) => {
     // Handle POST request (create knowledge)
     if (req.method === "POST") {
       const { projectId, content, documentUrl } = await req.json();
+      
+      console.log(`Creating knowledge for project ID: ${projectId}, has content: ${!!content}, has documentUrl: ${!!documentUrl}`);
       
       if (!projectId || (!content && !documentUrl)) {
         return new Response(
@@ -91,6 +97,7 @@ serve(async (req) => {
         .single();
 
       if (projectError || !projectData) {
+        console.error('Error verifying project exists:', projectError);
         return new Response(
           JSON.stringify({ error: "Project not found", details: projectError }),
           { 
@@ -110,6 +117,8 @@ serve(async (req) => {
         knowledgeEntry.document_url = documentUrl;
       }
       
+      console.log('Creating knowledge entry with data:', JSON.stringify(knowledgeEntry));
+      
       const { data: newKnowledge, error } = await supabaseClient
         .from('project_knowledge')
         .insert(knowledgeEntry)
@@ -126,6 +135,8 @@ serve(async (req) => {
           }
         );
       }
+
+      console.log('Successfully created knowledge entry:', newKnowledge?.id);
 
       return new Response(
         JSON.stringify({ 
