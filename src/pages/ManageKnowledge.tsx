@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,6 +14,7 @@ import { ProjectKnowledge, Project } from '@/types/supabase';
 import { FileText, Trash2, Plus, Download, ExternalLink } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ProfileButton } from '@/components/profile/ProfileButton';
+import { createBucket, sanitizeFileName } from '@/lib/StorageUtils';
 
 const ManageKnowledge = () => {
   const { t } = useTranslation();
@@ -34,6 +36,9 @@ const ManageKnowledge = () => {
       if (!user || !id) return;
 
       try {
+        // Initialize storage bucket if needed
+        await createBucket('project-knowledge');
+        
         const { data: projectData, error: projectError } = await supabase
           .from('projects')
           .select('*')
@@ -117,35 +122,37 @@ const ManageKnowledge = () => {
   const uploadKnowledgeDocuments = async (projectId: string) => {
     if (knowledgeDocuments.length === 0) return [];
     
-    const { error: bucketError } = await supabase.storage
-      .getBucket('project-knowledge');
-    
-    if (bucketError) {
-      await supabase.storage.createBucket('project-knowledge', {
-        public: true
-      });
-    }
+    // Ensure bucket exists
+    await createBucket('project-knowledge');
     
     const uploadResults = await Promise.all(
       knowledgeDocuments.map(async (file) => {
-        const fileName = `${projectId}/${Date.now()}_${file.name}`;
-        const { data, error } = await supabase.storage
-          .from('project-knowledge')
-          .upload(fileName, file);
-        
-        if (error) {
-          console.error('Error uploading knowledge document:', error);
+        try {
+          // Sanitize the file name to avoid special characters
+          const sanitizedFilename = sanitizeFileName(file.name);
+          const fileName = `${projectId}/${Date.now()}_${sanitizedFilename}`;
+          
+          const { data, error } = await supabase.storage
+            .from('project-knowledge')
+            .upload(fileName, file);
+          
+          if (error) {
+            console.error('Error uploading knowledge document:', error);
+            return null;
+          }
+          
+          const { data: urlData } = supabase.storage
+            .from('project-knowledge')
+            .getPublicUrl(fileName);
+            
+          return {
+            fileName: file.name,
+            url: urlData.publicUrl
+          };
+        } catch (error) {
+          console.error('Exception during file upload:', error);
           return null;
         }
-        
-        const { data: urlData } = supabase.storage
-          .from('project-knowledge')
-          .getPublicUrl(fileName);
-          
-        return {
-          fileName: file.name,
-          url: urlData.publicUrl
-        };
       })
     );
     

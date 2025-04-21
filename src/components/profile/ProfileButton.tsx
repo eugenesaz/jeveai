@@ -1,8 +1,9 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -24,17 +25,38 @@ export const ProfileButton = () => {
     if (user) {
       setLoading(true);
       try {
-        const { data, error } = await supabase
+        // First check if profile exists
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('telegram')
           .eq('id', user.id)
           .maybeSingle();
 
-        if (error) throw error;
+        if (profileError && profileError.code !== 'PGRST116') {
+          console.error('Error fetching profile:', profileError);
+          throw profileError;
+        }
 
-        setTelegramName(data?.telegram || '');
+        // If profile exists, set the telegram name
+        if (profileData) {
+          setTelegramName(profileData.telegram || '');
+        } else {
+          setTelegramName('');
+          // Create profile if it doesn't exist
+          console.log('Creating profile for user:', user.id);
+          const { error: createError } = await supabase
+            .from('profiles')
+            .insert({
+              id: user.id,
+              email: user.email
+            });
+          
+          if (createError) {
+            console.error('Error creating profile:', createError);
+          }
+        }
       } catch (error) {
-        console.error('Error fetching profile:', error);
+        console.error('Error checking profile:', error);
         setTelegramName('');
       } finally {
         setLoading(false);
@@ -47,15 +69,43 @@ export const ProfileButton = () => {
 
     setSaving(true);
     try {
-      const { error } = await supabase
+      // First check if profile exists
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .upsert({
-          id: user.id,
-          email: user.email,
-          telegram: telegramName
-        }, { onConflict: 'id' });
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle();
+      
+      let updateError;
+      
+      // If profile exists, update it
+      if (profileData) {
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            telegram: telegramName,
+            email: user.email
+          })
+          .eq('id', user.id);
+        
+        updateError = error;
+      } else {
+        // Create profile if it doesn't exist
+        const { error } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            email: user.email,
+            telegram: telegramName
+          });
+        
+        updateError = error;
+      }
 
-      if (error) throw error;
+      if (updateError) {
+        console.error('Error updating profile:', updateError);
+        throw updateError;
+      }
 
       toast({
         title: t('profile.successTitle', { defaultValue: 'Success' }),
@@ -101,6 +151,9 @@ export const ProfileButton = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('profile.title', { defaultValue: 'Profile' })}</DialogTitle>
+            <DialogDescription>
+              {t('profile.updateInfo', { defaultValue: 'Update your profile information' })}
+            </DialogDescription>
           </DialogHeader>
 
           {loading ? (
