@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Project } from '@/types/supabase';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, FileText } from 'lucide-react';
+import { BookOpen, FileText, Copy } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 interface ProjectTileProps {
   project: Project;
@@ -26,6 +27,15 @@ export const ProjectTile = ({ project, onCopyUrl }: ProjectTileProps) => {
   };
 
   const projectUrl = `${window.location.origin}/${project.url_name}`;
+
+  // Handler for copying project id
+  const handleCopyProjectId = () => {
+    navigator.clipboard.writeText(project.id);
+    toast({
+      title: 'Project ID Copied',
+      description: t('Project ID has been copied to clipboard'),
+    });
+  };
 
   return (
     <Card 
@@ -87,6 +97,15 @@ export const ProjectTile = ({ project, onCopyUrl }: ProjectTileProps) => {
           onClick={() => navigate(`/edit-project/${project.id}`)}
         >
           {t('editButton')}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleCopyProjectId}
+          className="gap-2"
+        >
+          <Copy className="h-4 w-4" />
+          {t('Copy Project ID')}
         </Button>
       </CardFooter>
     </Card>

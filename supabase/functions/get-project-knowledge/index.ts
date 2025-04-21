@@ -52,12 +52,12 @@ serve(async (req) => {
       );
     }
 
-    // Get project knowledge
+    // Get project knowledge sorted ascending
     const { data: knowledgeData, error } = await supabaseClient
       .from('project_knowledge')
-      .select('*')
+      .select('id, content, created_at')
       .eq('project_id', projectId)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: true });
 
     if (error) {
       console.error('Error fetching project knowledge:', error);
@@ -70,8 +70,16 @@ serve(async (req) => {
       );
     }
 
+    // Format as { [id]: content }
+    const obj: Record<string, string> = {};
+    (knowledgeData || []).forEach((item: any) => {
+      if (item && item.id && typeof item.content === 'string') {
+        obj[item.id] = item.content;
+      }
+    });
+
     return new Response(
-      JSON.stringify({ knowledge: knowledgeData || [] }),
+      JSON.stringify({ knowledge: obj }),
       { 
         status: 200, 
         headers: { ...corsHeaders, "Content-Type": "application/json" } 
