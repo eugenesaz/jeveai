@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/types/supabase';
@@ -9,6 +9,8 @@ import { ErrorState } from '@/components/landing/ErrorState';
 import { ProjectHeader } from '@/components/landing/ProjectHeader';
 import { ProjectHero } from '@/components/landing/ProjectHero';
 import { CourseGrid } from '@/components/landing/CourseGrid';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Course {
   id: string;
@@ -22,6 +24,8 @@ interface Course {
 const ProjectLanding = () => {
   const { t } = useTranslation();
   const { urlName } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [project, setProject] = useState<Project | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,6 +90,18 @@ const ProjectLanding = () => {
       <ProjectHeader projectName={project.name} colorScheme={project.color_scheme} />
       <main className="flex-grow">
         <ProjectHero project={project} />
+        {/* Enrolled Courses button for logged-in users */}
+        {user && (
+          <div className="container mx-auto px-4 flex justify-end mb-8">
+            <Button
+              variant="outline"
+              onClick={() => navigate('/enrolled-courses')}
+              className="flex items-center gap-2"
+            >
+              <span className="relative top-[-1px]">Enrolled courses</span>
+            </Button>
+          </div>
+        )}
         <CourseGrid courses={courses} projectId={project.id} />
       </main>
       <footer className={`bg-gray-900 text-white py-8`}>
@@ -100,3 +116,4 @@ const ProjectLanding = () => {
 };
 
 export default ProjectLanding;
+

@@ -19,6 +19,8 @@ interface Enrollment {
   course: Course;
 }
 
+const N8N_WEBHOOK_URL = "https://n8n.example.com/webhook/enrolled-courses"; // TODO: Replace with your actual n8n endpoint
+
 export default function EnrolledCourses() {
   const { user, isLoading, signOut } = useAuth();
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
@@ -52,6 +54,31 @@ export default function EnrolledCourses() {
       setLoading(false);
     };
     fetchData();
+  }, [user]);
+
+  // Send event to n8n when page loads and user is present
+  useEffect(() => {
+    if (!user) return;
+    const triggerN8n = async () => {
+      try {
+        await fetch(N8N_WEBHOOK_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            event: "viewed_enrolled_courses",
+            user_id: user.id,
+            email: user.email,
+            time: new Date().toISOString()
+          })
+        });
+      } catch (err) {
+        // fail silently (don't block UI)
+        console.error("Failed triggering n8n webhook", err);
+      }
+    };
+    triggerN8n();
   }, [user]);
 
   const handleLogout = async () => {
@@ -121,7 +148,7 @@ export default function EnrolledCourses() {
               )}
             </div>
             <Button variant="outline" onClick={() => navigate(`/course/${course.id}`)}>
-              View details
+              Continue course
             </Button>
           </Card>
         ))}
