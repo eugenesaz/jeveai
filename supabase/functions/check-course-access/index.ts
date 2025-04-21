@@ -1,16 +1,17 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.31.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders, status: 204 });
   }
 
   try {
@@ -19,7 +20,9 @@ serve(async (req) => {
     
     if (!telegramUsername || !botUsername) {
       return new Response(
-        JSON.stringify({ error: "Missing required parameters" }),
+        JSON.stringify({ 
+          error: "Both telegramUsername and botUsername are required" 
+        }),
         { 
           status: 400, 
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
@@ -27,102 +30,117 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Checking access for telegram user ${telegramUsername} to bot ${botUsername}`);
-
     // Initialize Supabase client
-    const supabaseAdmin = createClient(
+    const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
     );
 
-    // 1. Get user ID from profiles where telegram username matches
-    const { data: profileData, error: profileError } = await supabaseAdmin
-      .from("profiles")
-      .select("id")
-      .eq("telegram", telegramUsername)
+    // 1. Get user profile by telegram username
+    const { data: profileData, error: profileError } = await supabaseClient
+      .from('profiles')
+      .select('id')
+      .eq('telegram', telegramUsername.replace('@', ''))
       .single();
 
     if (profileError || !profileData) {
-      console.log("User not found:", profileError);
+      console.log('Profile not found:', telegramUsername);
       return new Response(
-        JSON.stringify({ status: "Not enrolled", reason: "User not found" }),
+        JSON.stringify({ status: "Not enrolled", error: "User not found" }),
         { 
+          status: 200, 
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
         }
       );
     }
 
-    const userId = profileData.id;
-
-    // 2. Get course that has the specified telegram bot
-    const { data: courseData, error: courseError } = await supabaseAdmin
-      .from("courses")
-      .select("id")
-      .eq("telegram_bot", botUsername)
+    // 2. Get course with the provided bot name
+    const { data: courseData, error: courseError } = await supabaseClient
+      .from('courses')
+      .select('id, duration, recurring')
+      .eq('telegram_bot', botUsername.replace('@', ''))
       .single();
 
     if (courseError || !courseData) {
-      console.log("Course not found:", courseError);
+      console.log('Course not found:', botUsername);
       return new Response(
-        JSON.stringify({ status: "Not enrolled", reason: "Course not found" }),
+        JSON.stringify({ status: "Not enrolled", error: "Course not found" }),
         { 
+          status: 200, 
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
         }
       );
     }
 
-    const courseId = courseData.id;
-
-    // 3. Check enrollment status
-    const { data: enrollmentData, error: enrollmentError } = await supabaseAdmin
-      .from("enrollments")
-      .select("begin_date, end_date")
-      .eq("user_id", userId)
-      .eq("course_id", courseId)
-      .eq("is_paid", true)
+    // 3. Check if user is enrolled in the course
+    const { data: enrollmentData, error: enrollmentError } = await supabaseClient
+      .from('enrollments')
+      .select('begin_date, end_date, is_paid')
+      .eq('user_id', profileData.id)
+      .eq('course_id', courseData.id)
       .single();
 
     if (enrollmentError || !enrollmentData) {
-      console.log("Enrollment not found:", enrollmentError);
+      console.log('Enrollment not found for user in course');
       return new Response(
         JSON.stringify({ status: "Not enrolled" }),
         { 
+          status: 200, 
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
         }
       );
     }
 
-    // 4. Check if the course has expired (if it has an end date)
+    // 4. Check if the enrollment has expired
+    const now = new Date();
+    let expired = false;
+    
     if (enrollmentData.end_date) {
       const endDate = new Date(enrollmentData.end_date);
-      const now = new Date();
-      
       if (now > endDate) {
-        return new Response(
-          JSON.stringify({ status: "Expired", endDate: enrollmentData.end_date }),
-          { 
-            headers: { ...corsHeaders, "Content-Type": "application/json" } 
-          }
-        );
+        expired = true;
       }
     }
 
-    // 5. If we got here, the user is enrolled and the course is active
+    // 5. Check if payment is complete
+    if (!enrollmentData.is_paid) {
+      return new Response(
+        JSON.stringify({ status: "Not paid" }),
+        { 
+          status: 200, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+    }
+
+    if (expired) {
+      return new Response(
+        JSON.stringify({ status: "Expired" }),
+        { 
+          status: 200, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+    }
+
     return new Response(
-      JSON.stringify({ 
-        status: "Active", 
-        beginDate: enrollmentData.begin_date,
-        endDate: enrollmentData.end_date || null
-      }),
+      JSON.stringify({ status: "Active" }),
       { 
+        status: 200, 
         headers: { ...corsHeaders, "Content-Type": "application/json" } 
       }
     );
+  } catch (err) {
+    console.error('Error processing request:', err);
     
-  } catch (error) {
-    console.error("Error processing request:", error);
     return new Response(
-      JSON.stringify({ error: "Internal server error" }),
+      JSON.stringify({ error: "Internal Server Error" }),
       { 
         status: 500, 
         headers: { ...corsHeaders, "Content-Type": "application/json" } 

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,7 +13,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { Spinner } from '@/components/ui/spinner';
 import { uploadProjectImage, testBucketAccess } from '@/lib/StorageUtils';
-import { Project } from '@/types/supabase';
+import { Project, ProjectKnowledge } from '@/types/supabase';
+import { Textarea } from '@/components/ui/textarea';
 
 const EditProject = () => {
   const { t } = useTranslation();
@@ -31,6 +33,10 @@ const EditProject = () => {
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [urlError, setUrlError] = useState('');
+  const [telegramBot, setTelegramBot] = useState('');
+  const [knowledge, setKnowledge] = useState('');
+  const [existingKnowledge, setExistingKnowledge] = useState<ProjectKnowledge[]>([]);
+  const [knowledgeDocuments, setKnowledgeDocuments] = useState<File[]>([]);
 
   const handleColorSchemeChange = (value: string) => {
     if (value === 'blue' || value === 'red' || value === 'orange' || value === 'green') {
@@ -43,6 +49,7 @@ const EditProject = () => {
       if (!user || !id) return;
 
       try {
+        // Fetch project data
         const { data, error } = await supabase
           .from('projects')
           .select('*')
@@ -85,11 +92,28 @@ const EditProject = () => {
         setProject(typedProject);
         setProjectName(data.name);
         setUrlName(data.url_name);
-        setIsActive(data.status);
+        setIsActive(data.status || false);
         setColorScheme(validColorScheme);
+        setTelegramBot(data.telegram_bot || '');
         
         if (data.landing_image) {
           setImagePreview(data.landing_image);
+        }
+
+        // Fetch existing knowledge
+        const { data: knowledgeData } = await supabase
+          .from('project_knowledge')
+          .select('*')
+          .eq('project_id', id)
+          .order('created_at', { ascending: false });
+
+        if (knowledgeData && knowledgeData.length > 0) {
+          setExistingKnowledge(knowledgeData);
+          // Set the most recent text knowledge (without document_url) as the current knowledge
+          const textKnowledge = knowledgeData.find(k => !k.document_url);
+          if (textKnowledge) {
+            setKnowledge(textKnowledge.content);
+          }
         }
       } catch (error) {
         console.error('Error fetching project:', error);
@@ -115,6 +139,18 @@ const EditProject = () => {
     }
   };
 
+  const handleKnowledgeDocumentsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      const limitedFiles = newFiles.slice(0, 5 - knowledgeDocuments.length);
+      setKnowledgeDocuments(prev => [...prev, ...limitedFiles]);
+    }
+  };
+
+  const removeKnowledgeDocument = (index: number) => {
+    setKnowledgeDocuments(prev => prev.filter((_, i) => i !== index));
+  };
+
   const validateUrlName = async (url: string) => {
     if (!url) return t('errors.required');
     if (!/^[a-zA-Z0-9-_]+$/.test(url)) return 'URL can only contain letters, numbers, dashes, and underscores';
@@ -136,6 +172,35 @@ const EditProject = () => {
     setUrlName(url);
     const error = await validateUrlName(url);
     setUrlError(error);
+  };
+
+  const uploadKnowledgeDocuments = async (projectId: string) => {
+    if (knowledgeDocuments.length === 0) return [];
+    
+    const uploadResults = await Promise.all(
+      knowledgeDocuments.map(async (file) => {
+        const fileName = `${projectId}/${Date.now()}_${file.name}`;
+        const { data, error } = await supabase.storage
+          .from('project-knowledge')
+          .upload(fileName, file);
+        
+        if (error) {
+          console.error('Error uploading knowledge document:', error);
+          return null;
+        }
+        
+        const { data: urlData } = supabase.storage
+          .from('project-knowledge')
+          .getPublicUrl(fileName);
+          
+        return {
+          fileName: file.name,
+          url: urlData.publicUrl
+        };
+      })
+    );
+    
+    return uploadResults.filter(Boolean);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -204,6 +269,7 @@ const EditProject = () => {
         status: isActive,
         color_scheme: colorScheme,
         landing_image: landingImageUrl,
+        telegram_bot: telegramBot || null,
       });
 
       const { error: updateError } = await supabase
@@ -214,6 +280,7 @@ const EditProject = () => {
           status: isActive,
           color_scheme: colorScheme,
           landing_image: landingImageUrl,
+          telegram_bot: telegramBot || null,
         })
         .eq('id', id)
         .eq('user_id', user.id);
@@ -221,6 +288,37 @@ const EditProject = () => {
       if (updateError) {
         console.error('Update error:', updateError);
         throw updateError;
+      }
+
+      // If knowledge is changed, add a new knowledge entry
+      if (knowledge) {
+        const latestKnowledge = existingKnowledge.find(k => !k.document_url);
+        if (!latestKnowledge || latestKnowledge.content !== knowledge) {
+          const { error: knowledgeError } = await supabase.from('project_knowledge').insert({
+            project_id: id,
+            content: knowledge,
+          });
+
+          if (knowledgeError) {
+            console.error('Error creating knowledge:', knowledgeError);
+          }
+        }
+      }
+
+      // Upload knowledge documents if any
+      if (knowledgeDocuments.length > 0) {
+        const documents = await uploadKnowledgeDocuments(id);
+        
+        // Create knowledge entries for each document
+        for (const doc of documents) {
+          if (doc) {
+            await supabase.from('project_knowledge').insert({
+              project_id: id,
+              content: `Document: ${doc.fileName}`,
+              document_url: doc.url,
+            });
+          }
+        }
       }
 
       toast({
@@ -332,6 +430,95 @@ const EditProject = () => {
                     <Label htmlFor="green" className="text-green-600">{t('influencer.project.green')}</Label>
                   </div>
                 </RadioGroup>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="telegramBot">Knowledge Telegram Bot Name</Label>
+                <Input
+                  id="telegramBot"
+                  value={telegramBot}
+                  onChange={(e) => setTelegramBot(e.target.value)}
+                  placeholder="your_bot_name (without @)"
+                />
+                <p className="text-xs text-gray-500">
+                  Bot name can include letters, numbers, and underscores
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="knowledge">Project Knowledge</Label>
+                <Textarea
+                  id="knowledge"
+                  value={knowledge}
+                  onChange={(e) => setKnowledge(e.target.value)}
+                  placeholder="Enter knowledge information for your project"
+                  rows={5}
+                />
+                <p className="text-xs text-gray-500">
+                  This will help your users understand your project better
+                </p>
+              </div>
+
+              {existingKnowledge.filter(k => k.document_url).length > 0 && (
+                <div className="space-y-2">
+                  <Label>Existing Knowledge Documents</Label>
+                  <div className="space-y-2">
+                    {existingKnowledge
+                      .filter(k => k.document_url)
+                      .map((doc, index) => (
+                        <div 
+                          key={index} 
+                          className="flex justify-between items-center bg-gray-100 p-2 rounded"
+                        >
+                          <a 
+                            href={doc.document_url || '#'} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline"
+                          >
+                            {doc.content.replace('Document: ', '')}
+                          </a>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="knowledgeDocuments">Add Knowledge Documents</Label>
+                <Input
+                  id="knowledgeDocuments"
+                  type="file"
+                  accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
+                  onChange={handleKnowledgeDocumentsChange}
+                  className="cursor-pointer"
+                  multiple
+                  disabled={knowledgeDocuments.length >= 5}
+                />
+                <p className="text-xs text-gray-500">
+                  Upload up to 5 additional documents to attach to your project knowledge
+                </p>
+
+                {knowledgeDocuments.length > 0 && (
+                  <div className="mt-2 space-y-2">
+                    {knowledgeDocuments.map((file, index) => (
+                      <div 
+                        key={index} 
+                        className="flex justify-between items-center bg-gray-100 p-2 rounded"
+                      >
+                        <span>{file.name}</span>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => removeKnowledgeDocument(index)}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">

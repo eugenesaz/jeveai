@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { Spinner } from '@/components/ui/spinner';
 import { uploadProjectImage, testBucketAccess } from '@/lib/StorageUtils';
+import { Textarea } from '@/components/ui/textarea';
 
 const CreateProject = () => {
   const { t } = useTranslation();
@@ -27,6 +29,9 @@ const CreateProject = () => {
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [urlError, setUrlError] = useState('');
+  const [telegramBot, setTelegramBot] = useState('');
+  const [knowledge, setKnowledge] = useState('');
+  const [knowledgeDocuments, setKnowledgeDocuments] = useState<File[]>([]);
 
   const handleColorSchemeChange = (value: string) => {
     if (value === 'blue' || value === 'red' || value === 'orange' || value === 'green') {
@@ -40,6 +45,18 @@ const CreateProject = () => {
       setLandingImage(file);
       setImagePreview(URL.createObjectURL(file));
     }
+  };
+
+  const handleKnowledgeDocumentsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      const limitedFiles = newFiles.slice(0, 5 - knowledgeDocuments.length);
+      setKnowledgeDocuments(prev => [...prev, ...limitedFiles]);
+    }
+  };
+
+  const removeKnowledgeDocument = (index: number) => {
+    setKnowledgeDocuments(prev => prev.filter((_, i) => i !== index));
   };
 
   const validateUrlName = async (url: string) => {
@@ -61,6 +78,35 @@ const CreateProject = () => {
     setUrlName(url);
     const error = await validateUrlName(url);
     setUrlError(error);
+  };
+
+  const uploadKnowledgeDocuments = async (projectId: string) => {
+    if (knowledgeDocuments.length === 0) return [];
+    
+    const uploadResults = await Promise.all(
+      knowledgeDocuments.map(async (file) => {
+        const fileName = `${projectId}/${Date.now()}_${file.name}`;
+        const { data, error } = await supabase.storage
+          .from('project-knowledge')
+          .upload(fileName, file);
+        
+        if (error) {
+          console.error('Error uploading knowledge document:', error);
+          return null;
+        }
+        
+        const { data: urlData } = supabase.storage
+          .from('project-knowledge')
+          .getPublicUrl(fileName);
+          
+        return {
+          fileName: file.name,
+          url: urlData.publicUrl
+        };
+      })
+    );
+    
+    return uploadResults.filter(Boolean);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -128,21 +174,51 @@ const CreateProject = () => {
         status: isActive,
         color_scheme: colorScheme,
         landing_image: landingImageUrl,
-        user_id: user.id
+        user_id: user.id,
+        telegram_bot: telegramBot || null,
       });
 
-      const { error: insertError } = await supabase.from('projects').insert({
+      const { data: projectData, error: insertError } = await supabase.from('projects').insert({
         name: projectName,
         url_name: urlName,
         status: isActive,
         color_scheme: colorScheme,
         landing_image: landingImageUrl,
         user_id: user.id,
-      });
+        telegram_bot: telegramBot || null,
+      }).select('id').single();
 
       if (insertError) {
         console.error('Insert error:', insertError);
         throw insertError;
+      }
+
+      // Create knowledge entry if knowledge text is provided
+      if (knowledge && projectData) {
+        const { error: knowledgeError } = await supabase.from('project_knowledge').insert({
+          project_id: projectData.id,
+          content: knowledge,
+        });
+
+        if (knowledgeError) {
+          console.error('Error creating knowledge:', knowledgeError);
+        }
+      }
+
+      // Upload knowledge documents if any
+      if (projectData && knowledgeDocuments.length > 0) {
+        const documents = await uploadKnowledgeDocuments(projectData.id);
+        
+        // Create knowledge entries for each document
+        for (const doc of documents) {
+          if (doc) {
+            await supabase.from('project_knowledge').insert({
+              project_id: projectData.id,
+              content: `Document: ${doc.fileName}`,
+              document_url: doc.url,
+            });
+          }
+        }
       }
 
       toast({
@@ -244,6 +320,70 @@ const CreateProject = () => {
                     <Label htmlFor="green" className="text-green-600">{t('influencer.project.green')}</Label>
                   </div>
                 </RadioGroup>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="telegramBot">Knowledge Telegram Bot Name</Label>
+                <Input
+                  id="telegramBot"
+                  value={telegramBot}
+                  onChange={(e) => setTelegramBot(e.target.value)}
+                  placeholder="your_bot_name (without @)"
+                />
+                <p className="text-xs text-gray-500">
+                  Bot name can include letters, numbers, and underscores
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="knowledge">Project Knowledge</Label>
+                <Textarea
+                  id="knowledge"
+                  value={knowledge}
+                  onChange={(e) => setKnowledge(e.target.value)}
+                  placeholder="Enter knowledge information for your project"
+                  rows={5}
+                />
+                <p className="text-xs text-gray-500">
+                  This will help your users understand your project better
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="knowledgeDocuments">Knowledge Documents</Label>
+                <Input
+                  id="knowledgeDocuments"
+                  type="file"
+                  accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
+                  onChange={handleKnowledgeDocumentsChange}
+                  className="cursor-pointer"
+                  multiple
+                  disabled={knowledgeDocuments.length >= 5}
+                />
+                <p className="text-xs text-gray-500">
+                  Upload up to 5 documents to attach to your project knowledge
+                </p>
+
+                {knowledgeDocuments.length > 0 && (
+                  <div className="mt-2 space-y-2">
+                    {knowledgeDocuments.map((file, index) => (
+                      <div 
+                        key={index} 
+                        className="flex justify-between items-center bg-gray-100 p-2 rounded"
+                      >
+                        <span>{file.name}</span>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => removeKnowledgeDocument(index)}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">

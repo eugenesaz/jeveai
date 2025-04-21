@@ -38,7 +38,8 @@ const CreateCourse = () => {
         telegram_bot: formData.telegramBot || null,
         project_id: selectedProject,
         ai_instructions: formData.aiInstructions || null,
-        materials: formData.materials ? JSON.stringify(formData.materials) : '[]'
+        materials: formData.materials ? JSON.stringify(formData.materials) : '[]',
+        course_plan: formData.coursePlan || null,
       });
 
       if (error) throw error;

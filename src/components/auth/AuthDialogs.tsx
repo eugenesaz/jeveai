@@ -38,17 +38,20 @@ export const AuthDialogs = ({
     setLoading(true);
     
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
       if (error) throw error;
       
-      toast.success(t('auth.success.login'));
-      setIsLoginOpen(false);
-      setEmail('');
-      setPassword('');
+      // Force a slight delay to ensure auth state is fully processed
+      setTimeout(() => {
+        toast.success(t('auth.success.login'));
+        setIsLoginOpen(false);
+        setEmail('');
+        setPassword('');
+      }, 100);
     } catch (error) {
       console.error('Login error:', error);
       toast.error(error instanceof Error ? error.message : t('auth.errors.unknown'));

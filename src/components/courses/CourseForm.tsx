@@ -22,6 +22,7 @@ interface CourseFormData {
   details: string;
   telegramBot: string;
   aiInstructions: string;
+  coursePlan: string;
   materials: File[];
 }
 
@@ -46,6 +47,7 @@ export const CourseForm = ({ onSubmit, loading, initialValues }: CourseFormProps
     details: '',
     telegramBot: '',
     aiInstructions: '',
+    coursePlan: '',
     materials: [],
   });
 
@@ -245,6 +247,21 @@ export const CourseForm = ({ onSubmit, loading, initialValues }: CourseFormProps
         />
         <p className="text-sm text-gray-500">
           Markdown formatting is supported
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="coursePlan">Course Plan</Label>
+        <Textarea
+          id="coursePlan"
+          value={formData.coursePlan}
+          onChange={(e) => setFormData(prev => ({ ...prev, coursePlan: e.target.value }))}
+          placeholder="Detailed day-by-day plan for your course"
+          rows={8}
+          required
+        />
+        <p className="text-sm text-gray-500">
+          Provide a detailed plan explaining what will happen on each day of the course
         </p>
       </div>
 

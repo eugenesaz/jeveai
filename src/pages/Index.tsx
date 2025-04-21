@@ -33,7 +33,7 @@ const Index = () => {
       setRedirecting(true);
       const timer = setTimeout(() => {
         navigate('/dashboard');
-      }, 100);
+      }, 500); // Increased timeout for better state synchronization
       return () => clearTimeout(timer);
     }
   }, [isLoading, user, navigate]);

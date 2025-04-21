@@ -15,3 +15,9 @@ port = 54324
 # Edge Functions
 [functions.check-course-access]
 verify_jwt = false
+
+[functions.course-plan]
+verify_jwt = false
+
+[functions.project-knowledge]
+verify_jwt = false
