@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -25,14 +24,13 @@ export const ProfileButton = () => {
     if (user) {
       setLoading(true);
       try {
-        // First check if profile exists
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('telegram')
           .eq('id', user.id)
           .maybeSingle();
 
-        if (profileError && profileError.code !== 'PGRST116') {
+        if (profileError) {
           console.error('Error fetching profile:', profileError);
           throw profileError;
         }
@@ -42,18 +40,6 @@ export const ProfileButton = () => {
           setTelegramName(profileData.telegram || '');
         } else {
           setTelegramName('');
-          // Create profile if it doesn't exist
-          console.log('Creating profile for user:', user.id);
-          const { error: createError } = await supabase
-            .from('profiles')
-            .insert({
-              id: user.id,
-              email: user.email
-            });
-          
-          if (createError) {
-            console.error('Error creating profile:', createError);
-          }
         }
       } catch (error) {
         console.error('Error checking profile:', error);
@@ -69,42 +55,17 @@ export const ProfileButton = () => {
 
     setSaving(true);
     try {
-      // First check if profile exists
-      const { data: profileData, error: profileError } = await supabase
+      const { error: upsertError } = await supabase
         .from('profiles')
-        .select('id')
-        .eq('id', user.id)
-        .maybeSingle();
-      
-      let updateError;
-      
-      // If profile exists, update it
-      if (profileData) {
-        const { error } = await supabase
-          .from('profiles')
-          .update({
-            telegram: telegramName,
-            email: user.email
-          })
-          .eq('id', user.id);
-        
-        updateError = error;
-      } else {
-        // Create profile if it doesn't exist
-        const { error } = await supabase
-          .from('profiles')
-          .insert({
-            id: user.id,
-            email: user.email,
-            telegram: telegramName
-          });
-        
-        updateError = error;
-      }
+        .upsert({
+          id: user.id,
+          email: user.email,
+          telegram: telegramName || null
+        });
 
-      if (updateError) {
-        console.error('Error updating profile:', updateError);
-        throw updateError;
+      if (upsertError) {
+        console.error('Error updating profile:', upsertError);
+        throw upsertError;
       }
 
       toast({
