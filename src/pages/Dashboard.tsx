@@ -35,7 +35,7 @@ const Dashboard = () => {
         
         console.log('Projects data:', data);
         
-        // Convert to the correct type by mapping the color_scheme property
+        // Convert to the correct type by mapping the color_scheme and always providing telegram_bot
         const typedProjects = data?.map(project => ({
           ...project,
           color_scheme: (project.color_scheme === 'blue' || 
@@ -43,7 +43,8 @@ const Dashboard = () => {
                          project.color_scheme === 'orange' || 
                          project.color_scheme === 'green') 
                          ? project.color_scheme as 'blue' | 'red' | 'orange' | 'green'
-                         : null
+                         : null,
+          telegram_bot: Object.prototype.hasOwnProperty.call(project, 'telegram_bot') ? project.telegram_bot : null,
         })) || [];
         
         setProjects(typedProjects);

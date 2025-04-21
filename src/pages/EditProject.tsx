@@ -86,7 +86,8 @@ const EditProject = () => {
 
         const typedProject: Project = {
           ...data,
-          color_scheme: validColorScheme
+          color_scheme: validColorScheme,
+          telegram_bot: Object.prototype.hasOwnProperty.call(data, 'telegram_bot') ? data.telegram_bot : null,
         };
         
         setProject(typedProject);
@@ -94,7 +95,7 @@ const EditProject = () => {
         setUrlName(data.url_name);
         setIsActive(data.status || false);
         setColorScheme(validColorScheme);
-        setTelegramBot(data.telegram_bot || '');
+        setTelegramBot(typedProject.telegram_bot || '');
         
         if (data.landing_image) {
           setImagePreview(data.landing_image);

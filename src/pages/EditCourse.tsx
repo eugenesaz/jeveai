@@ -18,7 +18,23 @@ const EditCourse = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [projectId, setProjectId] = useState<string | null>(null);
-  const [course, setCourse] = useState<Course | null>(null);
+  const [course, setCourse] = useState<Course>({
+    id: '',
+    name: '',
+    description: '',
+    status: true,
+    type: '',
+    price: 0,
+    duration: 0,
+    recurring: false,
+    details: '',
+    telegram_bot: '',
+    project_id: '',
+    created_at: '',
+    ai_instructions: '',
+    materials: '',
+    course_plan: '',
+  });
   const [userCanEdit, setUserCanEdit] = useState(false);
   
   useEffect(() => {
@@ -27,7 +43,6 @@ const EditCourse = () => {
       
       try {
         setLoading(true);
-        // Fetch the course details
         const { data: courseData, error: courseError } = await supabase
           .from('courses')
           .select('*')
@@ -54,7 +69,6 @@ const EditCourse = () => {
           return;
         }
         
-        // Ensure all properties are included, even if they're null
         setCourse({
           ...courseData,
           ai_instructions: courseData.ai_instructions || null,
@@ -62,7 +76,6 @@ const EditCourse = () => {
         });
         setProjectId(courseData.project_id);
         
-        // Check if user is the project owner
         const { data: projectData } = await supabase
           .from('projects')
           .select('user_id')
@@ -72,7 +85,6 @@ const EditCourse = () => {
         if (projectData && projectData.user_id === user.id) {
           setUserCanEdit(true);
         } else {
-          // Check if user has an influencer role for this project
           const { data: roleData } = await supabase
             .from('user_project_roles')
             .select('role')

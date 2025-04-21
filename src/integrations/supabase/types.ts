@@ -12,6 +12,7 @@ export type Database = {
       courses: {
         Row: {
           ai_instructions: string | null
+          course_plan: string | null
           created_at: string | null
           description: string | null
           details: string | null
@@ -28,6 +29,7 @@ export type Database = {
         }
         Insert: {
           ai_instructions?: string | null
+          course_plan?: string | null
           created_at?: string | null
           description?: string | null
           details?: string | null
@@ -44,6 +46,7 @@ export type Database = {
         }
         Update: {
           ai_instructions?: string | null
+          course_plan?: string | null
           created_at?: string | null
           description?: string | null
           details?: string | null
@@ -136,6 +139,38 @@ export type Database = {
         }
         Relationships: []
       }
+      project_knowledge: {
+        Row: {
+          content: string
+          created_at: string
+          document_url: string | null
+          id: string
+          project_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          document_url?: string | null
+          id?: string
+          project_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          document_url?: string | null
+          id?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_knowledge_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_secrets: {
         Row: {
           created_at: string | null
@@ -179,6 +214,7 @@ export type Database = {
           landing_image: string | null
           name: string
           status: boolean | null
+          telegram_bot: string | null
           url_name: string
           user_id: string
         }
@@ -189,6 +225,7 @@ export type Database = {
           landing_image?: string | null
           name: string
           status?: boolean | null
+          telegram_bot?: string | null
           url_name: string
           user_id: string
         }
@@ -199,6 +236,7 @@ export type Database = {
           landing_image?: string | null
           name?: string
           status?: boolean | null
+          telegram_bot?: string | null
           url_name?: string
           user_id?: string
         }

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -132,11 +131,9 @@ const CreateProject = () => {
     let landingImageUrl = '';
 
     try {
-      // Handle image upload if an image was selected
       if (landingImage) {
         setUploadingImage(true);
         
-        // Check bucket access first
         const hasAccess = await testBucketAccess('project-images');
         
         if (!hasAccess) {
@@ -193,7 +190,6 @@ const CreateProject = () => {
         throw insertError;
       }
 
-      // Create knowledge entry if knowledge text is provided
       if (knowledge && projectData) {
         const { error: knowledgeError } = await supabase.from('project_knowledge').insert({
           project_id: projectData.id,
@@ -205,11 +201,9 @@ const CreateProject = () => {
         }
       }
 
-      // Upload knowledge documents if any
       if (projectData && knowledgeDocuments.length > 0) {
         const documents = await uploadKnowledgeDocuments(projectData.id);
         
-        // Create knowledge entries for each document
         for (const doc of documents) {
           if (doc) {
             await supabase.from('project_knowledge').insert({

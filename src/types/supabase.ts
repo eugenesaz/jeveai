@@ -21,7 +21,7 @@ export interface Project {
   landing_image: string | null;
   user_id: string;
   created_at: string | null;
-  telegram_bot: string | null;
+  telegram_bot: string | null; // <-- ensure present
 }
 
 export interface ProjectKnowledge {
@@ -47,7 +47,7 @@ export interface Course {
   created_at: string | null;
   ai_instructions: string | null;
   materials: string | null;
-  course_plan: string | null;
+  course_plan: string | null; // <-- ensure present
 }
 
 export interface Enrollment {
