@@ -14,7 +14,7 @@ import { ProjectKnowledge, Project } from '@/types/supabase';
 import { FileText, Trash2, Plus, Download, ExternalLink } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ProfileButton } from '@/components/profile/ProfileButton';
-import { createBucket, sanitizeFileName } from '@/lib/StorageUtils';
+import { createBucket, uploadFile, listFiles } from '@/lib/StorageUtils';
 
 const ManageKnowledge = () => {
   const { t } = useTranslation();
@@ -30,6 +30,7 @@ const ManageKnowledge = () => {
   const [newKnowledgeContent, setNewKnowledgeContent] = useState('');
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [bucketStatus, setBucketStatus] = useState<string>('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -37,7 +38,13 @@ const ManageKnowledge = () => {
 
       try {
         // Initialize storage bucket if needed
-        await createBucket('project-knowledge');
+        const bucketCreated = await createBucket('project-knowledge');
+        setBucketStatus(bucketCreated ? 'Bucket ready' : 'Failed to create bucket');
+        console.log('Bucket status:', bucketCreated ? 'Created/Exists' : 'Failed to create');
+        
+        // List files in bucket for debugging
+        const files = await listFiles('project-knowledge', id);
+        console.log('Files in project-knowledge bucket:', files);
         
         const { data: projectData, error: projectError } = await supabase
           .from('projects')
@@ -122,41 +129,51 @@ const ManageKnowledge = () => {
   const uploadKnowledgeDocuments = async (projectId: string) => {
     if (knowledgeDocuments.length === 0) return [];
     
+    console.log(`Uploading ${knowledgeDocuments.length} knowledge documents for project ${projectId}`);
+    
     // Ensure bucket exists
-    await createBucket('project-knowledge');
+    const bucketCreated = await createBucket('project-knowledge');
+    if (!bucketCreated) {
+      console.error('Failed to create or access project-knowledge bucket');
+      toast({
+        title: 'Error',
+        description: 'Failed to access storage. Cannot upload documents.',
+        variant: 'destructive',
+      });
+      return [];
+    }
     
     const uploadResults = await Promise.all(
       knowledgeDocuments.map(async (file) => {
         try {
-          // Sanitize the file name to avoid special characters
-          const sanitizedFilename = sanitizeFileName(file.name);
-          const fileName = `${projectId}/${Date.now()}_${sanitizedFilename}`;
+          // Construct file path with project ID prefix for better organization
+          const fileName = `${projectId}/${Date.now()}_${file.name}`;
+          console.log(`Uploading document: ${fileName}`);
           
-          const { data, error } = await supabase.storage
-            .from('project-knowledge')
-            .upload(fileName, file);
+          // Use the improved uploadFile utility
+          const fileUrl = await uploadFile('project-knowledge', fileName, file);
           
-          if (error) {
-            console.error('Error uploading knowledge document:', error);
+          if (!fileUrl) {
+            console.error(`Failed to upload document: ${file.name}`);
             return null;
           }
           
-          const { data: urlData } = supabase.storage
-            .from('project-knowledge')
-            .getPublicUrl(fileName);
-            
+          console.log(`Successfully uploaded document: ${file.name}, URL: ${fileUrl}`);
           return {
             fileName: file.name,
-            url: urlData.publicUrl
+            url: fileUrl
           };
         } catch (error) {
-          console.error('Exception during file upload:', error);
+          console.error(`Exception uploading document ${file.name}:`, error);
           return null;
         }
       })
     );
     
-    return uploadResults.filter(Boolean);
+    const successfulUploads = uploadResults.filter(Boolean);
+    console.log(`Successfully uploaded ${successfulUploads.length} of ${knowledgeDocuments.length} documents`);
+    
+    return successfulUploads;
   };
 
   const handleAddKnowledge = async () => {
@@ -179,10 +196,13 @@ const ManageKnowledge = () => {
       }
 
       if (knowledgeDocuments.length > 0) {
+        console.log(`Processing ${knowledgeDocuments.length} knowledge documents`);
         const documents = await uploadKnowledgeDocuments(id);
+        console.log(`Received ${documents.length} upload results`);
         
         for (const doc of documents) {
           if (doc) {
+            console.log(`Creating database entry for document: ${doc.fileName}`);
             const { error } = await supabase.from('project_knowledge').insert({
               project_id: id,
               content: `Document: ${doc.fileName}`,
@@ -190,7 +210,9 @@ const ManageKnowledge = () => {
             });
 
             if (error) {
-              console.error('Error creating document knowledge:', error);
+              console.error('Error creating document knowledge entry:', error);
+            } else {
+              console.log(`Successfully created knowledge entry for document: ${doc.fileName}`);
             }
           }
         }
@@ -414,6 +436,7 @@ const ManageKnowledge = () => {
               />
               <p className="text-xs text-gray-500">
                 {t('project.uploadLimit', { defaultValue: 'You can upload up to 5 documents.' })}
+                {bucketStatus && ` Bucket status: ${bucketStatus}`}
               </p>
               {knowledgeDocuments.length > 0 && (
                 <div className="mt-2 space-y-2">

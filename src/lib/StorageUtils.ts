@@ -24,15 +24,28 @@ export const testBucketAccess = async (bucket: string): Promise<boolean> => {
 // Function to create a bucket if it doesn't exist
 export const createBucket = async (bucketName: string): Promise<boolean> => {
   try {
+    // First check if bucket already exists
+    const { data: existingBuckets, error: listError } = await supabase.storage.listBuckets();
+    
+    if (listError) {
+      console.error('Error listing buckets:', listError);
+      return false;
+    }
+    
+    // Check if our bucket is in the list
+    const bucketExists = existingBuckets.some(bucket => bucket.name === bucketName);
+    
+    if (bucketExists) {
+      console.log(`Bucket ${bucketName} already exists`);
+      return true;
+    }
+    
+    // Create the bucket if it doesn't exist
     const { error } = await supabase.storage.createBucket(bucketName, {
       public: true
     });
     
     if (error) {
-      if (error.message.includes('already exists')) {
-        console.log(`Bucket ${bucketName} already exists`);
-        return true;
-      }
       console.error(`Error creating bucket ${bucketName}:`, error);
       return false;
     }
@@ -61,7 +74,11 @@ export const uploadProjectImage = async (image: File, userId: string): Promise<s
     const fileName = `${userId}/${Date.now()}_${sanitizeFileName(image.name)}`;
     
     // Make sure the bucket exists
-    await createBucket('project-images');
+    const bucketExists = await createBucket('project-images');
+    if (!bucketExists) {
+      console.error('Failed to create or access project-images bucket');
+      return null;
+    }
     
     const { error: uploadError } = await supabase.storage
       .from('project-images')
@@ -100,6 +117,8 @@ export const uploadProjectImage = async (image: File, userId: string): Promise<s
 // Generic function to upload a file to a bucket
 export const uploadFile = async (bucket: string, filePath: string, file: File): Promise<string | null> => {
   try {
+    console.log(`Attempting to upload file to bucket: ${bucket}, path: ${filePath}`);
+    
     // Sanitize the file name part of the path
     const pathParts = filePath.split('/');
     const fileName = pathParts.pop() || '';
@@ -107,8 +126,13 @@ export const uploadFile = async (bucket: string, filePath: string, file: File): 
     const sanitizedPath = [...pathParts, sanitizedFileName].join('/');
     
     // Try to create the bucket if it doesn't exist
-    await createBucket(bucket);
+    const bucketExists = await createBucket(bucket);
+    if (!bucketExists) {
+      console.error(`Failed to create or access bucket: ${bucket}`);
+      return null;
+    }
     
+    console.log(`Uploading file to ${bucket}/${sanitizedPath}`);
     const { error: uploadError } = await supabase.storage
       .from(bucket)
       .upload(sanitizedPath, file, {
@@ -176,5 +200,24 @@ export const initializeStorage = async (): Promise<void> => {
     } else {
       console.log(`Bucket ${bucketName} accessible, no need to create`);
     }
+  }
+};
+
+// List all files in a bucket or folder
+export const listFiles = async (bucket: string, path: string = ''): Promise<string[]> => {
+  try {
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .list(path);
+    
+    if (error) {
+      console.error(`Error listing files in ${bucket}/${path}:`, error);
+      return [];
+    }
+    
+    return data.map(item => item.name);
+  } catch (error) {
+    console.error(`Exception listing files in ${bucket}/${path}:`, error);
+    return [];
   }
 };
