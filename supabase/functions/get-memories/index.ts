@@ -62,7 +62,7 @@ serve(async (req) => {
     // Get all memories for the user and order by created_at descending (newest first)
     const { data: memories, error } = await supabaseClient
       .from('memories')
-      .select('*')
+      .select('memory, created_at')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
@@ -78,28 +78,16 @@ serve(async (req) => {
     }
 
     console.log(`Retrieved ${memories?.length || 0} memories`);
-    console.log('Memories data:', memories);
 
-    // Format the response to include properly formatted dates
+    // Format the response to be n8n-friendly with just memory and created_at
     const formattedMemories = memories?.map(memory => ({
-      id: memory.id,
       memory: memory.memory,
-      user_id: memory.user_id,
-      created_at: memory.created_at,
-      // Add a formatted date string for easier frontend display
-      created_at_formatted: new Date(memory.created_at).toLocaleString()
+      created_at: memory.created_at
     })) || [];
 
-    // Explicitly format the response for clarity
-    const responseBody = {
-      success: true,
-      count: formattedMemories.length,
-      memories: formattedMemories,
-      fetchedAt: new Date().toISOString()
-    };
-
+    // Return just the array of memories for easier n8n processing
     return new Response(
-      JSON.stringify(responseBody),
+      JSON.stringify(formattedMemories),
       { 
         status: 200, 
         headers: { ...corsHeaders, "Content-Type": "application/json" } 
