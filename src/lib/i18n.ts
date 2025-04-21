@@ -1,3 +1,4 @@
+
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
@@ -98,15 +99,34 @@ const resources = {
           "oneTime": "One-time",
           "yes": "Yes",
           "no": "No"
+        },
+        "projects": {
+          "title": "Influencer Projects"
         }
+      },
+      "project": {
+        "manageKnowledge": "Manage Knowledge",
+        "knowledge": "Project Knowledge",
+        "addKnowledge": "Add Knowledge",
+        "orUploadDocuments": "Or Upload Documents",
+        "noKnowledge": "No knowledge added to this project yet"
+      },
+      "profile": {
+        "title": "User Profile",
+        "email": "Email",
+        "telegram": "Telegram",
+        "save": "Save Profile",
+        "updateSuccess": "Profile updated successfully",
+        "updateError": "Failed to update profile"
       },
       "no": {
         "courses": "No courses yet",
-        "project": "No Project"
+        "project": "No Project",
+        "projects": "No projects yet"
       },
       "view": "View",
       "editButton": "Edit",
-      "loading": "Loading courses...",
+      "loading": "Loading...",
       "customer": {
         "courses": {
           "title": "Courses",
@@ -154,7 +174,8 @@ const resources = {
         "uniqueBotName": "This bot name is already taken",
         "minPrice": "Price must be greater than 0",
         "socialRequired": "At least one social media account is required",
-        "botNameInvalid": "Bot name can only contain letters, numbers, and underscores"
+        "botNameInvalid": "Bot name can only contain letters, numbers, and underscores",
+        "projectNotFound": "Project not found"
       },
       "success": {
         "projectCreated": "Project created successfully!",
@@ -174,6 +195,26 @@ const resources = {
       "go": {
         "back": "Go Back"
       },
+      "goBack": "Go Back",
+      "login": {
+        "required": "Login Required",
+        "please": {
+          "login": {
+            "to": {
+              "access": "Please log in to access this content"
+            }
+          }
+        }
+      },
+      "please": {
+        "login": {
+          "to": {
+            "access": "Please log in to access this content"
+          }
+        }
+      },
+      "cancel": "Cancel",
+      "save": "Save",
       "landing": {
         "loading": "Loading...",
         "redirecting": "Redirecting to dashboard...",
@@ -227,7 +268,7 @@ const resources = {
       },
       "influencer": {
         "benefits": {
-          "title": "Масштабируйте свое вл��яние",
+          "title": "Масштабируйте свое влияние",
           "subtitle": "Поделитесь своими знаниями и опытом с мировой аудиторией",
           "virtualAssistant": "Создайте виртуального помощника на основе своих знаний",
           "scaleYourBusiness": "Масштабируйте свой бизнес с современными AI технологиями",
@@ -287,15 +328,34 @@ const resources = {
           "oneTime": "Разовый платеж",
           "yes": "Да",
           "no": "Нет"
+        },
+        "projects": {
+          "title": "Проекты инфлюенсера"
         }
+      },
+      "project": {
+        "manageKnowledge": "Управление знаниями",
+        "knowledge": "Знания проекта",
+        "addKnowledge": "Добавить знание",
+        "orUploadDocuments": "Или загрузить документы",
+        "noKnowledge": "К этому проекту еще не добавлены знания"
+      },
+      "profile": {
+        "title": "Профиль пользователя",
+        "email": "Эл. почта",
+        "telegram": "Telegram",
+        "save": "Сохранить профиль",
+        "updateSuccess": "Профиль успешно обновлен",
+        "updateError": "Не удалось обновить профиль"
       },
       "no": {
         "courses": "Пока нет курсов",
-        "project": "Нет проекта"
+        "project": "Нет проекта",
+        "projects": "Пока нет проектов"
       },
       "view": "Просмотр",
       "editButton": "Редактировать",
-      "loading": "Загрузка курсов...",
+      "loading": "Загрузка...",
       "customer": {
         "courses": {
           "title": "Курсы",
@@ -343,7 +403,8 @@ const resources = {
         "uniqueBotName": "Это имя бота уже занято",
         "minPrice": "Цена должна быть больше 0",
         "socialRequired": "Требуется указать хотя бы один аккаунт в социальных сетях",
-        "botNameInvalid": "Имя бота может содержать только буквы, цифры и знаки подчеркивания"
+        "botNameInvalid": "Имя бота может содержать только буквы, цифры и знаки подчеркивания",
+        "projectNotFound": "Проект не найден"
       },
       "success": {
         "projectCreated": "Проект успешно создан!",
@@ -363,6 +424,26 @@ const resources = {
       "go": {
         "back": "Назад"
       },
+      "goBack": "Назад",
+      "login": {
+        "required": "Требуется вход",
+        "please": {
+          "login": {
+            "to": {
+              "access": "Пожалуйста, войдите чтобы получить доступ"
+            }
+          }
+        }
+      },
+      "please": {
+        "login": {
+          "to": {
+            "access": "Пожалуйста, войдите чтобы получить доступ"
+          }
+        }
+      },
+      "cancel": "Отмена",
+      "save": "Сохранить",
       "landing": {
         "loading": "Загрузка...",
         "redirecting": "Перенаправление в панель управления...",

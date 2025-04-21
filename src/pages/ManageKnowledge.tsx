@@ -11,8 +11,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
 import { Spinner } from '@/components/ui/spinner';
 import { ProjectKnowledge, Project } from '@/types/supabase';
-import { FileText, Trash2, Plus } from 'lucide-react';
+import { FileText, Trash2, Plus, Download, ExternalLink } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { ProfileButton } from '@/components/profile/ProfileButton';
 
 const ManageKnowledge = () => {
   const { t } = useTranslation();
@@ -55,7 +56,7 @@ const ManageKnowledge = () => {
         if (!projectData) {
           toast({
             title: 'Error',
-            description: 'Project not found',
+            description: t('errors.projectNotFound'),
             variant: 'destructive',
           });
           navigate('/projects');
@@ -290,9 +291,12 @@ const ManageKnowledge = () => {
             <span className="text-gray-500">-</span>
             <span className="font-medium">{project.name}</span>
           </div>
-          <Button variant="ghost" onClick={() => navigate('/projects')}>
-            {t('goBack')}
-          </Button>
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" onClick={() => navigate('/projects')}>
+              {t('goBack')}
+            </Button>
+            <ProfileButton />
+          </div>
         </div>
       </header>
 
@@ -318,16 +322,32 @@ const ManageKnowledge = () => {
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
                           {item.document_url ? (
-                            <div className="flex items-center">
-                              <FileText className="h-5 w-5 mr-2 text-blue-500" />
-                              <a 
-                                href={item.document_url} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="text-blue-600 hover:underline"
-                              >
-                                {item.content.replace('Document: ', '')}
-                              </a>
+                            <div className="flex flex-col">
+                              <div className="flex items-center mb-2">
+                                <FileText className="h-5 w-5 mr-2 text-blue-500" />
+                                <span className="font-medium">
+                                  {item.content.replace('Document: ', '')}
+                                </span>
+                              </div>
+                              <div className="flex space-x-2">
+                                <a 
+                                  href={item.document_url} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800"
+                                >
+                                  <ExternalLink className="h-4 w-4 mr-1" />
+                                  {t('view')}
+                                </a>
+                                <a 
+                                  href={item.document_url} 
+                                  download
+                                  className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800"
+                                >
+                                  <Download className="h-4 w-4 mr-1" />
+                                  Download
+                                </a>
+                              </div>
                             </div>
                           ) : (
                             <div className="whitespace-pre-wrap">{item.content}</div>
@@ -403,7 +423,7 @@ const ManageKnowledge = () => {
                         size="sm"
                         onClick={() => removeKnowledgeDocument(index)}
                       >
-                        Remove
+                        {t('cancel')}
                       </Button>
                     </div>
                   ))}

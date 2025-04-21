@@ -86,7 +86,7 @@ const Projects = () => {
               onClick={() => navigate('/')} 
               className="w-full"
             >
-              {t('go.to.login')}
+              {t('navigation.login')}
             </Button>
           </CardContent>
         </Card>
@@ -104,7 +104,7 @@ const Projects = () => {
               {t('navigation.home')}
             </Button>
             <Button variant="ghost" onClick={() => navigate('/dashboard')}>
-              {t('influencer.dashboard.title')}
+              {t('navigation.dashboard')}
             </Button>
             <Button variant="ghost" onClick={() => navigate('/courses')}>
               {t('navigation.courses')}
