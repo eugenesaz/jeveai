@@ -52,7 +52,7 @@ serve(async (req) => {
       if (error) {
         console.error('Error fetching project knowledge:', error);
         return new Response(
-          JSON.stringify({ error: "Failed to fetch project knowledge" }),
+          JSON.stringify({ error: "Failed to fetch project knowledge", details: error }),
           { 
             status: 500, 
             headers: { ...corsHeaders, "Content-Type": "application/json" } 
@@ -71,11 +71,11 @@ serve(async (req) => {
     
     // Handle POST request (create knowledge)
     if (req.method === "POST") {
-      const { projectId, content } = await req.json();
+      const { projectId, content, documentUrl } = await req.json();
       
-      if (!projectId || !content) {
+      if (!projectId || (!content && !documentUrl)) {
         return new Response(
-          JSON.stringify({ error: "projectId and content are required" }),
+          JSON.stringify({ error: "projectId and either content or documentUrl are required" }),
           { 
             status: 400, 
             headers: { ...corsHeaders, "Content-Type": "application/json" } 
@@ -92,7 +92,7 @@ serve(async (req) => {
 
       if (projectError || !projectData) {
         return new Response(
-          JSON.stringify({ error: "Project not found" }),
+          JSON.stringify({ error: "Project not found", details: projectError }),
           { 
             status: 404, 
             headers: { ...corsHeaders, "Content-Type": "application/json" } 
@@ -101,19 +101,25 @@ serve(async (req) => {
       }
 
       // Create knowledge entry
+      const knowledgeEntry = {
+        project_id: projectId,
+        content: content || '',
+      };
+      
+      if (documentUrl) {
+        knowledgeEntry.document_url = documentUrl;
+      }
+      
       const { data: newKnowledge, error } = await supabaseClient
         .from('project_knowledge')
-        .insert({
-          project_id: projectId,
-          content: content,
-        })
+        .insert(knowledgeEntry)
         .select()
         .single();
 
       if (error) {
         console.error('Error creating project knowledge:', error);
         return new Response(
-          JSON.stringify({ error: "Failed to create project knowledge" }),
+          JSON.stringify({ error: "Failed to create project knowledge", details: error }),
           { 
             status: 500, 
             headers: { ...corsHeaders, "Content-Type": "application/json" } 
@@ -145,7 +151,11 @@ serve(async (req) => {
     console.error('Error processing request:', err);
     
     return new Response(
-      JSON.stringify({ error: "Internal Server Error" }),
+      JSON.stringify({ 
+        error: "Internal Server Error", 
+        details: err.message,
+        stack: err.stack
+      }),
       { 
         status: 500, 
         headers: { ...corsHeaders, "Content-Type": "application/json" } 

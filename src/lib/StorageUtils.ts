@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 
@@ -94,9 +95,28 @@ export const sanitizeFileName = (fileName: string): string => {
     .replace(/__+/g, '_');    // Replace multiple consecutive underscores with a single one
 };
 
+// Check if file is within size limit (2MB for documents)
+export const isFileSizeValid = (file: File, maxSizeMB: number = 2): boolean => {
+  const maxSizeBytes = maxSizeMB * 1024 * 1024;
+  if (file.size > maxSizeBytes) {
+    toast({
+      title: 'File Too Large',
+      description: `File size exceeds the maximum allowed size of ${maxSizeMB}MB`,
+      variant: 'destructive',
+    });
+    return false;
+  }
+  return true;
+};
+
 // Function to upload project image to storage
 export const uploadProjectImage = async (image: File, userId: string): Promise<string | null> => {
   try {
+    // Check file size - 5MB limit for images
+    if (!isFileSizeValid(image, 5)) {
+      return null;
+    }
+
     // Ensure buckets are properly configured first
     const bucketsConfigured = await ensureStorageBuckets();
     if (!bucketsConfigured) {
@@ -162,6 +182,11 @@ export const uploadKnowledgeDocument = async (file: File, projectId: string): Pr
   try {
     console.log(`Starting upload for document: ${file.name} for project ${projectId}`);
     
+    // Check file size - 2MB limit for documents
+    if (!isFileSizeValid(file, 2)) {
+      return null;
+    }
+    
     // Ensure buckets are properly configured first
     console.log('Ensuring storage buckets are configured...');
     const bucketsConfigured = await ensureStorageBuckets();
@@ -203,11 +228,21 @@ export const uploadKnowledgeDocument = async (file: File, projectId: string): Pr
     
     if (uploadError) {
       console.error('Knowledge document upload error:', uploadError);
-      toast({
-        title: 'Upload Failed',
-        description: `Could not upload: ${uploadError.message}`,
-        variant: 'destructive',
-      });
+      
+      // Specific error for file size
+      if (uploadError.message && uploadError.message.includes("too large")) {
+        toast({
+          title: 'File Too Large',
+          description: `The file is too large. Maximum allowed size is 2MB.`,
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Upload Failed',
+          description: `Could not upload: ${uploadError.message}`,
+          variant: 'destructive',
+        });
+      }
       return null;
     }
     
