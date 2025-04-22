@@ -43,9 +43,9 @@ serve(async (req) => {
     const supabaseClient = createClient(supabaseUrl, serviceRoleKey);
 
     // Get the request body
-    const { memory, userId } = await req.json();
+    const { memory, userId: rawUserId } = await req.json();
 
-    if (!memory || !userId) {
+    if (!memory || !rawUserId) {
       return new Response(
         JSON.stringify({ error: "Memory and userId are required" }),
         { 
@@ -54,6 +54,10 @@ serve(async (req) => {
         }
       );
     }
+
+    // Sanitize the userId by removing any whitespace or non-alphanumeric characters
+    // except for hyphens which are valid in UUIDs
+    const userId = rawUserId.trim().replace(/[^\w-]/g, '');
 
     console.log(`Saving memory for user: ${userId}`);
     console.log('Memory content:', memory);
