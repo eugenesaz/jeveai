@@ -8,3 +8,6 @@ schemas = ["public", "storage", "graphql_public"]
 
 [functions.get-user-by-telegram]
 verify_jwt = false
+
+[functions.course-ai-instructions]
+verify_jwt = false
