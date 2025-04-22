@@ -15,3 +15,8 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     autoRefreshToken: true,
   }
 });
+
+// Helper function to sanitize UUIDs
+export const sanitizeUuid = (uuid: string): string => {
+  return uuid.trim().replace(/[^\w-]/g, '');
+};

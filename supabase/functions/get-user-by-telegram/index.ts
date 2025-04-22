@@ -61,7 +61,7 @@ serve(async (req) => {
 
     const { data: userId, error } = await supabaseClient.rpc(
       'get_user_id_by_telegram',
-      { telegram_name: telegramName }
+      { telegram_name: telegramName.trim() }
     );
 
     if (error) {
@@ -85,8 +85,11 @@ serve(async (req) => {
       );
     }
 
+    // Sanitize the userId to ensure it's a clean UUID without tabs or spaces
+    const sanitizedUserId = userId.toString().trim().replace(/[^\w-]/g, '');
+
     return new Response(
-      JSON.stringify({ userId }),
+      JSON.stringify({ userId: sanitizedUserId }),
       { 
         status: 200, 
         headers: { ...corsHeaders, "Content-Type": "application/json" } 
