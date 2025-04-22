@@ -184,14 +184,14 @@ const ViewCourse = () => {
                     )}
                   </div>
                   
-                  {course.description && (
+                  {course?.description && (
                     <div className="mb-6">
                       <p className="text-sm font-medium text-gray-500 mb-1">Description</p>
                       <p className="text-lg">{course.description}</p>
                     </div>
                   )}
                   
-                  {course.telegram_bot && (
+                  {course?.telegram_bot && (
                     <div className="mt-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
                       <div className="flex items-start gap-4">
                         <MessageSquare className="h-10 w-10 text-blue-500" />
@@ -221,7 +221,7 @@ const ViewCourse = () => {
                 </CardContent>
               </Card>
               
-              {course.details && (
+              {course?.details && (
                 <Card>
                   <CardContent className="p-6">
                     <h2 className="text-2xl font-bold mb-4">Course Details</h2>
