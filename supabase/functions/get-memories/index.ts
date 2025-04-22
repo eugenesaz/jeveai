@@ -45,9 +45,9 @@ serve(async (req) => {
 
     // Get userId from URL parameters
     const url = new URL(req.url);
-    const userId = url.searchParams.get('userId');
+    const rawUserId = url.searchParams.get('userId');
 
-    if (!userId) {
+    if (!rawUserId) {
       return new Response(
         JSON.stringify({ error: "userId parameter is required" }),
         { 
@@ -57,6 +57,10 @@ serve(async (req) => {
       );
     }
 
+    // Sanitize the userId by removing any whitespace or non-alphanumeric characters
+    // except for hyphens which are valid in UUIDs
+    const userId = rawUserId.trim().replace(/[^\w-]/g, '');
+    
     console.log(`Fetching memories for user: ${userId}`);
 
     // Get all memories for the user and order by created_at descending (newest first)
@@ -104,4 +108,3 @@ serve(async (req) => {
     );
   }
 });
-
