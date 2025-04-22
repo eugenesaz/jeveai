@@ -4,7 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.31.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
@@ -14,16 +14,33 @@ serve(async (req) => {
     return new Response(null, { status: 204, headers: corsHeaders });
   }
 
-  if (req.method !== "GET") {
+  // Allow both GET and POST requests
+  if (req.method !== "GET" && req.method !== "POST") {
     return new Response(
-      JSON.stringify({ error: "Method not allowed" }),
+      JSON.stringify({ error: "Method not allowed", allowed: ["GET", "POST"] }),
       { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 
   try {
-    const url = new URL(req.url);
-    const courseId = url.searchParams.get("courseId");
+    let courseId;
+
+    if (req.method === "GET") {
+      const url = new URL(req.url);
+      courseId = url.searchParams.get("courseId");
+    } else if (req.method === "POST") {
+      // Extract courseId from POST request body
+      try {
+        const body = await req.json();
+        courseId = body.courseId;
+      } catch (err) {
+        console.error("Error parsing request body:", err);
+        return new Response(
+          JSON.stringify({ error: "Invalid JSON body" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
 
     if (!courseId) {
       return new Response(
