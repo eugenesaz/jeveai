@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -87,6 +88,7 @@ const EditProject = () => {
           ...data,
           color_scheme: validColorScheme,
           telegram_bot: Object.prototype.hasOwnProperty.call(data, 'telegram_bot') ? data.telegram_bot : null,
+          description: data.description || null, // Add description property
         };
         
         setProject(typedProject);

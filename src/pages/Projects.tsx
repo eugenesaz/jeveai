@@ -46,7 +46,9 @@ const Projects = () => {
                          project.color_scheme === 'orange' || 
                          project.color_scheme === 'green') 
                          ? project.color_scheme as 'blue' | 'red' | 'orange' | 'green'
-                         : null
+                         : null,
+          telegram_bot: project.telegram_bot || null,
+          description: project.description || null, // Add description property
         })) || [];
         
         setProjects(typedProjects);

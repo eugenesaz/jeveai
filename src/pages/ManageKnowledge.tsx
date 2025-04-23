@@ -87,6 +87,7 @@ const ManageKnowledge = () => {
           ...projectData,
           color_scheme: validColorScheme,
           telegram_bot: projectData.telegram_bot || null,
+          description: projectData.description || null,
         };
         
         setProject(typedProject);

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -37,7 +36,6 @@ const Dashboard = () => {
         
         console.log('Projects data:', data);
         
-        // Convert to the correct type by mapping the color_scheme and always providing telegram_bot
         const typedProjects = data?.map(project => ({
           ...project,
           color_scheme: (project.color_scheme === 'blue' || 
@@ -47,6 +45,7 @@ const Dashboard = () => {
                          ? project.color_scheme as 'blue' | 'red' | 'orange' | 'green'
                          : null,
           telegram_bot: project.telegram_bot || null,
+          description: project.description || null,
         })) || [];
         
         setProjects(typedProjects);
@@ -126,10 +125,8 @@ const Dashboard = () => {
 
       <main className="container mx-auto px-4 py-10">
         <div className="grid gap-10">
-          {/* Earnings Section */}
           <EarningsChart />
           
-          {/* Quick Actions */}
           <section className="bg-white rounded-2xl shadow-sm p-8">
             <h2 className="text-2xl font-bold mb-6">{t('dashboard.quick.actions', 'Quick Actions')}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -194,7 +191,7 @@ const Dashboard = () => {
                     <svg className="h-6 w-6 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                       <circle cx="9" cy="7" r="4" />
-                      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                      <path d="M23 21v-2a4 4 0 0 1 0 7.75" />
                       <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                     </svg>
                   </div>
@@ -212,7 +209,6 @@ const Dashboard = () => {
             </div>
           </section>
           
-          {/* Projects Section */}
           <section className="bg-white rounded-2xl shadow-sm p-8">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-2xl font-bold">{t('influencer.dashboard.projects')}</h2>
