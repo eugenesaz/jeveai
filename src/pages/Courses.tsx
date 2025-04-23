@@ -21,7 +21,7 @@ interface CourseWithProject extends Course {
 
 const Courses = () => {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth(); // Properly destructure signOut from useAuth
   const navigate = useNavigate();
   const location = useLocation();
   const [courses, setCourses] = useState<CourseWithProject[]>([]);
