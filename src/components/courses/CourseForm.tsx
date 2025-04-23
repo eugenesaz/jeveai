@@ -28,13 +28,29 @@ interface CourseFormData {
   materials: File[];
 }
 
+interface FieldLabels {
+  name: string;
+  description: string;
+  isActive: string;
+  type: string;
+  price: string;
+  duration: string;
+  isRecurring: string;
+  details: string;
+  telegramBot: string;
+  aiInstructions: string;
+  coursePlan: string;
+  materials: string;
+}
+
 interface CourseFormProps {
   onSubmit: (data: CourseFormData) => Promise<void>;
   loading: boolean;
   initialValues?: Partial<CourseFormData>;
+  fieldLabels?: FieldLabels;
 }
 
-export const CourseForm = ({ onSubmit, loading, initialValues }: CourseFormProps) => {
+export const CourseForm = ({ onSubmit, loading, initialValues, fieldLabels }: CourseFormProps) => {
   const { t } = useTranslation();
   const { botNameError, validateBotName } = useBotNameValidator();
 
@@ -137,6 +153,22 @@ export const CourseForm = ({ onSubmit, loading, initialValues }: CourseFormProps
     }));
   };
 
+  // Use fieldLabels if provided, otherwise fallback to translation keys
+  const labels = fieldLabels || {
+    name: t('influencer.course.name', 'Course Name'),
+    description: t('influencer.course.description', 'Course Description'),
+    isActive: t('influencer.course.status', 'Status'),
+    type: t('influencer.course.type', 'Course Type'),
+    price: t('influencer.course.price', 'Price (USD)'),
+    duration: t('influencer.course.duration', 'Duration (Days)'),
+    isRecurring: t('influencer.course.recurring', 'Recurring Payment'),
+    details: t('influencer.course.details', 'Course Details'),
+    telegramBot: t('influencer.course.telegramBot', 'Telegram Chatbot Name'),
+    aiInstructions: t('influencer.course.aiInstructions', 'AI Instructions'),
+    coursePlan: t('influencer.course.coursePlan', 'Course Plan'),
+    materials: t('influencer.course.materials', 'Materials')
+  };
+
   return (
     <Card className="border bg-card text-card-foreground shadow-sm">
       <CardHeader className="flex flex-col space-y-1.5 p-6">
@@ -158,7 +190,7 @@ export const CourseForm = ({ onSubmit, loading, initialValues }: CourseFormProps
           <form onSubmit={handleSubmit} className="space-y-6">
             <TabsContent value="basic" className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="courseName">{t('influencer.course.name')}</Label>
+                <Label htmlFor="courseName">{labels.name}</Label>
                 <Input
                   id="courseName"
                   value={formData.name}
@@ -170,7 +202,7 @@ export const CourseForm = ({ onSubmit, loading, initialValues }: CourseFormProps
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">{t('influencer.course.description')}</Label>
+                <Label htmlFor="description">{labels.description}</Label>
                 <Textarea
                   id="description"
                   value={formData.description}
@@ -188,11 +220,11 @@ export const CourseForm = ({ onSubmit, loading, initialValues }: CourseFormProps
                   checked={formData.isActive}
                   onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isActive: checked }))}
                 />
-                <Label htmlFor="isActive">{t('influencer.course.status', 'Active')}</Label>
+                <Label htmlFor="isActive">{labels.isActive}</Label>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="courseType">{t('influencer.course.type')}</Label>
+                <Label htmlFor="courseType">{labels.type}</Label>
                 <Select value={formData.type} onValueChange={(value) => setFormData(prev => ({ ...prev, type: value }))}>
                   <SelectTrigger className="bg-background">
                     <SelectValue placeholder={t('course.type.placeholder', 'Select a course type')} />
@@ -209,7 +241,7 @@ export const CourseForm = ({ onSubmit, loading, initialValues }: CourseFormProps
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="price">{t('influencer.course.price')}</Label>
+                <Label htmlFor="price">{labels.price}</Label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2">$</span>
                   <Input
@@ -227,7 +259,7 @@ export const CourseForm = ({ onSubmit, loading, initialValues }: CourseFormProps
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="duration">{t('influencer.course.duration')}</Label>
+                <Label htmlFor="duration">{labels.duration}</Label>
                 <Input
                   id="duration"
                   type="number"
@@ -252,13 +284,13 @@ export const CourseForm = ({ onSubmit, loading, initialValues }: CourseFormProps
                   onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isRecurring: checked }))}
                   disabled={parseInt(formData.duration) === 0}
                 />
-                <Label htmlFor="isRecurring">{t('influencer.course.recurring', 'Recurring')}</Label>
+                <Label htmlFor="isRecurring">{labels.isRecurring}</Label>
               </div>
             </TabsContent>
 
             <TabsContent value="details" className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="details">{t('influencer.course.details')}</Label>
+                <Label htmlFor="details">{labels.details}</Label>
                 <Textarea
                   id="details"
                   value={formData.details}
@@ -273,7 +305,7 @@ export const CourseForm = ({ onSubmit, loading, initialValues }: CourseFormProps
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="coursePlan">{t('influencer.course.plan', 'Course Plan')}</Label>
+                <Label htmlFor="coursePlan">{labels.coursePlan}</Label>
                 <Textarea
                   id="coursePlan"
                   value={formData.coursePlan}
@@ -288,7 +320,7 @@ export const CourseForm = ({ onSubmit, loading, initialValues }: CourseFormProps
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="telegramBot">{t('influencer.course.telegramBot')}</Label>
+                <Label htmlFor="telegramBot">{labels.telegramBot}</Label>
                 <Input
                   id="telegramBot"
                   value={formData.telegramBot}
@@ -303,7 +335,7 @@ export const CourseForm = ({ onSubmit, loading, initialValues }: CourseFormProps
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="aiInstructions">{t('influencer.course.aiInstructions', 'AI Instructions')}</Label>
+                <Label htmlFor="aiInstructions">{labels.aiInstructions}</Label>
                 <Textarea
                   id="aiInstructions"
                   value={formData.aiInstructions}
@@ -317,7 +349,7 @@ export const CourseForm = ({ onSubmit, loading, initialValues }: CourseFormProps
 
             <TabsContent value="materials" className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="materials">{t('influencer.course.materials', 'Materials')}</Label>
+                <Label htmlFor="materials">{labels.materials}</Label>
                 <Input
                   id="materials"
                   type="file"
