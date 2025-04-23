@@ -36,9 +36,9 @@ export function EarningsChart() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t('dashboard.earnings.title')}</CardTitle>
+        <CardTitle>{t('dashboard.earnings.title', 'Earnings Overview')}</CardTitle>
         <CardDescription>
-          {t('dashboard.earnings.description')}
+          {t('dashboard.earnings.description', 'Monthly platform revenue')}
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-4">
@@ -61,7 +61,7 @@ export function EarningsChart() {
                         <div className="grid grid-cols-2 gap-2">
                           <div className="flex flex-col">
                             <span className="text-[0.70rem] uppercase text-muted-foreground">
-                              {t('dashboard.month')}
+                              {t('dashboard.month', 'Month')}
                             </span>
                             <span className="font-bold text-muted-foreground">
                               {payload[0].payload.month}
@@ -69,7 +69,7 @@ export function EarningsChart() {
                           </div>
                           <div className="flex flex-col">
                             <span className="text-[0.70rem] uppercase text-muted-foreground">
-                              {t('dashboard.earnings')}
+                              {t('dashboard.earnings', 'Earnings')}
                             </span>
                             <span className="font-bold">
                               ${payload[0].value}

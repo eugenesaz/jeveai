@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,7 +9,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Course } from '@/types/supabase';
 import { ProjectsHeader } from '@/components/projects/ProjectsHeader';
-import { ArrowRight, ArrowLeft, Plus, Edit, Eye, Search } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Plus, Edit, Eye, Search, Home, Package, Calendar, LogOut } from 'lucide-react';
+import { ProfileButton } from '@/components/profile/ProfileButton';
 
 interface CourseWithProject extends Course {
   project: {
@@ -210,25 +212,32 @@ const Courses = () => {
               </p>
             )}
           </div>
-          <Button 
-            onClick={() => {
-              if (projectId) {
-                navigate(`/create-course?projectId=${projectId}`);
-              } else {
-                navigate('/create-course');
-              }
-            }}
-            variant="default"
-            className="flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            {t('influencer.course.createNew')}
-          </Button>
+          <div className="flex gap-4 items-center">
+            <div className="hidden md:flex gap-4">
+              <Button variant="ghost" onClick={() => navigate('/dashboard')}>
+                <Home className="h-4 w-4 mr-2" />
+                {t('navigation.home')}
+              </Button>
+              <Button variant="ghost" onClick={() => navigate('/projects')}>
+                <Package className="h-4 w-4 mr-2" />
+                {t('influencer.dashboard.projects')}
+              </Button>
+              <Button variant="ghost" onClick={() => navigate('/courses')}>
+                <Calendar className="h-4 w-4 mr-2" />
+                {t('navigation.courses')}
+              </Button>
+              <Button variant="ghost" onClick={signOut}>
+                <LogOut className="h-4 w-4 mr-2" />
+                {t('navigation.logout')}
+              </Button>
+            </div>
+            <ProfileButton />
+          </div>
         </div>
       </header>
 
       <main className="container mx-auto p-6 space-y-6">
-        <div className="flex items-center space-x-4 mb-4">
+        <div className="flex items-center justify-between mb-4">
           <div className="relative w-full max-w-sm">
             <span className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400">
               <Search className="w-5 h-5" />
@@ -241,7 +250,22 @@ const Courses = () => {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
+          <Button 
+            onClick={() => {
+              if (projectId) {
+                navigate(`/create-course?projectId=${projectId}`);
+              } else {
+                navigate('/create-course');
+              }
+            }}
+            variant="default"
+            className="flex items-center gap-2 ml-4"
+          >
+            <Plus className="w-4 h-4" />
+            {t('influencer.course.createNew')}
+          </Button>
         </div>
+        
         {loading ? (
           <div className="flex justify-center items-center h-40">
             <p>{t('loading', 'Loading...')}</p>
