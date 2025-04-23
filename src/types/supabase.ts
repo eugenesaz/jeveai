@@ -22,6 +22,7 @@ export interface Project {
   user_id: string;
   created_at: string | null;
   telegram_bot: string | null;
+  description: string | null; // Added description property
 }
 
 export interface ProjectKnowledge {
