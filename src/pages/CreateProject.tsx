@@ -1,235 +1,144 @@
-import { useState } from 'react';
+
+import { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/components/ui/use-toast';
-import { Spinner } from '@/components/ui/spinner';
-import { uploadProjectImage, testBucketAccess } from '@/lib/StorageUtils';
-import { Textarea } from '@/components/ui/textarea';
+import { toast } from '@/components/ui/sonner';
+import { FileImage, ArrowLeft, ArrowRight, Check, Plus } from 'lucide-react';
+import { useBotNameValidator } from '@/hooks/useBotNameValidator';
+
+// Define the allowed color schemes explicitly
+type ColorScheme = 'blue' | 'red' | 'orange' | 'green' | 'purple' | 'indigo' | 'pink' | 'teal';
 
 const CreateProject = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { botNameError, validateBotName } = useBotNameValidator();
 
   const [projectName, setProjectName] = useState('');
   const [urlName, setUrlName] = useState('');
-  const [isActive, setIsActive] = useState(true);
-  const [colorScheme, setColorScheme] = useState<'blue' | 'red' | 'orange' | 'green'>('blue');
-  const [landingImage, setLandingImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const [urlError, setUrlError] = useState('');
   const [telegramBot, setTelegramBot] = useState('');
-  const [knowledge, setKnowledge] = useState('');
-  const [knowledgeDocuments, setKnowledgeDocuments] = useState<File[]>([]);
+  const [isActive, setIsActive] = useState(true);
+  const [colorScheme, setColorScheme] = useState<ColorScheme>('blue');
+  const [landingImage, setLandingImage] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleColorSchemeChange = (value: string) => {
-    if (value === 'blue' || value === 'red' || value === 'orange' || value === 'green') {
-      setColorScheme(value);
+  const [saving, setSaving] = useState(false);
+
+  const handleUrlNameChange = (value: string) => {
+    // Replace spaces with underscores, remove special characters, and convert to lowercase
+    const formattedValue = value
+      .replace(/\s+/g, '_')
+      .replace(/[^a-zA-Z0-9_]/g, '')
+      .toLowerCase();
+    setUrlName(formattedValue);
+  };
+
+  const handleImageClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
     }
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setLandingImage(file);
-      setImagePreview(URL.createObjectURL(file));
+      setImageFile(file);
+      // Create a preview of the selected image
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLandingImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
-  };
-
-  const handleKnowledgeDocumentsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newFiles = Array.from(e.target.files);
-      const limitedFiles = newFiles.slice(0, 5 - knowledgeDocuments.length);
-      setKnowledgeDocuments(prev => [...prev, ...limitedFiles]);
-    }
-  };
-
-  const removeKnowledgeDocument = (index: number) => {
-    setKnowledgeDocuments(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const validateUrlName = async (url: string) => {
-    if (!url) return t('errors.required');
-    if (!/^[a-zA-Z0-9-_]+$/.test(url)) return 'URL can only contain letters, numbers, dashes, and underscores';
-    
-    const { data } = await supabase
-      .from('projects')
-      .select('url_name')
-      .eq('url_name', url)
-      .single();
-    
-    if (data) return t('errors.uniqueUrlName');
-    return '';
-  };
-
-  const handleUrlNameChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const url = e.target.value;
-    setUrlName(url);
-    const error = await validateUrlName(url);
-    setUrlError(error);
-  };
-
-  const uploadKnowledgeDocuments = async (projectId: string) => {
-    if (knowledgeDocuments.length === 0) return [];
-    
-    const uploadResults = await Promise.all(
-      knowledgeDocuments.map(async (file) => {
-        const fileName = `${projectId}/${Date.now()}_${file.name}`;
-        const { data, error } = await supabase.storage
-          .from('project-knowledge')
-          .upload(fileName, file);
-        
-        if (error) {
-          console.error('Error uploading knowledge document:', error);
-          return null;
-        }
-        
-        const { data: urlData } = supabase.storage
-          .from('project-knowledge')
-          .getPublicUrl(fileName);
-          
-        return {
-          fileName: file.name,
-          url: urlData.publicUrl
-        };
-      })
-    );
-    
-    return uploadResults.filter(Boolean);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!user) return;
-    
-    if (!projectName) {
-      toast({
-        title: 'Error',
-        description: t('errors.required'),
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    const urlValidation = await validateUrlName(urlName);
-    if (urlValidation) {
-      setUrlError(urlValidation);
-      return;
-    }
-
-    setLoading(true);
-    let landingImageUrl = '';
+    setSaving(true);
 
     try {
-      if (landingImage) {
-        setUploadingImage(true);
-        
-        const hasAccess = await testBucketAccess('project-images');
-        
-        if (!hasAccess) {
-          console.error('Project-images bucket not accessible.');
-          toast({
-            title: 'Warning',
-            description: 'Storage bucket not available. Contact support.',
-            variant: 'destructive',
-          });
-          setUploadingImage(false);
-          setLoading(false);
+      // Validate URL name format
+      if (!/^[a-z0-9_]+$/.test(urlName)) {
+        toast.error(t('errors.invalidUrlName', 'Invalid URL name format. Use only lowercase letters, numbers, and underscores.'));
+        setSaving(false);
+        return;
+      }
+
+      // Check if URL name is already taken
+      const { data: existingProject, error: urlCheckError } = await supabase
+        .from('projects')
+        .select('id')
+        .eq('url_name', urlName)
+        .single();
+
+      if (!urlCheckError && existingProject) {
+        toast.error(t('errors.urlNameTaken', 'This URL name is already taken. Please choose another one.'));
+        setSaving(false);
+        return;
+      }
+
+      // Validate Telegram bot name if provided
+      if (telegramBot) {
+        const error = await validateBotName(telegramBot, undefined);
+        if (error) {
+          setSaving(false);
           return;
         }
+      }
 
-        const uploadedUrl = await uploadProjectImage(landingImage, user.id);
-        
-        if (uploadedUrl) {
-          landingImageUrl = uploadedUrl;
-          console.log('Image uploaded successfully. URL:', landingImageUrl);
-        } else {
-          console.error('Image upload failed');
-          toast({
-            title: 'Warning',
-            description: 'Image upload failed. Project will be created without an image.',
-            variant: 'destructive',
-          });
+      // Upload image if selected
+      let imageUrl = null;
+      if (imageFile) {
+        const filename = `${user.id}/${Date.now().toString(36)}_${Math.random().toString(36).substring(2)}_${imageFile.name.replace(/\s+/g, '_')}`;
+        const { data: storageData, error: storageError } = await supabase.storage
+          .from('project-images')
+          .upload(filename, imageFile);
+
+        if (storageError) {
+          throw storageError;
         }
-        
-        setUploadingImage(false);
+        const { data: publicUrlData } = supabase.storage
+          .from('project-images')
+          .getPublicUrl(filename);
+        imageUrl = publicUrlData.publicUrl;
       }
 
-      console.log('Creating project with data:', {
-        name: projectName,
-        url_name: urlName,
-        status: isActive,
-        color_scheme: colorScheme,
-        landing_image: landingImageUrl,
-        user_id: user.id,
-        telegram_bot: telegramBot || null,
-      });
-
-      const { data: projectData, error: insertError } = await supabase.from('projects').insert({
-        name: projectName,
-        url_name: urlName,
-        status: isActive,
-        color_scheme: colorScheme,
-        landing_image: landingImageUrl,
-        user_id: user.id,
-        telegram_bot: telegramBot || null,
-      }).select('id').single();
-
-      if (insertError) {
-        console.error('Insert error:', insertError);
-        throw insertError;
-      }
-
-      if (knowledge && projectData) {
-        const { error: knowledgeError } = await supabase.from('project_knowledge').insert({
-          project_id: projectData.id,
-          content: knowledge,
+      // Create project
+      const { error } = await supabase
+        .from('projects')
+        .insert({
+          name: projectName,
+          url_name: urlName,
+          status: isActive,
+          telegram_bot: telegramBot || null,
+          color_scheme: colorScheme,
+          landing_image: imageUrl,
+          user_id: user.id
         });
 
-        if (knowledgeError) {
-          console.error('Error creating knowledge:', knowledgeError);
-        }
+      if (error) {
+        throw error;
       }
 
-      if (projectData && knowledgeDocuments.length > 0) {
-        const documents = await uploadKnowledgeDocuments(projectData.id);
-        
-        for (const doc of documents) {
-          if (doc) {
-            await supabase.from('project_knowledge').insert({
-              project_id: projectData.id,
-              content: `Document: ${doc.fileName}`,
-              document_url: doc.url,
-            });
-          }
-        }
-      }
-
-      toast({
-        title: 'Success',
-        description: t('success.projectCreated'),
-      });
-
+      toast.success(t('success.projectCreated', 'Project created successfully'));
       navigate('/projects');
     } catch (error) {
       console.error('Error creating project:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to create project. Please try again.',
-        variant: 'destructive',
-      });
+      toast.error(t('errors.createFailed', 'Failed to create project. Please try again.'));
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
@@ -237,44 +146,219 @@ const CreateProject = () => {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">
         <div className="container mx-auto p-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">{t('influencer.project.createNew')}</h1>
-          <Button variant="ghost" onClick={() => navigate('/projects')}>
-            {t('cancel')}
+          <h1 className="text-2xl font-bold">{t('influencer.project.createNew', 'Add Project')}</h1>
+          <Button variant="ghost" onClick={() => navigate('/projects')} className="flex items-center gap-2">
+            <ArrowLeft className="w-4 h-4" />
+            {t('cancel', 'Cancel')}
           </Button>
         </div>
       </header>
 
-      <main className="container mx-auto p-6">
+      <main className="container mx-auto py-8 px-4">
         <Card className="max-w-3xl mx-auto">
           <CardHeader>
-            <CardTitle>{t('influencer.project.createNew')}</CardTitle>
+            <CardTitle>{t('influencer.project.createNew', 'Add Project')}</CardTitle>
+            <CardDescription>
+              {t('influencer.project.createDescription', 'Fill in the details to create your new project')}
+            </CardDescription>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit}>
+            <CardContent className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="projectName">{t('influencer.project.name')}</Label>
                 <Input
                   id="projectName"
                   value={projectName}
-                  onChange={(e) => setProjectName(e.target.value)}
-                  placeholder="My Awesome Project"
+                  onChange={e => setProjectName(e.target.value)}
+                  placeholder={t('influencer.project.namePlaceholder', 'Enter project name')}
                   required
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="urlName">{t('influencer.project.urlName')}</Label>
-                <Input
-                  id="urlName"
-                  value={urlName}
-                  onChange={handleUrlNameChange}
-                  placeholder="my-awesome-project"
-                  required
-                />
-                {urlError && <p className="text-sm text-red-500">{urlError}</p>}
+                <div className="flex items-center space-x-2">
+                  <div className="bg-gray-100 px-3 py-2 rounded-l-md border border-r-0 text-gray-500">
+                    {window.location.origin}/
+                  </div>
+                  <Input
+                    id="urlName"
+                    value={urlName}
+                    onChange={e => handleUrlNameChange(e.target.value)}
+                    className="rounded-l-none"
+                    placeholder="my-project"
+                    required
+                  />
+                </div>
                 <p className="text-sm text-gray-500">
-                  {window.location.origin}/{urlName || 'your-url-name'}
+                  {t('influencer.project.urlNameHint', 'Use only lowercase letters, numbers, and underscores')}
                 </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="telegramBot">{t('influencer.project.telegramBot')}</Label>
+                <Input
+                  id="telegramBot"
+                  value={telegramBot}
+                  onChange={e => setTelegramBot(e.target.value)}
+                  placeholder="your_bot_name"
+                />
+                {botNameError && <p className="text-sm text-red-500">{botNameError}</p>}
+                <p className="text-sm text-gray-500">
+                  {t('influencer.project.telegramBotHint', 'Optional: Add a Telegram bot for this project')}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>{t('influencer.project.colorScheme')}</Label>
+                <RadioGroup
+                  value={colorScheme}
+                  onValueChange={value => setColorScheme(value as ColorScheme)}
+                  className="grid grid-cols-2 sm:grid-cols-4 gap-2"
+                >
+                  <Label
+                    htmlFor="blue"
+                    className={`flex items-center justify-between rounded-md border-2 p-4 cursor-pointer ${
+                      colorScheme === 'blue' ? 'border-blue-500' : 'border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full bg-blue-500"></div>
+                      <span>{t('colors.blue')}</span>
+                    </div>
+                    <RadioGroupItem value="blue" id="blue" className="sr-only" />
+                    {colorScheme === 'blue' && <Check className="w-5 h-5 text-blue-500" />}
+                  </Label>
+                  <Label
+                    htmlFor="red"
+                    className={`flex items-center justify-between rounded-md border-2 p-4 cursor-pointer ${
+                      colorScheme === 'red' ? 'border-red-500' : 'border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full bg-red-500"></div>
+                      <span>{t('colors.red')}</span>
+                    </div>
+                    <RadioGroupItem value="red" id="red" className="sr-only" />
+                    {colorScheme === 'red' && <Check className="w-5 h-5 text-red-500" />}
+                  </Label>
+                  <Label
+                    htmlFor="green"
+                    className={`flex items-center justify-between rounded-md border-2 p-4 cursor-pointer ${
+                      colorScheme === 'green' ? 'border-green-500' : 'border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full bg-green-500"></div>
+                      <span>{t('colors.green')}</span>
+                    </div>
+                    <RadioGroupItem value="green" id="green" className="sr-only" />
+                    {colorScheme === 'green' && <Check className="w-5 h-5 text-green-500" />}
+                  </Label>
+                  <Label
+                    htmlFor="orange"
+                    className={`flex items-center justify-between rounded-md border-2 p-4 cursor-pointer ${
+                      colorScheme === 'orange' ? 'border-orange-500' : 'border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full bg-orange-500"></div>
+                      <span>{t('colors.orange')}</span>
+                    </div>
+                    <RadioGroupItem value="orange" id="orange" className="sr-only" />
+                    {colorScheme === 'orange' && <Check className="w-5 h-5 text-orange-500" />}
+                  </Label>
+                  <Label
+                    htmlFor="purple"
+                    className={`flex items-center justify-between rounded-md border-2 p-4 cursor-pointer ${
+                      colorScheme === 'purple' ? 'border-purple-500' : 'border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full bg-purple-500"></div>
+                      <span>{t('colors.purple', 'Purple')}</span>
+                    </div>
+                    <RadioGroupItem value="purple" id="purple" className="sr-only" />
+                    {colorScheme === 'purple' && <Check className="w-5 h-5 text-purple-500" />}
+                  </Label>
+                  <Label
+                    htmlFor="indigo"
+                    className={`flex items-center justify-between rounded-md border-2 p-4 cursor-pointer ${
+                      colorScheme === 'indigo' ? 'border-indigo-500' : 'border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full bg-indigo-500"></div>
+                      <span>{t('colors.indigo', 'Indigo')}</span>
+                    </div>
+                    <RadioGroupItem value="indigo" id="indigo" className="sr-only" />
+                    {colorScheme === 'indigo' && <Check className="w-5 h-5 text-indigo-500" />}
+                  </Label>
+                  <Label
+                    htmlFor="pink"
+                    className={`flex items-center justify-between rounded-md border-2 p-4 cursor-pointer ${
+                      colorScheme === 'pink' ? 'border-pink-500' : 'border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full bg-pink-500"></div>
+                      <span>{t('colors.pink', 'Pink')}</span>
+                    </div>
+                    <RadioGroupItem value="pink" id="pink" className="sr-only" />
+                    {colorScheme === 'pink' && <Check className="w-5 h-5 text-pink-500" />}
+                  </Label>
+                  <Label
+                    htmlFor="teal"
+                    className={`flex items-center justify-between rounded-md border-2 p-4 cursor-pointer ${
+                      colorScheme === 'teal' ? 'border-teal-500' : 'border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full bg-teal-500"></div>
+                      <span>{t('colors.teal', 'Teal')}</span>
+                    </div>
+                    <RadioGroupItem value="teal" id="teal" className="sr-only" />
+                    {colorScheme === 'teal' && <Check className="w-5 h-5 text-teal-500" />}
+                  </Label>
+                </RadioGroup>
+              </div>
+
+              <div className="space-y-2">
+                <Label>{t('influencer.project.landingImage')}</Label>
+                <div 
+                  onClick={handleImageClick}
+                  className="border-2 border-dashed rounded-md p-4 flex flex-col items-center justify-center cursor-pointer bg-gray-50 hover:bg-gray-100 transition"
+                >
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                  />
+                  {landingImage ? (
+                    <div className="relative w-full">
+                      <img 
+                        src={landingImage} 
+                        alt="Landing page preview" 
+                        className="rounded-md max-h-64 mx-auto object-contain"
+                      />
+                      <div className="mt-2 text-center text-sm text-gray-500">
+                        {t('influencer.project.clickToChangeImage')}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="py-8 flex flex-col items-center text-gray-500">
+                      <FileImage className="w-12 h-12 mb-2" />
+                      <p className="text-center">
+                        {t('influencer.project.dropImageHere')}
+                      </p>
+                      <p className="text-sm text-gray-400 mt-1">
+                        {t('influencer.project.orClickToSelect')}
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="flex items-center space-x-2">
@@ -283,151 +367,27 @@ const CreateProject = () => {
                   checked={isActive}
                   onCheckedChange={setIsActive}
                 />
-                <Label htmlFor="isActive">{t('influencer.project.status')}</Label>
-                <span className="text-sm text-gray-500 ml-2">
-                  {isActive ? t('influencer.project.active') : t('influencer.project.inactive')}
-                </span>
+                <Label htmlFor="isActive">{t('influencer.project.isActive')}</Label>
               </div>
-
-              <div className="space-y-2">
-                <Label>{t('influencer.project.colorScheme')}</Label>
-                <RadioGroup 
-                  defaultValue="blue" 
-                  value={colorScheme} 
-                  onValueChange={handleColorSchemeChange}
-                  className="flex space-x-4"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="blue" id="blue" />
-                    <Label htmlFor="blue" className="text-blue-600">{t('influencer.project.blue')}</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="red" id="red" />
-                    <Label htmlFor="red" className="text-red-600">{t('influencer.project.red')}</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="orange" id="orange" />
-                    <Label htmlFor="orange" className="text-orange-600">{t('influencer.project.orange')}</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="green" id="green" />
-                    <Label htmlFor="green" className="text-green-600">{t('influencer.project.green')}</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="telegramBot">Knowledge Telegram Bot Name</Label>
-                <Input
-                  id="telegramBot"
-                  value={telegramBot}
-                  onChange={(e) => setTelegramBot(e.target.value)}
-                  placeholder="your_bot_name (without @)"
-                />
-                <p className="text-xs text-gray-500">
-                  Bot name can include letters, numbers, and underscores
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="knowledge">Project Knowledge</Label>
-                <Textarea
-                  id="knowledge"
-                  value={knowledge}
-                  onChange={(e) => setKnowledge(e.target.value)}
-                  placeholder="Enter knowledge information for your project"
-                  rows={5}
-                />
-                <p className="text-xs text-gray-500">
-                  This will help your users understand your project better
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="knowledgeDocuments">Knowledge Documents</Label>
-                <Input
-                  id="knowledgeDocuments"
-                  type="file"
-                  accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
-                  onChange={handleKnowledgeDocumentsChange}
-                  className="cursor-pointer"
-                  multiple
-                  disabled={knowledgeDocuments.length >= 5}
-                />
-                <p className="text-xs text-gray-500">
-                  Upload up to 5 documents to attach to your project knowledge
-                </p>
-
-                {knowledgeDocuments.length > 0 && (
-                  <div className="mt-2 space-y-2">
-                    {knowledgeDocuments.map((file, index) => (
-                      <div 
-                        key={index} 
-                        className="flex justify-between items-center bg-gray-100 p-2 rounded"
-                      >
-                        <span>{file.name}</span>
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => removeKnowledgeDocument(index)}
-                        >
-                          Remove
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="landingImage">{t('influencer.project.landingImage')}</Label>
-                <Input
-                  id="landingImage"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="cursor-pointer"
-                />
-                {imagePreview && (
-                  <div className="mt-2 relative w-full h-40 overflow-hidden rounded border">
-                    <img 
-                      src={imagePreview} 
-                      alt="Landing page preview" 
-                      className="w-full h-full object-cover"
-                    />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      className="absolute top-2 right-2"
-                      onClick={() => {
-                        setLandingImage(null);
-                        setImagePreview(null);
-                      }}
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                )}
-              </div>
-
-              <Button 
-                type="submit" 
-                className="w-full" 
-                disabled={loading}
+            </CardContent>
+            <CardFooter className="flex justify-end space-x-4 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate('/projects')}
               >
-                {loading ? (
-                  <div className="flex items-center justify-center">
-                    <Spinner className="h-5 w-5 mr-2" />
-                    <span>Creating Project...</span>
-                  </div>
-                ) : (
-                  t('influencer.project.save')
-                )}
+                {t('cancel', 'Cancel')}
               </Button>
-            </form>
-          </CardContent>
+              <Button
+                type="submit"
+                disabled={saving || !!botNameError}
+                className="flex items-center gap-2"
+              >
+                <ArrowRight className="w-4 h-4" /> 
+                {saving ? t('saving', 'Saving...') : t('save', 'Save')}
+              </Button>
+            </CardFooter>
+          </form>
         </Card>
       </main>
     </div>
