@@ -324,10 +324,11 @@ const Courses = () => {
                     <div>{course.recurring ? t('influencer.course.yes') : t('influencer.course.no')}</div>
                   </div>
                 </CardContent>
-                <CardFooter className="flex flex-wrap gap-2">
+                <CardFooter className="flex flex-wrap gap-2 justify-between">
                   <Button 
                     variant="outline" 
                     onClick={() => navigate(`/edit-course/${course.id}`)}
+                    size="sm"
                     className="flex items-center gap-2"
                   >
                     <Edit className="w-4 h-4" />
@@ -336,6 +337,7 @@ const Courses = () => {
                   <Button 
                     variant="outline"
                     onClick={() => navigate(`/course/${course.id}`)}
+                    size="sm"
                     className="flex items-center gap-2"
                   >
                     <Eye className="w-4 h-4" />
@@ -344,10 +346,11 @@ const Courses = () => {
                   <Button 
                     variant="default"
                     onClick={() => navigate(`/conversations/${course.id}`)}
+                    size="sm"
                     className="flex items-center gap-2"
                   >
                     <MessageSquare className="w-4 h-4" />
-                    {t('view.conversations', 'View Conversations')}
+                    {t('view.conversations', 'Conversations')}
                   </Button>
                 </CardFooter>
               </Card>
