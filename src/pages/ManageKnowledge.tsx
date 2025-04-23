@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -83,11 +84,12 @@ const ManageKnowledge = () => {
                                ? projectData.color_scheme as 'blue' | 'red' | 'orange' | 'green'
                                : 'blue';
 
+        // Create a properly typed Project object with all required properties
         const typedProject: Project = {
           ...projectData,
           color_scheme: validColorScheme,
           telegram_bot: projectData.telegram_bot || null,
-          description: projectData.description || null,
+          description: projectData.description || null, // This is where we're handling the description property
         };
         
         setProject(typedProject);

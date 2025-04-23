@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -36,17 +37,20 @@ const Dashboard = () => {
         
         console.log('Projects data:', data);
         
-        const typedProjects = data?.map(project => ({
-          ...project,
-          color_scheme: (project.color_scheme === 'blue' || 
+        const typedProjects = data?.map(project => {
+          // Create a new object with all properties and add defaults for missing ones
+          return {
+            ...project,
+            color_scheme: (project.color_scheme === 'blue' || 
                          project.color_scheme === 'red' || 
                          project.color_scheme === 'orange' || 
                          project.color_scheme === 'green') 
                          ? project.color_scheme as 'blue' | 'red' | 'orange' | 'green'
                          : null,
-          telegram_bot: project.telegram_bot || null,
-          description: project.description || null,
-        })) || [];
+            telegram_bot: project.telegram_bot || null,
+            description: project.description || null,
+          };
+        }) || [];
         
         setProjects(typedProjects);
       } catch (error) {

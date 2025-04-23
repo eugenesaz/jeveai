@@ -84,11 +84,12 @@ const EditProject = () => {
                                  ? data.color_scheme as 'blue' | 'red' | 'orange' | 'green'
                                  : 'blue';
 
+        // Create a properly typed Project object with all required properties
         const typedProject: Project = {
           ...data,
           color_scheme: validColorScheme,
           telegram_bot: Object.prototype.hasOwnProperty.call(data, 'telegram_bot') ? data.telegram_bot : null,
-          description: data.description || null, // Add description property
+          description: data.description || null, // This is where we're handling the description
         };
         
         setProject(typedProject);

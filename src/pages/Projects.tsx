@@ -39,17 +39,25 @@ const Projects = () => {
 
         console.log('Projects data:', data);
         
-        const typedProjects = data?.map(project => ({
-          ...project,
-          color_scheme: (project.color_scheme === 'blue' || 
-                         project.color_scheme === 'red' || 
-                         project.color_scheme === 'orange' || 
-                         project.color_scheme === 'green') 
-                         ? project.color_scheme as 'blue' | 'red' | 'orange' | 'green'
-                         : null,
-          telegram_bot: project.telegram_bot || null,
-          description: project.description || null, // Add description property
-        })) || [];
+        // Add description property if it doesn't exist in the database response
+        const typedProjects = data?.map(project => {
+          // Create a new object with all the properties from the project
+          const projectWithDefaults = {
+            ...project,
+            // Set valid color scheme or null if invalid
+            color_scheme: (project.color_scheme === 'blue' || 
+                          project.color_scheme === 'red' || 
+                          project.color_scheme === 'orange' || 
+                          project.color_scheme === 'green') 
+                          ? project.color_scheme as 'blue' | 'red' | 'orange' | 'green'
+                          : null,
+            // Ensure telegram_bot and description exist (null if not present)
+            telegram_bot: project.telegram_bot || null,
+            description: project.description || null,
+          };
+          
+          return projectWithDefaults;
+        }) || [];
         
         setProjects(typedProjects);
       } catch (error) {
