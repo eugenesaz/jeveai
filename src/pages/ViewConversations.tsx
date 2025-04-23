@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { UsersList } from '@/components/conversations/UsersList';
 import { MessageList } from '@/components/conversations/MessageList';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, RefreshCcw, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface User {
@@ -31,11 +31,13 @@ const ViewConversations = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      if (!courseId) return;
+  const fetchData = async () => {
+    if (!courseId) return;
+    setRefreshing(true);
 
+    try {
       const { data, error } = await supabase
         .from('conversations')
         .select('user_id, name')
@@ -46,7 +48,6 @@ const ViewConversations = () => {
         return;
       }
 
-      // Group by user and count messages
       const userMap = new Map<string, { name: string; count: number }>();
       data.forEach(item => {
         const existing = userMap.get(item.user_id);
@@ -64,13 +65,17 @@ const ViewConversations = () => {
       }));
 
       setUsers(users);
-      if (users.length > 0) {
+      if (users.length > 0 && !selectedUserId) {
         setSelectedUserId(users[0].id);
       }
+    } finally {
       setLoading(false);
-    };
+      setRefreshing(false);
+    }
+  };
 
-    fetchUsers();
+  useEffect(() => {
+    fetchData();
   }, [courseId]);
 
   useEffect(() => {
@@ -97,17 +102,40 @@ const ViewConversations = () => {
     }
   }, [courseId, selectedUserId]);
 
+  const handleAddKnowledge = () => {
+    navigate(`/manage-knowledge/${courseId}`);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-4">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate(-1)}
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate(-1)}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              {t('back')}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={fetchData}
+              disabled={refreshing}
+              className="gap-2"
+            >
+              <RefreshCcw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+              {t('refresh')}
+            </Button>
+          </div>
+          <Button
+            onClick={handleAddKnowledge}
+            variant="default"
             className="gap-2"
           >
-            <ArrowLeft className="h-4 w-4" />
-            {t('back')}
+            <Plus className="h-4 w-4" />
+            {t('Add Knowledge')}
           </Button>
         </div>
       </header>

@@ -324,7 +324,7 @@ const Courses = () => {
                     <div>{course.recurring ? t('influencer.course.yes') : t('influencer.course.no')}</div>
                   </div>
                 </CardContent>
-                <CardFooter className="flex justify-between">
+                <CardFooter className="flex flex-wrap gap-2">
                   <Button 
                     variant="outline" 
                     onClick={() => navigate(`/edit-course/${course.id}`)}

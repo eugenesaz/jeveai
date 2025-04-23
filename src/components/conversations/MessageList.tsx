@@ -27,6 +27,15 @@ export const MessageList = ({ messages }: MessageListProps) => {
     (message.message_highlight?.toLowerCase() || '').includes(searchTerm.toLowerCase())
   );
 
+  const getCellColor = (content: string) => {
+    const words = content.trim().split(/\s+/);
+    const percentage = (words.length / 100) * 100; // This is a simple metric, adjust as needed
+
+    if (percentage >= 80) return 'bg-white';
+    if (percentage >= 50) return 'bg-yellow-50 border-yellow-100';
+    return 'bg-red-50 border-red-100';
+  };
+
   return (
     <div className="h-full flex flex-col">
       <div className="relative mb-4">
@@ -43,11 +52,7 @@ export const MessageList = ({ messages }: MessageListProps) => {
           {filteredMessages.map((message) => (
             <div
               key={message.id}
-              className={`rounded-lg p-4 transition-all duration-200 ${
-                message.message_highlight 
-                  ? 'bg-yellow-50 border border-yellow-100' 
-                  : 'bg-white border'
-              }`}
+              className={`rounded-lg p-4 transition-all duration-200 border ${getCellColor(message.user_message)}`}
             >
               <div className="space-y-2">
                 <div className="flex justify-between items-start">
