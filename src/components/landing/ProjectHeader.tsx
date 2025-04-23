@@ -19,7 +19,7 @@ interface ProjectHeaderProps {
 
 export const ProjectHeader = ({ projectName, colorScheme = 'blue', projectUrlName }: ProjectHeaderProps) => {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isSignUpOpen, setIsSignUpOpen] = useState(false);
   const navigate = useNavigate();
@@ -27,9 +27,10 @@ export const ProjectHeader = ({ projectName, colorScheme = 'blue', projectUrlNam
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
-      toast.success(t('navigation.logout_success'));
+      setUser(null);
+      toast.success(t('navigation.logout_success', 'Successfully logged out!'));
     } catch (error) {
-      toast.error(t('navigation.logout_error'));
+      toast.error(t('navigation.logout_error', 'Logout failed!'));
       console.error('Logout error:', error);
     }
   };
@@ -43,14 +44,7 @@ export const ProjectHeader = ({ projectName, colorScheme = 'blue', projectUrlNam
           </h1>
           <div className="flex items-center space-x-4">
             <ProjectLanguageSelector />
-            <Button
-              variant="outline"
-              className={cn("text-white border-white/30 hover:border-white/50 bg-white/10 hover:bg-white/20 transition-all duration-300 ease-in-out flex items-center gap-2")}
-              onClick={() => navigate(`/${projectUrlName}`)}
-            >
-              <ArrowLeft className="mr-2 w-4 h-4" />
-              {t('Back', 'Back')}
-            </Button>
+            {/* REMOVE Back button from ProjectLanding */}
             {user ? (
               <>
                 <Button 
@@ -65,6 +59,7 @@ export const ProjectHeader = ({ projectName, colorScheme = 'blue', projectUrlNam
                   variant="outline" 
                   className={cn("text-white border-white/30 hover:border-white/50 bg-white/10 hover:bg-white/20 transition-all duration-300 ease-in-out flex items-center gap-2")}
                   onClick={handleLogout}
+                  data-testid="logout-btn"
                 >
                   <LogOut className="mr-2 w-4 h-4" />
                   {t('navigation.logout')}
@@ -102,3 +97,6 @@ export const ProjectHeader = ({ projectName, colorScheme = 'blue', projectUrlNam
     </>
   );
 };
+
+// no changes below
+

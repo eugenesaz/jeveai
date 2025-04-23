@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
@@ -109,8 +108,8 @@ const ViewCourse = () => {
   };
 
   const handleGoBack = () => {
-    if (isFromProjectLanding) {
-      navigate(-1);
+    if (course?.project_id) {
+      navigate(`/project/${course.project_id}`);
     } else {
       navigate('/dashboard');
     }
@@ -141,8 +140,8 @@ const ViewCourse = () => {
         <header className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md">
           <div className="container mx-auto p-6 flex justify-between items-center">
             <h1 className="text-2xl md:text-3xl font-bold">{course?.name}</h1>
-            <Button variant="outline" className="text-white border-white hover:bg-white/10" onClick={() => navigate('/enrolled-courses')}>
-              Back to My Courses
+            <Button variant="outline" className="text-white border-white hover:bg-white/10" onClick={handleGoBack}>
+              Back
             </Button>
           </div>
         </header>
