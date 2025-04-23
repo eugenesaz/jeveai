@@ -38,6 +38,9 @@ const Dashboard = () => {
         console.log('Projects data:', data);
         
         const typedProjects = data?.map(project => {
+          // Add type assertion to access description
+          const projectData = project as any;
+          
           return {
             id: project.id,
             name: project.name,
@@ -53,7 +56,7 @@ const Dashboard = () => {
                          ? project.color_scheme as 'blue' | 'red' | 'orange' | 'green'
                          : null,
             telegram_bot: project.telegram_bot || null,
-            description: project.description || null,
+            description: projectData.description || null,
           } as Project;
         }) || [];
         

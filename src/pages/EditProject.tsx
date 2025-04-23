@@ -84,6 +84,9 @@ const EditProject = () => {
                                  ? data.color_scheme as 'blue' | 'red' | 'orange' | 'green'
                                  : 'blue';
 
+        // Type assertion to access description
+        const projectData = data as any;
+
         // Create a properly typed Project object with all required properties
         const typedProject: Project = {
           id: data.id,
@@ -95,7 +98,7 @@ const EditProject = () => {
           created_at: data.created_at,
           color_scheme: validColorScheme,
           telegram_bot: data.telegram_bot || null,
-          description: data.description || null,
+          description: projectData.description || null,
         };
         
         setProject(typedProject);

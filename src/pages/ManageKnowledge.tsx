@@ -83,6 +83,9 @@ const ManageKnowledge = () => {
                                projectData.color_scheme === 'green') 
                                ? projectData.color_scheme as 'blue' | 'red' | 'orange' | 'green'
                                : 'blue';
+                               
+        // Type assertion to access description
+        const projectDataWithDesc = projectData as any;
 
         // Create a properly typed Project object with all required properties
         const typedProject: Project = {
@@ -95,7 +98,7 @@ const ManageKnowledge = () => {
           created_at: projectData.created_at,
           color_scheme: validColorScheme,
           telegram_bot: projectData.telegram_bot || null,
-          description: projectData.description || null,
+          description: projectDataWithDesc.description || null,
         };
         
         setProject(typedProject);

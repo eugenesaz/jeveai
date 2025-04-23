@@ -41,6 +41,9 @@ const Projects = () => {
         
         // Add description property if it doesn't exist in the database response
         const typedProjects = data?.map(project => {
+          // Add type assertion to access description
+          const projectData = project as any;
+          
           return {
             id: project.id,
             name: project.name,
@@ -58,7 +61,7 @@ const Projects = () => {
                           : null,
             // Ensure telegram_bot and description exist (null if not present)
             telegram_bot: project.telegram_bot || null,
-            description: project.description || null,
+            description: projectData.description || null,
           } as Project;
         }) || [];
         
