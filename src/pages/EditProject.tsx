@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -38,9 +37,19 @@ const EditProject = () => {
   const [existingKnowledge, setExistingKnowledge] = useState<ProjectKnowledge[]>([]);
   const [knowledgeDocuments, setKnowledgeDocuments] = useState<File[]>([]);
 
+  const colorOptions = [
+    { value: 'blue', label: t('influencer.project.blue', 'Blue'), className: 'text-blue-600' },
+    { value: 'red', label: t('influencer.project.red', 'Red'), className: 'text-red-600' },
+    { value: 'orange', label: t('influencer.project.orange', 'Orange'), className: 'text-orange-600' },
+    { value: 'green', label: t('influencer.project.green', 'Green'), className: 'text-green-600' },
+    { value: 'purple', label: t('influencer.project.purple', 'Purple'), className: 'text-purple-600' },
+    { value: 'teal', label: t('influencer.project.teal', 'Teal'), className: 'text-teal-600' },
+    { value: 'yellow', label: t('influencer.project.yellow', 'Yellow'), className: 'text-yellow-600' },
+  ];
+
   const handleColorSchemeChange = (value: string) => {
-    if (value === 'blue' || value === 'red' || value === 'orange' || value === 'green') {
-      setColorScheme(value);
+    if (colorOptions.some((c) => c.value === value)) {
+      setColorScheme(value as any);
     }
   };
 
@@ -49,7 +58,6 @@ const EditProject = () => {
       if (!user || !id) return;
 
       try {
-        // Fetch project data
         const { data, error } = await supabase
           .from('projects')
           .select('*')
@@ -84,10 +92,8 @@ const EditProject = () => {
                                  ? data.color_scheme as 'blue' | 'red' | 'orange' | 'green'
                                  : 'blue';
 
-        // Type assertion to access description
         const projectData = data as any;
 
-        // Create a properly typed Project object with all required properties
         const typedProject: Project = {
           id: data.id,
           name: data.name,
@@ -112,7 +118,6 @@ const EditProject = () => {
           setImagePreview(data.landing_image);
         }
 
-        // Fetch existing knowledge
         const { data: knowledgeData } = await supabase
           .from('project_knowledge')
           .select('*')
@@ -121,7 +126,6 @@ const EditProject = () => {
 
         if (knowledgeData && knowledgeData.length > 0) {
           setExistingKnowledge(knowledgeData);
-          // Set the most recent text knowledge (without document_url) as the current knowledge
           const textKnowledge = knowledgeData.find(k => !k.document_url);
           if (textKnowledge) {
             setKnowledge(textKnowledge.content);
@@ -229,11 +233,9 @@ const EditProject = () => {
     try {
       let landingImageUrl = project?.landing_image || '';
 
-      // Upload new image if one was selected
       if (landingImage) {
         setUploadingImage(true);
         
-        // Check bucket access first
         const hasAccess = await testBucketAccess('project-images');
         
         if (!hasAccess) {
@@ -292,7 +294,6 @@ const EditProject = () => {
         throw updateError;
       }
 
-      // If knowledge is changed, add a new knowledge entry
       if (knowledge) {
         const latestKnowledge = existingKnowledge.find(k => !k.document_url);
         if (!latestKnowledge || latestKnowledge.content !== knowledge) {
@@ -307,11 +308,9 @@ const EditProject = () => {
         }
       }
 
-      // Upload knowledge documents if any
       if (knowledgeDocuments.length > 0) {
         const documents = await uploadKnowledgeDocuments(id);
         
-        // Create knowledge entries for each document
         for (const doc of documents) {
           if (doc) {
             await supabase.from('project_knowledge').insert({
@@ -346,124 +345,111 @@ const EditProject = () => {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <Spinner size="lg" className="mb-4" />
-          <p>{t('loading')}</p>
+          <p>{t('loading', 'Loading...')}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm">
-        <div className="container mx-auto p-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">{t('influencer.project.edit')}</h1>
+    <div className="min-h-screen bg-gradient-to-br from-white to-blue-50">
+      <header className="bg-white/70 shadow-sm backdrop-blur">
+        <div className="container mx-auto p-6 flex justify-between items-center">
+          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">{t('edit_project.title', 'Edit Project')}</h1>
           <Button variant="ghost" onClick={() => navigate('/projects')}>
-            {t('cancel')}
+            {t('cancel', 'Cancel')}
           </Button>
         </div>
       </header>
 
-      <main className="container mx-auto p-6">
-        <Card className="max-w-3xl mx-auto">
+      <main className="container mx-auto py-10">
+        <Card className="max-w-3xl mx-auto border-none shadow-xl glass-morphism">
           <CardHeader>
-            <CardTitle>{t('influencer.project.edit')}</CardTitle>
+            <CardTitle className="text-2xl md:text-3xl font-bold mb-0">
+              {t('edit_project.heading', 'Edit Project Details')}
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-8">
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="projectName">{t('edit_project.name', 'Project Name')}</Label>
+                  <Input
+                    id="projectName"
+                    value={projectName}
+                    onChange={(e) => setProjectName(e.target.value)}
+                    placeholder={t('edit_project.name_placeholder', 'My Awesome Project')}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="urlName">{t('edit_project.url_name', 'URL Name')}</Label>
+                  <Input
+                    id="urlName"
+                    value={urlName}
+                    onChange={handleUrlNameChange}
+                    placeholder={t('edit_project.url_name_placeholder', 'my-awesome-project')}
+                    required
+                  />
+                  {urlError && <p className="text-sm text-red-500">{urlError}</p>}
+                </div>
+              </div>
               <div className="space-y-2">
-                <Label htmlFor="projectName">{t('influencer.project.name')}</Label>
-                <Input
-                  id="projectName"
-                  value={projectName}
-                  onChange={(e) => setProjectName(e.target.value)}
-                  placeholder="My Awesome Project"
-                  required
-                />
+                <Label htmlFor="projectStatus">{t('edit_project.status', 'Project Status')}</Label>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="isActive"
+                    checked={isActive}
+                    onCheckedChange={setIsActive}
+                  />
+                  <span className="text-sm text-gray-500 ml-2">
+                    {isActive ? t('edit_project.active', 'Active') : t('edit_project.inactive', 'Inactive')}
+                  </span>
+                </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="urlName">{t('influencer.project.urlName')}</Label>
-                <Input
-                  id="urlName"
-                  value={urlName}
-                  onChange={handleUrlNameChange}
-                  placeholder="my-awesome-project"
-                  required
-                />
-                {urlError && <p className="text-sm text-red-500">{urlError}</p>}
-                <p className="text-sm text-gray-500">
-                  {window.location.origin}/{urlName || 'your-url-name'}
-                </p>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="isActive"
-                  checked={isActive}
-                  onCheckedChange={setIsActive}
-                />
-                <Label htmlFor="isActive">{t('influencer.project.status')}</Label>
-                <span className="text-sm text-gray-500 ml-2">
-                  {isActive ? t('influencer.project.active') : t('influencer.project.inactive')}
-                </span>
-              </div>
-
-              <div className="space-y-2">
-                <Label>{t('influencer.project.colorScheme')}</Label>
+                <Label>{t('edit_project.color_scheme', 'Color Scheme')}</Label>
                 <RadioGroup 
                   value={colorScheme} 
                   onValueChange={handleColorSchemeChange}
-                  className="flex space-x-4"
+                  className="flex flex-wrap gap-4"
                 >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="blue" id="blue" />
-                    <Label htmlFor="blue" className="text-blue-600">{t('influencer.project.blue')}</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="red" id="red" />
-                    <Label htmlFor="red" className="text-red-600">{t('influencer.project.red')}</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="orange" id="orange" />
-                    <Label htmlFor="orange" className="text-orange-600">{t('influencer.project.orange')}</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="green" id="green" />
-                    <Label htmlFor="green" className="text-green-600">{t('influencer.project.green')}</Label>
-                  </div>
+                  {colorOptions.map((color) => (
+                    <div className="flex items-center space-x-2" key={color.value}>
+                      <RadioGroupItem value={color.value} id={color.value} />
+                      <Label htmlFor={color.value} className={color.className}>{color.label}</Label>
+                    </div>
+                  ))}
                 </RadioGroup>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="telegramBot">Knowledge Telegram Bot Name</Label>
+                <Label htmlFor="telegramBot">{t('edit_project.telegram_bot', 'Knowledge Telegram Bot Name')}</Label>
                 <Input
                   id="telegramBot"
                   value={telegramBot}
                   onChange={(e) => setTelegramBot(e.target.value)}
-                  placeholder="your_bot_name (without @)"
+                  placeholder={t('edit_project.telegram_bot_placeholder', 'your_bot_name (without @)')}
                 />
-                <p className="text-xs text-gray-500">
-                  Bot name can include letters, numbers, and underscores
-                </p>
+                <p className="text-xs text-gray-500">{t('edit_project.telegram_bot_hint', 'Bot name can include letters, numbers, and underscores')}</p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="knowledge">Project Knowledge</Label>
+                <Label htmlFor="knowledge">{t('edit_project.knowledge', 'Project Knowledge')}</Label>
                 <Textarea
                   id="knowledge"
                   value={knowledge}
                   onChange={(e) => setKnowledge(e.target.value)}
-                  placeholder="Enter knowledge information for your project"
+                  placeholder={t('edit_project.knowledge_placeholder', 'Enter knowledge information for your project')}
                   rows={5}
                 />
-                <p className="text-xs text-gray-500">
-                  This will help your users understand your project better
-                </p>
+                <p className="text-xs text-gray-500">{t('edit_project.knowledge_hint', 'This will help your users understand your project better')}</p>
               </div>
 
               {existingKnowledge.filter(k => k.document_url).length > 0 && (
                 <div className="space-y-2">
-                  <Label>Existing Knowledge Documents</Label>
+                  <Label>{t('edit_project.existing_docs', 'Existing Knowledge Documents')}</Label>
                   <div className="space-y-2">
                     {existingKnowledge
                       .filter(k => k.document_url)
@@ -487,7 +473,7 @@ const EditProject = () => {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="knowledgeDocuments">Add Knowledge Documents</Label>
+                <Label htmlFor="knowledgeDocuments">{t('edit_project.add_docs', 'Add Knowledge Documents')}</Label>
                 <Input
                   id="knowledgeDocuments"
                   type="file"
@@ -497,10 +483,7 @@ const EditProject = () => {
                   multiple
                   disabled={knowledgeDocuments.length >= 5}
                 />
-                <p className="text-xs text-gray-500">
-                  Upload up to 5 additional documents to attach to your project knowledge
-                </p>
-
+                <p className="text-xs text-gray-500">{t('edit_project.docs_hint', 'Upload up to 5 additional documents to attach to your project knowledge')}</p>
                 {knowledgeDocuments.length > 0 && (
                   <div className="mt-2 space-y-2">
                     {knowledgeDocuments.map((file, index) => (
@@ -515,7 +498,7 @@ const EditProject = () => {
                           size="sm"
                           onClick={() => removeKnowledgeDocument(index)}
                         >
-                          Remove
+                          {t('edit_project.remove', 'Remove')}
                         </Button>
                       </div>
                     ))}
@@ -524,7 +507,7 @@ const EditProject = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="landingImage">{t('influencer.project.landingImage')}</Label>
+                <Label htmlFor="landingImage">{t('edit_project.landing_image', 'Landing Image')}</Label>
                 <Input
                   id="landingImage"
                   type="file"
@@ -533,23 +516,23 @@ const EditProject = () => {
                   className="cursor-pointer"
                 />
                 {imagePreview && (
-                  <div className="mt-2 relative w-full h-40 overflow-hidden rounded border">
+                  <div className="mt-2 relative w-full h-40 overflow-hidden rounded-xl border">
                     <img 
                       src={imagePreview} 
-                      alt="Landing page preview" 
+                      alt={t('edit_project.landing_image_preview', 'Landing page preview')}
                       className="w-full h-full object-cover"
                     />
                     <Button
                       type="button"
                       variant="destructive"
                       size="sm"
-                      className="absolute top-2 right-2"
+                      className="absolute top-3 right-3"
                       onClick={() => {
                         setLandingImage(null);
                         setImagePreview(project?.landing_image || null);
                       }}
                     >
-                      Remove
+                      {t('edit_project.remove', 'Remove')}
                     </Button>
                   </div>
                 )}
@@ -557,16 +540,16 @@ const EditProject = () => {
 
               <Button 
                 type="submit" 
-                className="w-full" 
+                className="w-full bg-primary text-white font-bold py-3"
                 disabled={saving}
               >
                 {saving ? (
                   <div className="flex items-center justify-center">
                     <Spinner className="h-5 w-5 mr-2" />
-                    <span>Updating Project...</span>
+                    <span>{t('edit_project.saving', 'Updating Project...')}</span>
                   </div>
                 ) : (
-                  t('influencer.project.save')
+                  t('edit_project.save', 'Save Changes')
                 )}
               </Button>
             </form>

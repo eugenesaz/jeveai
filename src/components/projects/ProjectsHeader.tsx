@@ -11,7 +11,7 @@ export const ProjectsHeader = () => {
   return (
     <header className="bg-white shadow-sm">
       <div className="container mx-auto p-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold">{t('influencer.project.title')}</h1>
+        <h1 className="text-2xl font-bold">{t('projects.title', 'Projects')}</h1>
         <div className="flex gap-4">
           <Button
             variant="outline"
@@ -19,7 +19,7 @@ export const ProjectsHeader = () => {
             className="flex items-center gap-2"
           >
             <BookOpen className="w-4 h-4" />
-            My courses
+            {t('navigation.my_courses', 'My courses')}
           </Button>
           <Button 
             onClick={() => navigate('/courses')} 

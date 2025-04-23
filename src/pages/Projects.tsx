@@ -122,7 +122,7 @@ const Projects = () => {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">
         <div className="container mx-auto p-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">{t('influencer.projects.title')}</h1>
+          <h1 className="text-2xl font-bold">{t('projects.title', 'Projects')}</h1>
           <div className="flex gap-4 items-center">
             <div className="hidden md:flex gap-4">
               <Button variant="ghost" onClick={() => navigate('/')}>
@@ -138,7 +138,8 @@ const Projects = () => {
                 {t('navigation.courses')}
               </Button>
               <Button variant="ghost" onClick={signOut}>
-                <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7" /><path d="M3 21V3"/></svg>
+                {/* Added Lucide LogOut icon */}
+                <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7"/><path d="M3 21V3"/></svg>
                 {t('navigation.logout')}
               </Button>
             </div>
