@@ -67,7 +67,7 @@ const Index = () => {
                 {t('landing.hero.title', 'Scale Your Influence Through Personalization')}
               </h1>
               <p className="text-xl md:text-2xl mb-8 text-purple-100">
-                {t('landing.hero.subtitle', 'Create hyper-personalized programs that adapt to your customers' individual needs')}
+                {t('landing.hero.subtitle', 'Create hyper-personalized programs that adapt to your customers\' individual needs')}
               </p>
               <div className="flex flex-wrap gap-4">
                 <Button 
@@ -151,7 +151,7 @@ const Index = () => {
                   ))}
                 </div>
               </div>
-              <p className="text-gray-600 mb-6 italic">"{t('landing.testimonials.quote1', 'I've doubled my client base while actually improving my personalized service. The system adapts to each client's needs automatically.')}"</p>
+              <p className="text-gray-600 mb-6 italic">"{t('landing.testimonials.quote1', 'I\'ve doubled my client base while actually improving my personalized service. The system adapts to each client\'s needs automatically.')}"</p>
               <div className="flex items-center">
                 <div className="w-12 h-12 bg-purple-200 rounded-full flex items-center justify-center text-purple-700 font-bold text-lg mr-4">JD</div>
                 <div>
@@ -187,7 +187,7 @@ const Index = () => {
                   ))}
                 </div>
               </div>
-              <p className="text-gray-600 mb-6 italic">"{t('landing.testimonials.quote3', 'My customers rave about how the program feels like it was made just for them. I've increased retention rates by 70%.')}"</p>
+              <p className="text-gray-600 mb-6 italic">"{t('landing.testimonials.quote3', 'My customers rave about how the program feels like it was made just for them. I\'ve increased retention rates by 70%.')}"</p>
               <div className="flex items-center">
                 <div className="w-12 h-12 bg-indigo-200 rounded-full flex items-center justify-center text-indigo-700 font-bold text-lg mr-4">AL</div>
                 <div>
