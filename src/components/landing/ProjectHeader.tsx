@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { ProjectLanguageSelector } from '@/components/landing/ProjectLanguageSelector';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/sonner';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
@@ -19,15 +18,14 @@ interface ProjectHeaderProps {
 
 export const ProjectHeader = ({ projectName, colorScheme = 'blue', projectUrlName }: ProjectHeaderProps) => {
   const { t } = useTranslation();
-  const { user, setUser } = useAuth();
+  const { user, signOut } = useAuth();
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isSignUpOpen, setIsSignUpOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
-      setUser(null);
+      await signOut();
       toast.success(t('navigation.logout_success', 'Successfully logged out!'));
     } catch (error) {
       toast.error(t('navigation.logout_error', 'Logout failed!'));
@@ -44,7 +42,6 @@ export const ProjectHeader = ({ projectName, colorScheme = 'blue', projectUrlNam
           </h1>
           <div className="flex items-center space-x-4">
             <ProjectLanguageSelector />
-            {/* REMOVE Back button from ProjectLanding */}
             {user ? (
               <>
                 <Button 
@@ -99,4 +96,3 @@ export const ProjectHeader = ({ projectName, colorScheme = 'blue', projectUrlNam
 };
 
 // no changes below
-
