@@ -14,6 +14,9 @@ import { Check, ChevronLeft, Save, FileImage, Copy, Trash2 } from 'lucide-react'
 import { toast } from '@/components/ui/sonner';
 import { useBotNameValidator } from '@/hooks/useBotNameValidator';
 
+// Define the allowed color schemes explicitly
+type ColorScheme = 'blue' | 'red' | 'orange' | 'green' | 'purple' | 'indigo' | 'pink' | 'teal';
+
 const EditProject = () => {
   const { id } = useParams();
   const { t } = useTranslation();
@@ -30,7 +33,7 @@ const EditProject = () => {
   const [telegramBot, setTelegramBot] = useState('');
   const [originalTelegramBot, setOriginalTelegramBot] = useState('');
   const [isActive, setIsActive] = useState(true);
-  const [colorScheme, setColorScheme] = useState<'blue' | 'red' | 'orange' | 'green' | 'purple' | 'indigo' | 'pink' | 'teal'>('blue');
+  const [colorScheme, setColorScheme] = useState<ColorScheme>('blue');
   
   // Image handling
   const [landingImage, setLandingImage] = useState<string | null>(null);
@@ -68,7 +71,9 @@ const EditProject = () => {
         setTelegramBot(data.telegram_bot || '');
         setOriginalTelegramBot(data.telegram_bot || '');
         setIsActive(data.status);
-        setColorScheme(data.color_scheme || 'blue');
+        // Make sure to cast the color_scheme to the ColorScheme type
+        // and provide a fallback if it's not one of the expected values
+        setColorScheme((data.color_scheme as ColorScheme) || 'blue');
         setLandingImage(data.landing_image);
         
       } catch (error) {
@@ -178,7 +183,7 @@ const EditProject = () => {
           url_name: urlName,
           status: isActive,
           telegram_bot: telegramBot || null,
-          color_scheme: colorScheme,
+          color_scheme: colorScheme, // Now this is properly typed
           landing_image: imageUrl,
         })
         .eq('id', id);

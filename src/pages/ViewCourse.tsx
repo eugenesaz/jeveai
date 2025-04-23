@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
@@ -6,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import ReactMarkdown from 'react-markdown';
-import { Course } from '@/types/supabase';
+import { Course, Project } from '@/types/supabase';
 import { AuthDialogs } from '@/components/auth/AuthDialogs';
 import { toast } from '@/components/ui/use-toast';
 import { FakePaymentDialog } from "@/components/FakePaymentDialog";
@@ -17,6 +18,8 @@ import { TelegramWarning } from '@/components/profile/TelegramWarning';
 interface CourseWithDates extends Course {
   begin_date?: string;
   end_date?: string;
+  // Add project URL name for navigation
+  project_url_name?: string;
 }
 
 interface EnrollmentInfo {
@@ -38,6 +41,7 @@ const ViewCourse = () => {
   const [isSignUpOpen, setIsSignUpOpen] = useState(false);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [userTelegram, setUserTelegram] = useState<string | null>(null);
+  const [projectUrlName, setProjectUrlName] = useState<string | null>(null);
 
   const isFromProjectLanding = location.state?.fromProjectLanding || false;
 
@@ -46,6 +50,7 @@ const ViewCourse = () => {
       if (!id) return;
 
       try {
+        // First fetch the course data
         const { data: courseData, error: courseError } = await supabase
           .from('courses')
           .select('*')
@@ -54,6 +59,21 @@ const ViewCourse = () => {
 
         if (courseError) {
           throw courseError;
+        }
+
+        // Then fetch the associated project to get its URL name
+        if (courseData.project_id) {
+          const { data: projectData, error: projectError } = await supabase
+            .from('projects')
+            .select('url_name')
+            .eq('id', courseData.project_id)
+            .single();
+            
+          if (!projectError && projectData) {
+            setProjectUrlName(projectData.url_name);
+            // Add the project's URL name to the course data
+            courseData.project_url_name = projectData.url_name;
+          }
         }
 
         setCourse(courseData as CourseWithDates);
@@ -108,8 +128,10 @@ const ViewCourse = () => {
   };
 
   const handleGoBack = () => {
-    if (course?.project_id) {
-      navigate(`/${course.url_name || course.project_id}`);
+    if (projectUrlName) {
+      navigate(`/${projectUrlName}`);
+    } else if (course?.project_id) {
+      navigate(`/projects`);
     } else {
       navigate('/dashboard');
     }

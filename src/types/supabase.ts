@@ -17,7 +17,7 @@ export interface Project {
   name: string;
   status: boolean | null;
   url_name: string;
-  color_scheme: 'blue' | 'red' | 'orange' | 'green' | null;
+  color_scheme: 'blue' | 'red' | 'orange' | 'green' | 'purple' | 'indigo' | 'pink' | 'teal' | null;
   landing_image: string | null;
   user_id: string;
   created_at: string | null;
