@@ -61,6 +61,11 @@ const ViewCourse = () => {
           throw courseError;
         }
 
+        // Create a copy of courseData to add project_url_name
+        const courseWithProjectUrl: CourseWithDates = {
+          ...courseData as Course
+        };
+
         // Then fetch the associated project to get its URL name
         if (courseData.project_id) {
           const { data: projectData, error: projectError } = await supabase
@@ -72,11 +77,11 @@ const ViewCourse = () => {
           if (!projectError && projectData) {
             setProjectUrlName(projectData.url_name);
             // Add the project's URL name to the course data
-            courseData.project_url_name = projectData.url_name;
+            courseWithProjectUrl.project_url_name = projectData.url_name;
           }
         }
 
-        setCourse(courseData as CourseWithDates);
+        setCourse(courseWithProjectUrl);
         
         if (user) {
           const { data: enrollmentData, error: enrollmentError } = await supabase
