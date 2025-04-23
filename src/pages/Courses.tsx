@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,7 +8,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Course } from '@/types/supabase';
 import { ProjectsHeader } from '@/components/projects/ProjectsHeader';
-import { Home, Plus, Pencil, Eye } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Plus, Edit, Eye, Search } from 'lucide-react';
 
 interface CourseWithProject extends Course {
   project: {
@@ -26,8 +25,8 @@ const Courses = () => {
   const [courses, setCourses] = useState<CourseWithProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [projectName, setProjectName] = useState<string | null>(null);
-  
-  // Get the project ID from the URL query parameters
+  const [search, setSearch] = useState('');
+
   const queryParams = new URLSearchParams(location.search);
   const projectId = queryParams.get('projectId');
 
@@ -36,11 +35,9 @@ const Courses = () => {
       if (!user) return;
 
       try {
-        // If projectId is provided, fetch courses for this specific project
         if (projectId) {
           console.log('Fetching courses for project:', projectId);
           
-          // Fetch project name
           const { data: projectData } = await supabase
             .from('projects')
             .select('name')
@@ -51,7 +48,6 @@ const Courses = () => {
             setProjectName(projectData.name);
           }
           
-          // First check if user is the owner of this project
           const { data: projectOwnerData } = await supabase
             .from('projects')
             .select('id')
@@ -60,7 +56,6 @@ const Courses = () => {
             .single();
             
           if (projectOwnerData) {
-            // User is the project owner, fetch all courses for this project
             const { data: coursesData, error: coursesError } = await supabase
               .from('courses')
               .select(`
@@ -78,7 +73,6 @@ const Courses = () => {
               setCourses(coursesData as CourseWithProject[]);
             }
           } else {
-            // Check if user has an influencer role for this project
             const { data: roleData, error: roleError } = await supabase
               .from('user_project_roles')
               .select('role')
@@ -91,7 +85,6 @@ const Courses = () => {
               return;
             }
 
-            // Only allow viewing courses if user is an influencer for this project
             const isInfluencer = roleData && roleData.some(role => role.role === 'influencer');
             if (!isInfluencer) {
               console.log('User is not an influencer for this project');
@@ -99,7 +92,6 @@ const Courses = () => {
               return;
             }
             
-            // Fetch courses for this specific project
             const { data: coursesData, error: coursesError } = await supabase
               .from('courses')
               .select(`
@@ -118,7 +110,6 @@ const Courses = () => {
             }
           }
         } else {
-          // Fetch all projects owned by the user
           const { data: ownedProjects, error: ownedProjectsError } = await supabase
             .from('projects')
             .select('id')
@@ -130,7 +121,6 @@ const Courses = () => {
 
           let projectIds = ownedProjects ? ownedProjects.map(project => project.id) : [];
 
-          // Also fetch all projects where user has an influencer role
           const { data: userProjects, error: projectsError } = await supabase
             .from('user_project_roles')
             .select('project_id')
@@ -143,7 +133,6 @@ const Courses = () => {
 
           if (userProjects && userProjects.length > 0) {
             projectIds = [...projectIds, ...userProjects.map(project => project.project_id)];
-            // Remove duplicates
             projectIds = [...new Set(projectIds)];
           }
 
@@ -152,7 +141,6 @@ const Courses = () => {
             return;
           }
 
-          // Fetch courses for all these projects
           const { data: coursesData, error: coursesError } = await supabase
             .from('courses')
             .select(`
@@ -181,10 +169,8 @@ const Courses = () => {
 
   const getTypeTranslation = (type: string) => {
     if (!type) return '';
-    
     const translationKey = `influencer.course.types.${type.toLowerCase()}`;
     const translated = t(translationKey);
-    
     return translated !== translationKey ? translated : type;
   };
 
@@ -203,7 +189,15 @@ const Courses = () => {
     }
   };
 
-  
+  const filteredCourses = courses.filter(course => {
+    const searchText = search.toLowerCase();
+    return (
+      course.name.toLowerCase().includes(searchText) ||
+      (course.description && course.description.toLowerCase().includes(searchText)) ||
+      (course.type && course.type.toLowerCase().includes(searchText))
+    );
+  });
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">
@@ -212,43 +206,47 @@ const Courses = () => {
             <h1 className="text-2xl font-bold">{t('influencer.course.title')}</h1>
             {projectName && (
               <p className="text-gray-500 mt-1">
-                {t('filtering.for.project')}: {projectName}
+                {t('filtering.for.project', 'For project')}: {projectName}
               </p>
             )}
           </div>
-          <div className="flex gap-4">
-            <Button variant="ghost" onClick={() => navigate('/dashboard')} className="flex items-center gap-2">
-              <Home className="w-4 h-4" />
-              {t('navigation.dashboard')}
-            </Button>
-            <Button variant="ghost" onClick={() => navigate('/projects')} className="flex items-center gap-2">
-              <Eye className="w-4 h-4" />
-              {t('navigation.projects')}
-            </Button>
-            <Button 
-              onClick={() => {
-                if (projectId) {
-                  navigate(`/create-course?projectId=${projectId}`);
-                } else {
-                  navigate('/create-course');
-                }
-              }} 
-              variant="default"
-              className="flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              {t('influencer.course.createNew')}
-            </Button>
-          </div>
+          <Button 
+            onClick={() => {
+              if (projectId) {
+                navigate(`/create-course?projectId=${projectId}`);
+              } else {
+                navigate('/create-course');
+              }
+            }}
+            variant="default"
+            className="flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            {t('influencer.course.createNew')}
+          </Button>
         </div>
       </header>
 
       <main className="container mx-auto p-6 space-y-6">
+        <div className="flex items-center space-x-4 mb-4">
+          <div className="relative w-full max-w-sm">
+            <span className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400">
+              <Search className="w-5 h-5" />
+            </span>
+            <input
+              type="text"
+              className="w-full pl-10 pr-4 py-2 border rounded-md shadow-sm focus:ring focus:ring-primary/20"
+              placeholder={t('search.courses', 'Search courses')}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+        </div>
         {loading ? (
           <div className="flex justify-center items-center h-40">
-            <p>{t('loading')}</p>
+            <p>{t('loading', 'Loading...')}</p>
           </div>
-        ) : courses.length === 0 ? (
+        ) : filteredCourses.length === 0 ? (
           <div className="text-center p-10">
             <h2 className="text-xl font-semibold mb-4">
               {projectName 
@@ -271,7 +269,7 @@ const Courses = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {courses.map((course) => (
+            {filteredCourses.map((course) => (
               <Card 
                 key={course.id} 
                 className={`border ${getColorClass(course.project?.color_scheme || null)}`}
@@ -306,7 +304,7 @@ const Courses = () => {
                     onClick={() => navigate(`/edit-course/${course.id}`)}
                     className="flex items-center gap-2"
                   >
-                    <Pencil className="w-4 h-4" />
+                    <Edit className="w-4 h-4" />
                     {t('editButton')}
                   </Button>
                   <Button 

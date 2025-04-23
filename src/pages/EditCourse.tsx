@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -188,6 +187,20 @@ const EditCourse = () => {
                 aiInstructions: course.ai_instructions || '',
                 coursePlan: course.course_plan || '',
                 materials: course.materials ? JSON.parse(course.materials) : []
+              }}
+              fieldLabels={{
+                name: t('influencer.course.name', 'Course Name'),
+                description: t('influencer.course.description', 'Course Description'),
+                isActive: t('influencer.course.status', 'Status'),
+                type: t('influencer.course.type', 'Course Type'),
+                price: t('influencer.course.price', 'Price (USD)'),
+                duration: t('influencer.course.duration', 'Duration (Days)'),
+                isRecurring: t('influencer.course.recurring', 'Recurring Payment'),
+                details: t('influencer.course.details', 'Course Details'),
+                telegramBot: t('influencer.course.telegramBot', 'Telegram Chatbot Name'),
+                aiInstructions: t('influencer.course.aiInstructions', 'AI Instructions'),
+                coursePlan: t('influencer.course.coursePlan', 'Course Plan'),
+                materials: t('influencer.course.materials', 'Materials')
               }}
             />
           </div>

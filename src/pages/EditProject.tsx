@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Check, ChevronLeft, Save, FileImage, Copy, Trash2 } from 'lucide-react';
+import { Check, ChevronLeft, Save, FileImage, Copy, Trash2, ArrowLeft, ArrowRight } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 import { useBotNameValidator } from '@/hooks/useBotNameValidator';
 
@@ -217,8 +216,8 @@ const EditProject = () => {
         <div className="container mx-auto p-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">{t('influencer.project.edit', 'Edit Project')}</h1>
           <Button variant="ghost" onClick={() => navigate('/projects')} className="flex items-center gap-2">
-            <ChevronLeft className="w-4 h-4" />
-            {t('back')}
+            <ArrowLeft className="w-4 h-4" />
+            {t('go.back', 'Go Back')}
           </Button>
         </div>
       </header>
@@ -226,7 +225,7 @@ const EditProject = () => {
       <main className="container mx-auto py-8 px-4">
         <Card className="max-w-3xl mx-auto">
           <CardHeader>
-            <CardTitle>{t('influencer.project.edit')}</CardTitle>
+            <CardTitle>{t('influencer.project.edit', 'Edit Project')}</CardTitle>
             <CardDescription>
               {t('influencer.project.editDescription', 'Update your project details and settings')}
             </CardDescription>
@@ -454,15 +453,16 @@ const EditProject = () => {
                 variant="outline"
                 onClick={() => navigate('/projects')}
               >
-                {t('cancel')}
+                {t('cancel', 'Cancel')}
               </Button>
               <Button
                 type="submit"
                 disabled={saving || !!botNameError}
                 className="flex items-center gap-2"
               >
-                <Save className="w-4 h-4" />
-                {saving ? t('saving') : t('save')}
+                {/* Use allowed icon */}
+                <ArrowRight className="w-4 h-4" /> 
+                {saving ? t('saving', 'Saving...') : t('save', 'Save')}
               </Button>
             </CardFooter>
           </form>
