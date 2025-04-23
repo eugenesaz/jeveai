@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -20,24 +21,9 @@ interface CourseWithProject extends Course {
   } | null;
 }
 
-const Card = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "rounded-lg border bg-card text-card-foreground shadow-sm",
-      className
-    )}
-    {...props}
-  />
-))
-Card.displayName = "Card"
-
 const Courses = () => {
   const { t } = useTranslation();
-  const { user, signOut } = useAuth(); // Properly destructure signOut from useAuth
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [courses, setCourses] = useState<CourseWithProject[]>([]);
