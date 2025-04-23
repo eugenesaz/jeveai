@@ -38,9 +38,14 @@ const Dashboard = () => {
         console.log('Projects data:', data);
         
         const typedProjects = data?.map(project => {
-          // Create a new object with all properties and add defaults for missing ones
           return {
-            ...project,
+            id: project.id,
+            name: project.name,
+            url_name: project.url_name,
+            status: project.status,
+            landing_image: project.landing_image,
+            user_id: project.user_id,
+            created_at: project.created_at,
             color_scheme: (project.color_scheme === 'blue' || 
                          project.color_scheme === 'red' || 
                          project.color_scheme === 'orange' || 

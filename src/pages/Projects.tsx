@@ -41,9 +41,14 @@ const Projects = () => {
         
         // Add description property if it doesn't exist in the database response
         const typedProjects = data?.map(project => {
-          // Create a new object with all the properties from the project
-          const projectWithDefaults = {
-            ...project,
+          return {
+            id: project.id,
+            name: project.name,
+            url_name: project.url_name,
+            status: project.status,
+            landing_image: project.landing_image,
+            user_id: project.user_id,
+            created_at: project.created_at,
             // Set valid color scheme or null if invalid
             color_scheme: (project.color_scheme === 'blue' || 
                           project.color_scheme === 'red' || 
@@ -55,8 +60,6 @@ const Projects = () => {
             telegram_bot: project.telegram_bot || null,
             description: project.description || null,
           } as Project;
-          
-          return projectWithDefaults;
         }) || [];
         
         setProjects(typedProjects);

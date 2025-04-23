@@ -86,11 +86,17 @@ const EditProject = () => {
 
         // Create a properly typed Project object with all required properties
         const typedProject: Project = {
-          ...data,
+          id: data.id,
+          name: data.name,
+          url_name: data.url_name,
+          status: data.status,
+          landing_image: data.landing_image,
+          user_id: data.user_id,
+          created_at: data.created_at,
           color_scheme: validColorScheme,
-          telegram_bot: Object.prototype.hasOwnProperty.call(data, 'telegram_bot') ? data.telegram_bot : null,
-          description: data.description || null, // This is where we're handling the description
-        } as Project;
+          telegram_bot: data.telegram_bot || null,
+          description: data.description || null,
+        };
         
         setProject(typedProject);
         setProjectName(data.name);

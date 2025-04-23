@@ -86,11 +86,17 @@ const ManageKnowledge = () => {
 
         // Create a properly typed Project object with all required properties
         const typedProject: Project = {
-          ...projectData,
+          id: projectData.id,
+          name: projectData.name,
+          url_name: projectData.url_name,
+          status: projectData.status,
+          landing_image: projectData.landing_image,
+          user_id: projectData.user_id,
+          created_at: projectData.created_at,
           color_scheme: validColorScheme,
           telegram_bot: projectData.telegram_bot || null,
-          description: projectData.description || null, // This is where we're handling the description property
-        } as Project;
+          description: projectData.description || null,
+        };
         
         setProject(typedProject);
 
