@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
@@ -11,7 +12,7 @@ import { AuthDialogs } from '@/components/auth/AuthDialogs';
 import { toast } from '@/components/ui/use-toast';
 import { FakePaymentDialog } from "@/components/FakePaymentDialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, Check, Calendar, Star, Users } from 'lucide-react';
 import { TelegramWarning } from '@/components/profile/TelegramWarning';
 
 interface CourseWithDates extends Course {
@@ -137,16 +138,16 @@ const ViewCourse = () => {
 
     return (
       <div className="min-h-screen bg-gray-50">
-        <header className="bg-white shadow-sm">
-          <div className="container mx-auto p-4 flex justify-between items-center">
-            <h1 className="text-2xl font-bold">{course?.name}</h1>
-            <Button variant="outline" onClick={() => navigate('/enrolled-courses')}>
+        <header className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md">
+          <div className="container mx-auto p-6 flex justify-between items-center">
+            <h1 className="text-2xl md:text-3xl font-bold">{course?.name}</h1>
+            <Button variant="outline" className="text-white border-white hover:bg-white/10" onClick={() => navigate('/enrolled-courses')}>
               Back to My Courses
             </Button>
           </div>
         </header>
 
-        <main className="container mx-auto py-8">
+        <main className="container mx-auto py-12 px-4">
           {needsTelegramUsername && user && (
             <TelegramWarning 
               userId={user.id}
@@ -167,70 +168,106 @@ const ViewCourse = () => {
 
           {!needsTelegramUsername && (
             <>
-              <Card className="mb-8">
-                <CardContent className="p-6">
-                  <h2 className="text-2xl font-bold mb-4">Course Information</h2>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div>
-                      <p className="text-sm font-medium text-gray-500 mb-1">Begin Date</p>
-                      <p className="text-lg">{enrollmentInfo.begin_date ? new Date(enrollmentInfo.begin_date).toLocaleDateString() : '-'}</p>
-                    </div>
-                    {enrollmentInfo.end_date && (
-                      <div>
-                        <p className="text-sm font-medium text-gray-500 mb-1">End Date</p>
-                        <p className="text-lg">{new Date(enrollmentInfo.end_date).toLocaleDateString()}</p>
+              <div className="max-w-4xl mx-auto">
+                <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-10">
+                  <div className="p-8 md:p-10">
+                    <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-900">Course Information</h2>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                      <div className="bg-blue-50 p-6 rounded-lg">
+                        <div className="flex items-center mb-4">
+                          <Calendar className="h-6 w-6 text-blue-600 mr-3" />
+                          <h3 className="text-lg font-semibold text-gray-900">Duration</h3>
+                        </div>
+                        <div className="pl-9">
+                          <p className="text-gray-600 mb-2">Begin Date:</p>
+                          <p className="text-lg font-medium">{enrollmentInfo.begin_date ? new Date(enrollmentInfo.begin_date).toLocaleDateString() : '-'}</p>
+                          
+                          {enrollmentInfo.end_date && (
+                            <>
+                              <p className="text-gray-600 mt-4 mb-2">End Date:</p>
+                              <p className="text-lg font-medium">{new Date(enrollmentInfo.end_date).toLocaleDateString()}</p>
+                            </>
+                          )}
+                        </div>
                       </div>
-                    )}
-                  </div>
-                  
-                  {course?.description && (
-                    <div className="mb-6">
-                      <p className="text-sm font-medium text-gray-500 mb-1">Description</p>
-                      <p className="text-lg">{course.description}</p>
-                    </div>
-                  )}
-                  
-                  {course?.telegram_bot && (
-                    <div className="mt-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
-                      <div className="flex items-start gap-4">
-                        <MessageSquare className="h-10 w-10 text-blue-500" />
-                        <div>
-                          <h3 className="text-xl font-bold mb-2">Telegram Bot Support</h3>
-                          <p className="mb-4">This course includes a Telegram bot assistant. Connect with the bot to get additional support and materials.</p>
-                          
-                          <Alert className="mb-4">
-                            <AlertTitle>Instructions:</AlertTitle>
-                            <AlertDescription>
-                              1. Click the link below to open Telegram<br />
-                              2. Send any message to the bot to activate it<br />
-                              3. The bot will verify your enrollment automatically
-                            </AlertDescription>
-                          </Alert>
-                          
-                          <Button className="flex gap-2 items-center" asChild>
-                            <a href={`https://t.me/${course.telegram_bot}`} target="_blank" rel="noopener noreferrer">
-                              <MessageSquare className="h-4 w-4" />
-                              Connect to Telegram Bot
-                            </a>
-                          </Button>
+                      
+                      <div className="bg-indigo-50 p-6 rounded-lg">
+                        <div className="flex items-center mb-4">
+                          <Star className="h-6 w-6 text-indigo-600 mr-3" />
+                          <h3 className="text-lg font-semibold text-gray-900">Benefits</h3>
+                        </div>
+                        <div className="pl-9 space-y-3">
+                          <div className="flex items-start">
+                            <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
+                            <p className="text-gray-800">Personalized guidance</p>
+                          </div>
+                          <div className="flex items-start">
+                            <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
+                            <p className="text-gray-800">Dedicated support</p>
+                          </div>
+                          <div className="flex items-start">
+                            <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
+                            <p className="text-gray-800">Exclusive materials</p>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-              
-              {course?.details && (
-                <Card>
-                  <CardContent className="p-6">
-                    <h2 className="text-2xl font-bold mb-4">Course Details</h2>
-                    <div className="prose max-w-none">
-                      <ReactMarkdown>{course.details}</ReactMarkdown>
+                    
+                    {course?.description && (
+                      <div className="mb-10">
+                        <h3 className="text-xl font-semibold mb-4 text-gray-900">Description</h3>
+                        <div className="bg-gray-50 p-6 rounded-lg">
+                          <p className="text-gray-700">{course.description}</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {course?.telegram_bot && (
+                      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-8 border border-blue-100">
+                        <div className="flex items-start gap-6">
+                          <div className="bg-blue-100 rounded-full p-4">
+                            <MessageSquare className="h-12 w-12 text-blue-600" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="text-2xl font-bold mb-4 text-gray-900">Telegram Bot Support</h3>
+                            <p className="text-gray-600 mb-6">This course includes a Telegram bot assistant. Connect with the bot to get additional support and materials.</p>
+                            
+                            <Alert className="mb-6 border-blue-200 bg-blue-50">
+                              <AlertTitle className="text-blue-800 font-semibold">Instructions:</AlertTitle>
+                              <AlertDescription className="text-blue-700">
+                                <ol className="list-decimal list-inside space-y-2 mt-2">
+                                  <li>Click the button below to open Telegram</li>
+                                  <li>Send any message to the bot to activate it</li>
+                                  <li>The bot will verify your enrollment automatically</li>
+                                </ol>
+                              </AlertDescription>
+                            </Alert>
+                            
+                            <Button className="bg-blue-600 hover:bg-blue-700 text-white flex gap-2 items-center" asChild>
+                              <a href={`https://t.me/${course.telegram_bot}`} target="_blank" rel="noopener noreferrer">
+                                <MessageSquare className="h-4 w-4" />
+                                Connect to Telegram Bot
+                              </a>
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {course?.details && (
+                  <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+                    <div className="p-8 md:p-10">
+                      <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-900">Course Details</h2>
+                      <div className="prose max-w-none">
+                        <ReactMarkdown>{course.details}</ReactMarkdown>
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
-              )}
+                  </div>
+                )}
+              </div>
             </>
           )}
         </main>
@@ -241,87 +278,153 @@ const ViewCourse = () => {
   return (
     <>
       <div className="min-h-screen bg-gray-50">
-        <header className="bg-white shadow-sm">
-          <div className="container mx-auto p-4 flex justify-between items-center">
-            <h1 className="text-2xl font-bold">{course.name}</h1>
-            <Button variant="ghost" onClick={handleGoBack}>
-              {t('go.back')}
+        {/* Hero Banner */}
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+          <div className="container mx-auto p-6 py-10 md:py-16">
+            <Button variant="ghost" className="text-white mb-6 hover:bg-white/10" onClick={handleGoBack}>
+              ← {t('go.back')}
             </Button>
+            <div className="max-w-4xl">
+              <h1 className="text-3xl md:text-5xl font-bold mb-4">{course.name}</h1>
+              <p className="text-xl text-blue-100 mb-6">{course.description}</p>
+              
+              <div className="flex flex-wrap gap-4 mb-8">
+                <div className="bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full flex items-center">
+                  <Star className="h-5 w-5 mr-2 text-yellow-300" />
+                  <span>{getTypeTranslation(course.type)}</span>
+                </div>
+                <div className="bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full flex items-center">
+                  <Calendar className="h-5 w-5 mr-2 text-yellow-300" />
+                  <span>
+                    {course.duration === 0 
+                      ? t('customer.courses.oneTime') 
+                      : `${course.duration} ${t('customer.courses.days')}`}
+                  </span>
+                </div>
+                <div className="bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full flex items-center">
+                  <Users className="h-5 w-5 mr-2 text-yellow-300" />
+                  <span>{t('customer.courses.unlimited.access', 'Unlimited access')}</span>
+                </div>
+              </div>
+              
+              <Button 
+                onClick={handleEnroll}
+                className="bg-white text-blue-700 hover:bg-blue-50 px-8 py-6 text-lg font-semibold rounded-lg shadow-lg"
+              >
+                {user ? t('customer.courses.pay_and_enroll', 'Pay & Enroll') : t('customer.courses.enroll', 'Enroll')}
+                <span className="ml-2 font-bold">${course.price.toFixed(2)}</span>
+              </Button>
+            </div>
           </div>
-        </header>
+        </div>
 
-        <main className="container mx-auto p-6">
-          <Card className="max-w-4xl mx-auto">
-            <CardContent className="space-y-6 p-6">
-              <div className="bg-gray-50 p-4 rounded-md">
-                <p className="text-lg">{course.description}</p>
+        <main className="container mx-auto py-16 px-4">
+          <div className="max-w-4xl mx-auto">
+            {/* What You'll Learn */}
+            <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-12">
+              <div className="p-8 md:p-10">
+                <h2 className="text-2xl md:text-3xl font-bold mb-8 text-gray-900">{t('course.what.youll.learn', "What You'll Learn")}</h2>
+                
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="flex items-start">
+                    <Check className="h-6 w-6 text-green-500 mr-3 mt-0.5" />
+                    <p className="text-gray-700">{t('course.learn.item1', 'Personalized strategies for your specific goals')}</p>
+                  </div>
+                  <div className="flex items-start">
+                    <Check className="h-6 w-6 text-green-500 mr-3 mt-0.5" />
+                    <p className="text-gray-700">{t('course.learn.item2', 'Practical techniques you can implement immediately')}</p>
+                  </div>
+                  <div className="flex items-start">
+                    <Check className="h-6 w-6 text-green-500 mr-3 mt-0.5" />
+                    <p className="text-gray-700">{t('course.learn.item3', 'Science-backed approaches for lasting results')}</p>
+                  </div>
+                  <div className="flex items-start">
+                    <Check className="h-6 w-6 text-green-500 mr-3 mt-0.5" />
+                    <p className="text-gray-700">{t('course.learn.item4', 'Customized guidance from experienced mentors')}</p>
+                  </div>
+                </div>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
+            </div>
+            
+            {/* Course Information */}
+            <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-12">
+              <div className="p-8 md:p-10">
+                <h2 className="text-2xl md:text-3xl font-bold mb-8 text-gray-900">{t('course.information', "Course Information")}</h2>
+                
+                <div className="grid md:grid-cols-2 gap-8">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-500">{t('customer.courses.type')}</h3>
-                    <p className="text-lg">{getTypeTranslation(course.type)}</p>
+                    <h3 className="text-lg font-semibold mb-4 text-gray-900">{t('course.includes', "This Course Includes")}</h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center">
+                        <Check className="h-5 w-5 text-green-500 mr-3" />
+                        <p className="text-gray-700">{t('course.includes.1', 'Personalized assessment')}</p>
+                      </div>
+                      <div className="flex items-center">
+                        <Check className="h-5 w-5 text-green-500 mr-3" />
+                        <p className="text-gray-700">{t('course.includes.2', 'Customized program')}</p>
+                      </div>
+                      <div className="flex items-center">
+                        <Check className="h-5 w-5 text-green-500 mr-3" />
+                        <p className="text-gray-700">{t('course.includes.3', 'Regular checkpoints')}</p>
+                      </div>
+                      {course.telegram_bot && (
+                        <div className="flex items-center">
+                          <Check className="h-5 w-5 text-green-500 mr-3" />
+                          <p className="text-gray-700">{t('course.includes.telegram', 'Telegram bot support')}</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   
                   <div>
-                    <h3 className="text-sm font-medium text-gray-500">{t('customer.courses.duration')}</h3>
-                    <p className="text-lg">
-                      {course.duration === 0 
-                        ? t('customer.courses.oneTime') 
-                        : `${course.duration} ${t('customer.courses.days')}`}
-                    </p>
+                    <h3 className="text-lg font-semibold mb-4 text-gray-900">{t('course.details', "Details")}</h3>
+                    <div className="space-y-4">
+                      <div className="flex items-start">
+                        <div className="text-gray-500 w-32">{t('customer.courses.price')}:</div>
+                        <div className="font-semibold">${course.price.toFixed(2)}</div>
+                      </div>
+                      <div className="flex items-start">
+                        <div className="text-gray-500 w-32">{t('customer.courses.duration')}:</div>
+                        <div className="font-semibold">
+                          {course.duration === 0 
+                            ? t('customer.courses.oneTime') 
+                            : `${course.duration} ${t('customer.courses.days')}`}
+                        </div>
+                      </div>
+                      {course.telegram_bot && (
+                        <div className="flex items-start">
+                          <div className="text-gray-500 w-32">{t('influencer.course.telegramBot')}:</div>
+                          <div className="font-semibold">@{course.telegram_bot}</div>
+                        </div>
+                      )}
+                    </div>
                   </div>
-
-                  {userRole === 'customer' && course.begin_date && (
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">{t('begin.date')}</h3>
-                      <p className="text-lg">{new Date(course.begin_date).toLocaleDateString()}</p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500">{t('customer.courses.price')}</h3>
-                    <p className="text-lg">${course.price.toFixed(2)}</p>
-                  </div>
-                  
-                  {userRole === 'customer' && course.duration > 0 && course.end_date && (
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">{t('end.date')}</h3>
-                      <p className="text-lg">{new Date(course.end_date).toLocaleDateString()}</p>
-                    </div>
-                  )}
-
-                  {course.telegram_bot && (
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">{t('influencer.course.telegramBot')}</h3>
-                      <p className="text-lg">@{course.telegram_bot}</p>
-                    </div>
-                  )}
                 </div>
               </div>
+            </div>
 
-              {course.details && (
-                <div className="mt-6">
-                  <h3 className="text-lg font-medium mb-2">{t('influencer.course.details')}</h3>
-                  <div className="prose max-w-none bg-white p-6 rounded-md border">
+            {course.details && (
+              <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+                <div className="p-8 md:p-10">
+                  <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-900">{t('course.detailed.description', "Detailed Description")}</h2>
+                  <div className="prose max-w-none">
                     <ReactMarkdown>{course.details}</ReactMarkdown>
                   </div>
                 </div>
-              )}
-
-              <div className="mt-8 flex justify-center">
-                <Button 
-                  onClick={handleEnroll}
-                  className="px-8 py-6 text-lg bg-blue-600 hover:bg-blue-700"
-                >
-                  {user ? t('customer.courses.pay_and_enroll', 'Pay & Enroll') : t('customer.courses.enroll', 'Enroll')}
-                </Button>
               </div>
-            </CardContent>
-          </Card>
+            )}
+            
+            {/* Fixed CTA on the bottom for mobile */}
+            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white p-4 border-t border-gray-200 shadow-lg">
+              <Button 
+                onClick={handleEnroll}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4"
+              >
+                {user ? t('customer.courses.pay_and_enroll', 'Pay & Enroll') : t('customer.courses.enroll', 'Enroll')}
+                <span className="ml-2 font-bold">${course.price.toFixed(2)}</span>
+              </Button>
+            </div>
+          </div>
         </main>
       </div>
 

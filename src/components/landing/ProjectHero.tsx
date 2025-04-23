@@ -7,21 +7,39 @@ interface ProjectHeroProps {
 
 export const ProjectHero = ({ project }: ProjectHeroProps) => {
   return (
-    <section className="relative py-20 bg-gradient-to-b from-gray-900 to-gray-800 text-white">
-      {project.landing_image && (
-        <div 
-          className="absolute inset-0 opacity-20" 
-          style={{
-            backgroundImage: `url(${project.landing_image})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-          }}
-        />
-      )}
-      <div className="container mx-auto px-4 relative z-10">
-        <h1 className="text-4xl md:text-5xl font-bold mb-4 text-center">
-          {project.name}
-        </h1>
+    <section className="relative py-24 overflow-hidden">
+      {/* Background image with overlay */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center" 
+        style={{
+          backgroundImage: project.landing_image 
+            ? `url(${project.landing_image})` 
+            : 'url(https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&q=80&w=1470&h=950)',
+          backgroundPosition: 'center'
+        }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-r from-gray-900/90 to-gray-900/50"></div>
+      
+      {/* Content */}
+      <div className="container mx-auto px-6 relative z-10">
+        <div className="max-w-2xl text-white">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+            {project.name}
+          </h1>
+          {project.description && (
+            <p className="text-xl md:text-2xl text-gray-200 mb-8 leading-relaxed">
+              {project.description}
+            </p>
+          )}
+          <div className="flex flex-wrap gap-4">
+            <button className="px-8 py-3 bg-white text-gray-900 rounded-lg font-medium hover:bg-gray-100 transition duration-200">
+              Explore Courses
+            </button>
+            <button className="px-8 py-3 bg-transparent border border-white text-white rounded-lg font-medium hover:bg-white/10 transition duration-200">
+              Learn More
+            </button>
+          </div>
+        </div>
       </div>
     </section>
   );

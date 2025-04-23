@@ -1,6 +1,7 @@
 
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
+import { ArrowRight } from 'lucide-react';
 
 interface CallToActionProps {
   onSignUpClick: () => void;
@@ -21,48 +22,60 @@ export const CallToAction = ({ onSignUpClick, colorScheme = 'blue' }: CallToActi
     }
   };
 
-  const getBgClass = () => {
+  const getBgGradient = () => {
     switch (colorScheme) {
-      case 'blue': return 'bg-blue-100';
-      case 'red': return 'bg-red-100';
-      case 'orange': return 'bg-orange-100';
-      case 'green': return 'bg-green-100';
-      default: return 'bg-purple-100';
+      case 'blue': return 'from-blue-50 to-indigo-100';
+      case 'red': return 'from-red-50 to-pink-100';
+      case 'orange': return 'from-orange-50 to-amber-100';
+      case 'green': return 'from-green-50 to-emerald-100';
+      default: return 'from-purple-50 to-indigo-100';
     }
   };
 
   return (
     <>
-      <section className="py-16 text-center">
-        <h1 className="text-5xl font-bold mb-4 text-purple-900">
-          {t('influencer.benefits.title')}
-        </h1>
-        <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-10">
-          {t('influencer.benefits.subtitle')}
-        </p>
-        <Button 
-          size="lg" 
-          className={`${getButtonClass()} text-white px-8`}
-          onClick={onSignUpClick}
-        >
-          {t('landing.cta.start')}
-        </Button>
+      <section className="py-24 text-center">
+        <div className="container mx-auto px-6">
+          <h1 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900">
+            {t('influencer.benefits.title')}
+          </h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-10">
+            {t('influencer.benefits.subtitle')}
+          </p>
+          <Button 
+            size="lg" 
+            className={`${getButtonClass()} text-white px-8 py-6 text-lg font-medium rounded-lg`}
+            onClick={onSignUpClick}
+          >
+            {t('landing.cta.start')} <ArrowRight className="ml-2 h-5 w-5" />
+          </Button>
+        </div>
       </section>
 
-      <section className={`py-16 text-center ${getBgClass()} rounded-lg p-10 mb-10`}>
-        <h2 className="text-3xl font-bold mb-4 text-purple-900">
-          {t('landing.cta.ready')}
-        </h2>
-        <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-8">
-          {t('landing.cta.join')}
-        </p>
-        <Button 
-          size="lg" 
-          className={`${getButtonClass()} text-white px-8`}
-          onClick={onSignUpClick}
-        >
-          {t('landing.cta.start')}
-        </Button>
+      <section className={`py-24 bg-gradient-to-br ${getBgGradient()} rounded-none`}>
+        <div className="container mx-auto px-6">
+          <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
+            <div className="grid md:grid-cols-2">
+              <div className="p-12 md:p-16 flex flex-col justify-center">
+                <h2 className="text-3xl font-bold mb-6 text-gray-900">
+                  {t('landing.cta.ready')}
+                </h2>
+                <p className="text-lg text-gray-600 mb-8">
+                  {t('landing.cta.join')}
+                </p>
+                <Button 
+                  size="lg" 
+                  className={`${getButtonClass()} text-white px-8 py-3 text-lg font-medium self-start`}
+                  onClick={onSignUpClick}
+                >
+                  {t('landing.cta.start')}
+                </Button>
+              </div>
+              <div className="bg-cover bg-center hidden md:block" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&q=80&w=800&h=600)' }}>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
     </>
   );
