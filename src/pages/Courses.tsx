@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,6 +10,8 @@ import { Course } from '@/types/supabase';
 import { ProjectsHeader } from '@/components/projects/ProjectsHeader';
 import { ArrowRight, ArrowLeft, Plus, Edit, Eye, Search, Home, Package, Calendar, LogOut } from 'lucide-react';
 import { ProfileButton } from '@/components/profile/ProfileButton';
+import { cn } from '@/lib/utils';
+import { MessageSquare } from 'lucide-react';
 
 interface CourseWithProject extends Course {
   project: {
@@ -18,6 +19,21 @@ interface CourseWithProject extends Course {
     color_scheme: string | null;
   } | null;
 }
+
+const Card = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn(
+      "rounded-lg border bg-card text-card-foreground shadow-sm",
+      className
+    )}
+    {...props}
+  />
+))
+Card.displayName = "Card"
 
 const Courses = () => {
   const { t } = useTranslation();
@@ -332,12 +348,20 @@ const Courses = () => {
                     {t('editButton')}
                   </Button>
                   <Button 
-                    variant="default"
+                    variant="outline"
                     onClick={() => navigate(`/course/${course.id}`)}
                     className="flex items-center gap-2"
                   >
                     <Eye className="w-4 h-4" />
                     {t('view', 'View')}
+                  </Button>
+                  <Button 
+                    variant="default"
+                    onClick={() => navigate(`/conversations/${course.id}`)}
+                    className="flex items-center gap-2"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    {t('view.conversations', 'View Conversations')}
                   </Button>
                 </CardFooter>
               </Card>

@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -21,6 +20,7 @@ import ProjectLanding from "@/pages/ProjectLanding";
 import Admin from "@/pages/Admin";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import EnrolledCourses from "@/pages/EnrolledCourses";
+import ViewConversations from "@/pages/ViewConversations";
 
 const queryClient = new QueryClient();
 
@@ -34,12 +34,10 @@ const App = () => {
             <Sonner />
             <BrowserRouter>
               <Routes>
-                {/* Public Routes */}
                 <Route path="/" element={<Index />} />
                 <Route path="/:urlName" element={<ProjectLanding />} />
                 <Route path="/course/:id" element={<ViewCourse />} />
                 
-                {/* Influencer Routes */}
                 <Route path="/dashboard" element={
                   <ProtectedRoute allowedRoles={['influencer', 'admin']}>
                     <Dashboard />
@@ -81,14 +79,18 @@ const App = () => {
                   </ProtectedRoute>
                 } />
                 
-                {/* Admin Routes */}
+                <Route path="/conversations/:courseId" element={
+                  <ProtectedRoute allowedRoles={['influencer', 'admin']}>
+                    <ViewConversations />
+                  </ProtectedRoute>
+                } />
+                
                 <Route path="/control" element={
                   <ProtectedRoute allowedRoles={['admin']}>
                     <Admin />
                   </ProtectedRoute>
                 } />
                 
-                {/* Catch-all route */}
                 <Route path="/enrolled-courses" element={<EnrolledCourses />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
