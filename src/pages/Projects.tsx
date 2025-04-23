@@ -4,11 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Home, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/types/supabase';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/sonner';
 import { ProjectsHeader } from '@/components/projects/ProjectsHeader';
 import { ProjectTile } from '@/components/projects/ProjectTile';
 import { ProfileButton } from '@/components/profile/ProfileButton';
@@ -68,11 +68,7 @@ const Projects = () => {
         setProjects(typedProjects);
       } catch (error) {
         console.error('Error fetching projects:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load projects',
-          variant: 'destructive',
-        });
+        toast.error('Failed to load projects');
       } finally {
         setLoading(false);
       }
@@ -84,10 +80,7 @@ const Projects = () => {
   const handleCopyUrl = (urlName: string) => {
     const url = `${window.location.origin}/${urlName}`;
     navigator.clipboard.writeText(url);
-    toast({
-      title: 'URL Copied',
-      description: 'Project URL has been copied to clipboard',
-    });
+    toast.success('Project URL has been copied to clipboard');
   };
 
   const filteredProjects = searchQuery 
@@ -125,21 +118,20 @@ const Projects = () => {
           <h1 className="text-2xl font-bold">{t('projects.title', 'Projects')}</h1>
           <div className="flex gap-4 items-center">
             <div className="hidden md:flex gap-4">
-              <Button variant="ghost" onClick={() => navigate('/')}>
-                <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24"><path d="M3 12l9-9 9 9"/><path d="M9 21V9h6v12"/></svg>
+              <Button variant="ghost" onClick={() => navigate('/')} className="flex items-center gap-2">
+                <Home className="h-4 w-4" />
                 {t('navigation.home')}
               </Button>
-              <Button variant="ghost" onClick={() => navigate('/dashboard')}>
+              <Button variant="ghost" onClick={() => navigate('/dashboard')} className="flex items-center gap-2">
                 <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 15V9a4 4 0 1 1 8 0v6" /></svg>
                 {t('navigation.dashboard')}
               </Button>
-              <Button variant="ghost" onClick={() => navigate('/courses')}>
+              <Button variant="ghost" onClick={() => navigate('/courses')} className="flex items-center gap-2">
                 <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 3v4" /><path d="M8 3v4" /></svg>
                 {t('navigation.courses')}
               </Button>
-              <Button variant="ghost" onClick={signOut}>
-                {/* Added Lucide LogOut icon */}
-                <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7"/><path d="M3 21V3"/></svg>
+              <Button variant="ghost" onClick={signOut} className="flex items-center gap-2">
+                <LogOut className="h-4 w-4" />
                 {t('navigation.logout')}
               </Button>
             </div>
@@ -151,13 +143,13 @@ const Projects = () => {
       <main className="container mx-auto py-10 px-4">
         <div className="bg-white rounded-2xl shadow-sm p-8 mb-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-            <h2 className="text-2xl font-bold">{t('influencer.projects.manage', 'Manage Your Projects')}</h2>
+            <h2 className="text-2xl font-bold">{t('projects.manage', 'Manage Your Projects')}</h2>
             <Button 
               onClick={() => navigate('/create-project')} 
               className="gap-2 bg-blue-600 hover:bg-blue-700"
             >
               <Plus className="h-4 w-4" />
-              {t('influencer.project.createNew')}
+              {t('project.createNew', 'Create New Project')}
             </Button>
           </div>
           
@@ -191,7 +183,7 @@ const Projects = () => {
               )}
               <Button onClick={() => navigate('/create-project')} className="gap-2">
                 <Plus className="h-4 w-4" />
-                {t('influencer.project.createNew')}
+                {t('project.createNew', 'Create New Project')}
               </Button>
             </div>
           ) : (

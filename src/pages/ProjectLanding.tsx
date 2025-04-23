@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -86,7 +87,10 @@ const ProjectLanding = () => {
     <div className="min-h-screen flex flex-col">
       <ProjectHeader projectName={project.name} colorScheme={project.color_scheme} projectUrlName={project.url_name} />
       <main className="flex-grow">
+        {/* Project Hero with Image at the Top */}
         <ProjectHero project={project} />
+        
+        {/* Available Courses */}
         <CourseGrid courses={courses} projectId={project.id} />
         
         <section className="py-20 bg-white">

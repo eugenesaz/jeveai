@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/sonner';
 import { ProjectSelector } from '@/components/courses/ProjectSelector';
 import { CourseForm } from '@/components/courses/CourseForm';
+import { ArrowLeft } from 'lucide-react';
 
 const CreateCourse = () => {
   const { t } = useTranslation();
@@ -44,19 +45,11 @@ const CreateCourse = () => {
 
       if (error) throw error;
 
-      toast({
-        title: 'Success',
-        description: t('success.courseCreated'),
-      });
-
+      toast.success(t('success.courseCreated', 'Course created successfully'));
       navigate('/courses');
     } catch (error) {
       console.error('Error creating course:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to create course. Please try again.',
-        variant: 'destructive',
-      });
+      toast.error(t('errors.courseCreateFailed', 'Failed to create course. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -67,33 +60,27 @@ const CreateCourse = () => {
       <header className="bg-white shadow-sm">
         <div className="container mx-auto p-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">{t('influencer.course.createNew')}</h1>
-          <Button variant="ghost" onClick={() => navigate('/courses')}>
+          <Button variant="ghost" onClick={() => navigate('/courses')} className="flex items-center gap-2">
+            <ArrowLeft className="h-4 w-4" />
             {t('cancel')}
           </Button>
         </div>
       </header>
 
-      <main className="container mx-auto p-6">
-        <Card className="max-w-3xl mx-auto">
-          <CardHeader>
-            <CardTitle>{t('influencer.course.createNew')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {user && (
-              <>
-                <ProjectSelector
-                  userId={user.id}
-                  value={selectedProject}
-                  onChange={setSelectedProject}
-                  selectedProjectId={selectedProject}
-                />
-                {selectedProject && (
-                  <CourseForm onSubmit={handleSubmit} loading={loading} />
-                )}
-              </>
+      <main className="container mx-auto py-8 px-4">
+        {user && (
+          <div className="max-w-3xl mx-auto space-y-6">
+            <ProjectSelector
+              userId={user.id}
+              value={selectedProject}
+              onChange={setSelectedProject}
+              selectedProjectId={selectedProject}
+            />
+            {selectedProject && (
+              <CourseForm onSubmit={handleSubmit} loading={loading} />
             )}
-          </CardContent>
-        </Card>
+          </div>
+        )}
       </main>
     </div>
   );

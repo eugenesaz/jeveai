@@ -109,7 +109,7 @@ const ViewCourse = () => {
 
   const handleGoBack = () => {
     if (course?.project_id) {
-      navigate(`/project/${course.project_id}`);
+      navigate(`/${course.url_name || course.project_id}`);
     } else {
       navigate('/dashboard');
     }
@@ -283,6 +283,7 @@ const ViewCourse = () => {
             <Button variant="ghost" className="text-white mb-6 hover:bg-white/10" onClick={handleGoBack}>
               ← {t('go.back')}
             </Button>
+            
             <div className="max-w-4xl">
               <h1 className="text-3xl md:text-5xl font-bold mb-4">{course.name}</h1>
               <p className="text-xl text-blue-100 mb-6">{course.description}</p>

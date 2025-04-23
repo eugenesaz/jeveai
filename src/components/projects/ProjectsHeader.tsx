@@ -3,10 +3,24 @@ import { Button } from '@/components/ui/button';
 import { Plus, BookOpen, Home, List, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/components/ui/sonner';
 
 export const ProjectsHeader = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { signOut } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast.success(t('navigation.logout_success', 'Successfully logged out!'));
+      navigate('/');
+    } catch (error) {
+      toast.error(t('navigation.logout_error', 'Logout failed!'));
+      console.error('Logout error:', error);
+    }
+  };
 
   return (
     <header className="bg-white shadow-sm">
@@ -28,6 +42,14 @@ export const ProjectsHeader = () => {
           >
             <List className="w-4 h-4" />
             {t('navigation.courses')}
+          </Button>
+          <Button 
+            onClick={handleLogout} 
+            variant="ghost"
+            className="flex items-center gap-2"
+          >
+            <LogOut className="w-4 h-4" />
+            {t('navigation.logout')}
           </Button>
           <Button 
             onClick={() => navigate('/create-project')} 

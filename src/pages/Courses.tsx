@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,6 +9,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Course } from '@/types/supabase';
 import { ProjectsHeader } from '@/components/projects/ProjectsHeader';
+import { Home, Plus, Pencil, Eye } from 'lucide-react';
 
 interface CourseWithProject extends Course {
   project: {
@@ -215,10 +217,12 @@ const Courses = () => {
             )}
           </div>
           <div className="flex gap-4">
-            <Button variant="ghost" onClick={() => navigate('/dashboard')}>
+            <Button variant="ghost" onClick={() => navigate('/dashboard')} className="flex items-center gap-2">
+              <Home className="w-4 h-4" />
               {t('navigation.dashboard')}
             </Button>
-            <Button variant="ghost" onClick={() => navigate('/projects')}>
+            <Button variant="ghost" onClick={() => navigate('/projects')} className="flex items-center gap-2">
+              <Eye className="w-4 h-4" />
               {t('navigation.projects')}
             </Button>
             <Button 
@@ -230,7 +234,9 @@ const Courses = () => {
                 }
               }} 
               variant="default"
+              className="flex items-center gap-2"
             >
+              <Plus className="w-4 h-4" />
               {t('influencer.course.createNew')}
             </Button>
           </div>
@@ -257,7 +263,9 @@ const Courses = () => {
                   navigate('/create-course');
                 }
               }}
+              className="flex items-center gap-2"
             >
+              <Plus className="w-4 h-4" />
               {t('influencer.course.createNew')}
             </Button>
           </div>
@@ -296,13 +304,17 @@ const Courses = () => {
                   <Button 
                     variant="outline" 
                     onClick={() => navigate(`/edit-course/${course.id}`)}
+                    className="flex items-center gap-2"
                   >
+                    <Pencil className="w-4 h-4" />
                     {t('editButton')}
                   </Button>
                   <Button 
                     variant="default"
                     onClick={() => navigate(`/course/${course.id}`)}
+                    className="flex items-center gap-2"
                   >
+                    <Eye className="w-4 h-4" />
                     {t('view', 'View')}
                   </Button>
                 </CardFooter>

@@ -1,80 +1,58 @@
 
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { LineChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChartLine } from 'lucide-react';  // Changed from ChartLineUp to ChartLine
-import {
-  Area,
-  AreaChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
 
-// Generate mock data for the last 12 weeks
-const generateMockData = () => {
-  const data = [];
-  const today = new Date();
-  
-  for (let i = 11; i >= 0; i--) {
-    const date = new Date(today);
-    date.setDate(date.getDate() - i * 7);
-    
-    data.push({
-      week: `Week ${12-i}`,
-      earnings: Math.floor(Math.random() * 30000),
-      date: date.toISOString().split('T')[0],
-    });
-  }
-  
-  return data;
-};
+const data = [
+  {
+    month: "Jan",
+    earnings: 0,
+  },
+  {
+    month: "Feb",
+    earnings: 180,
+  },
+  {
+    month: "Mar",
+    earnings: 260,
+  },
+  {
+    month: "Apr",
+    earnings: 450,
+  },
+  {
+    month: "May",
+    earnings: 320,
+  },
+  {
+    month: "Jun",
+    earnings: 792,
+  },
+];
 
-const mockData = generateMockData();
-
-export const EarningsChart = () => {
+export function EarningsChart() {
   const { t } = useTranslation();
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-xl font-bold flex items-center gap-2">
-          <ChartLine className="h-5 w-5 text-purple-500" />  {/* Updated icon */}
-          {t('dashboard.earnings.title')}
-        </CardTitle>
+      <CardHeader>
+        <CardTitle>{t('dashboard.earnings.title')}</CardTitle>
+        <CardDescription>
+          {t('dashboard.earnings.description')}
+        </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="h-[300px]">
+      <CardContent className="pb-4">
+        <div className="h-[225px]">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart
-              data={mockData}
+            <LineChart
+              data={data}
               margin={{
-                top: 10,
+                top: 5,
                 right: 10,
                 left: 10,
-                bottom: 20,
+                bottom: 0,
               }}
             >
-              <defs>
-                <linearGradient id="earnings" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#9b87f5" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#9b87f5" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <XAxis
-                dataKey="week"
-                stroke="#888888"
-                tickLine={false}
-                axisLine={false}
-                tick={{ fill: '#888888', fontSize: 12 }}
-              />
-              <YAxis
-                stroke="#888888"
-                tickLine={false}
-                axisLine={false}
-                tick={{ fill: '#888888', fontSize: 12 }}
-                tickFormatter={(value) => `$${value.toLocaleString()}`}
-              />
               <Tooltip
                 content={({ active, payload }) => {
                   if (active && payload && payload.length) {
@@ -83,38 +61,58 @@ export const EarningsChart = () => {
                         <div className="grid grid-cols-2 gap-2">
                           <div className="flex flex-col">
                             <span className="text-[0.70rem] uppercase text-muted-foreground">
-                              {payload[0].payload.date}
+                              {t('dashboard.month')}
                             </span>
                             <span className="font-bold text-muted-foreground">
-                              {payload[0].payload.week}
+                              {payload[0].payload.month}
                             </span>
                           </div>
                           <div className="flex flex-col">
                             <span className="text-[0.70rem] uppercase text-muted-foreground">
-                              {t('dashboard.earnings.earnings')}
+                              {t('dashboard.earnings')}
                             </span>
                             <span className="font-bold">
-                              ${payload[0].value?.toLocaleString()}
+                              ${payload[0].value}
                             </span>
                           </div>
                         </div>
                       </div>
                     );
                   }
+
                   return null;
                 }}
               />
-              <Area
-                type="monotone"
-                dataKey="earnings"
-                stroke="#9b87f5"
-                fill="url(#earnings)"
-                strokeWidth={2}
+              <XAxis
+                dataKey="month"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                stroke="#888888"
+                fontSize={12}
               />
-            </AreaChart>
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                stroke="#888888"
+                tickFormatter={(value) => `$${value}`}
+                fontSize={12}
+              />
+              <Line
+                type="monotone"
+                strokeWidth={3}
+                dataKey="earnings"
+                activeDot={{
+                  r: 8,
+                  style: { fill: "var(--theme-primary)", opacity: 0.8 },
+                }}
+                style={{ stroke: "var(--theme-primary)" }}
+              />
+            </LineChart>
           </ResponsiveContainer>
         </div>
       </CardContent>
     </Card>
   );
-};
+}

@@ -1,13 +1,15 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/sonner';
 import { CourseForm } from '@/components/courses/CourseForm';
 import { ProjectSelector } from '@/components/courses/ProjectSelector';
 import { Button } from '@/components/ui/button';
 import { Course } from '@/types/supabase';
+import { ArrowLeft } from 'lucide-react';
 
 const EditCourse = () => {
   const { t } = useTranslation();
@@ -50,21 +52,13 @@ const EditCourse = () => {
           .single();
           
         if (courseError) {
-          toast({
-            title: t('errors.title'),
-            description: courseError.message,
-            variant: 'destructive',
-          });
+          toast.error(courseError.message);
           navigate('/courses');
           return;
         }
         
         if (!courseData) {
-          toast({
-            title: t('errors.title'),
-            description: t('errors.courseNotFound'),
-            variant: 'destructive',
-          });
+          toast.error(t('errors.courseNotFound', 'Course not found'));
           navigate('/courses');
           return;
         }
@@ -95,21 +89,13 @@ const EditCourse = () => {
           if (roleData && roleData.length > 0) {
             setUserCanEdit(true);
           } else {
-            toast({
-              title: t('errors.title'),
-              description: t('errors.notAuthorized'),
-              variant: 'destructive',
-            });
+            toast.error(t('errors.notAuthorized', 'You are not authorized to edit this course'));
             navigate('/courses');
           }
         }
       } catch (error) {
         console.error('Error fetching course:', error);
-        toast({
-          title: t('errors.title'),
-          description: t('errors.generic'),
-          variant: 'destructive',
-        });
+        toast.error(t('errors.generic', 'An error occurred'));
         navigate('/courses');
       } finally {
         setLoading(false);
@@ -137,6 +123,7 @@ const EditCourse = () => {
         telegram_bot: formData.telegramBot || null,
         project_id: projectId,
         ai_instructions: formData.aiInstructions || null,
+        course_plan: formData.coursePlan || null,
         materials: formData.materials ? JSON.stringify(formData.materials) : null
       };
       
@@ -146,27 +133,15 @@ const EditCourse = () => {
         .eq('id', id);
         
       if (error) {
-        toast({
-          title: t('errors.title'),
-          description: error.message,
-          variant: 'destructive',
-        });
+        toast.error(error.message);
         return;
       }
       
-      toast({
-        title: t('success'),
-        description: t('influencer.course.updateSuccess'),
-      });
-      
+      toast.success(t('influencer.course.updateSuccess', 'Course updated successfully'));
       navigate('/courses');
     } catch (error) {
       console.error('Error updating course:', error);
-      toast({
-        title: t('errors.title'),
-        description: t('errors.generic'),
-        variant: 'destructive',
-      });
+      toast.error(t('errors.generic', 'An error occurred'));
     } finally {
       setSaving(false);
     }
@@ -176,25 +151,21 @@ const EditCourse = () => {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">
         <div className="container mx-auto p-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">{t('influencer.course.edit')}</h1>
-          <div className="flex gap-4">
-            <Button variant="ghost" onClick={() => navigate('/courses')}>
-              {t('navigation.courses')}
-            </Button>
-            <Button variant="ghost" onClick={() => navigate('/dashboard')}>
-              {t('navigation.dashboard')}
-            </Button>
-          </div>
+          <h1 className="text-2xl font-bold">{t('influencer.course.edit', 'Edit Course')}</h1>
+          <Button variant="ghost" onClick={() => navigate('/courses')} className="flex items-center gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            {t('navigation.courses', 'Courses')}
+          </Button>
         </div>
       </header>
       
-      <main className="container mx-auto p-6">
+      <main className="container mx-auto py-8 px-4">
         {loading ? (
           <div className="flex justify-center items-center h-40">
-            <p>{t('loading')}</p>
+            <p>{t('loading', 'Loading...')}</p>
           </div>
         ) : course && userCanEdit ? (
-          <div className="bg-white rounded-lg shadow-sm p-6 max-w-2xl mx-auto">
+          <div className="max-w-3xl mx-auto space-y-6">
             <ProjectSelector 
               selectedProjectId={projectId || ''}
               onProjectSelect={setProjectId}
@@ -215,13 +186,14 @@ const EditCourse = () => {
                 details: course.details || '',
                 telegramBot: course.telegram_bot || '',
                 aiInstructions: course.ai_instructions || '',
+                coursePlan: course.course_plan || '',
                 materials: course.materials ? JSON.parse(course.materials) : []
               }}
             />
           </div>
         ) : (
           <div className="text-center p-10">
-            <p>{t('errors.notAuthorized')}</p>
+            <p>{t('errors.notAuthorized', 'You are not authorized to edit this course')}</p>
           </div>
         )}
       </main>
