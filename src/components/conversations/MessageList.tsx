@@ -27,11 +27,13 @@ export const MessageList = ({ messages }: MessageListProps) => {
     (message.message_highlight?.toLowerCase() || '').includes(searchTerm.toLowerCase())
   );
 
-  const getCellColor = (content: string) => {
-    const words = content.trim().split(/\s+/);
-    const percentage = (words.length / 100) * 100; // This is a simple metric, adjust as needed
+  const getHighlightColor = (highlight: string | null) => {
+    if (!highlight) return 'bg-white border';
+    
+    const percentage = parseFloat(highlight);
+    if (isNaN(percentage)) return 'bg-white border';
 
-    if (percentage >= 80) return 'bg-white';
+    if (percentage >= 80) return 'bg-white border';
     if (percentage >= 50) return 'bg-yellow-50 border-yellow-100';
     return 'bg-red-50 border-red-100';
   };
@@ -50,11 +52,8 @@ export const MessageList = ({ messages }: MessageListProps) => {
       <ScrollArea className="flex-1">
         <div className="space-y-4">
           {filteredMessages.map((message) => (
-            <div
-              key={message.id}
-              className={`rounded-lg p-4 transition-all duration-200 border ${getCellColor(message.user_message)}`}
-            >
-              <div className="space-y-2">
+            <div key={message.id} className="space-y-4">
+              <div className="rounded-lg p-4 transition-all duration-200 border bg-white">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <p className="font-medium">User Message</p>
@@ -64,6 +63,9 @@ export const MessageList = ({ messages }: MessageListProps) => {
                     {format(new Date(message.message_time), 'MMM d, yyyy HH:mm')}
                   </time>
                 </div>
+              </div>
+
+              <div className="rounded-lg p-4 transition-all duration-200 border bg-white">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <p className="font-medium">Response</p>
@@ -73,13 +75,14 @@ export const MessageList = ({ messages }: MessageListProps) => {
                     {format(new Date(message.response_time), 'MMM d, yyyy HH:mm')}
                   </time>
                 </div>
-                {message.message_highlight && (
-                  <div className="mt-2 p-2 bg-yellow-100 rounded">
-                    <p className="text-sm font-medium text-yellow-800">Highlight</p>
-                    <p className="text-sm text-yellow-700">{message.message_highlight}</p>
-                  </div>
-                )}
               </div>
+
+              {message.message_highlight && (
+                <div className={`rounded p-2 ${getHighlightColor(message.message_highlight)}`}>
+                  <p className="text-sm font-medium text-gray-800">% of knowledge in the response</p>
+                  <p className="text-sm text-gray-700">{message.message_highlight}</p>
+                </div>
+              )}
             </div>
           ))}
         </div>

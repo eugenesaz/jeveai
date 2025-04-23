@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,7 @@ import { MessageList } from '@/components/conversations/MessageList';
 import { supabase } from '@/integrations/supabase/client';
 import { ArrowLeft, RefreshCcw, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { AddKnowledgeDialog } from '@/components/conversations/AddKnowledgeDialog';
 
 interface User {
   id: string;
@@ -102,10 +102,6 @@ const ViewConversations = () => {
     }
   }, [courseId, selectedUserId]);
 
-  const handleAddKnowledge = () => {
-    navigate(`/manage-knowledge/${courseId}`);
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">
@@ -129,14 +125,7 @@ const ViewConversations = () => {
               {t('refresh')}
             </Button>
           </div>
-          <Button
-            onClick={handleAddKnowledge}
-            variant="default"
-            className="gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            {t('Add Knowledge')}
-          </Button>
+          <AddKnowledgeDialog courseId={courseId || ''} onKnowledgeAdded={fetchData} />
         </div>
       </header>
 
