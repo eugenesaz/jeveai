@@ -90,7 +90,7 @@ const ManageKnowledge = () => {
           color_scheme: validColorScheme,
           telegram_bot: projectData.telegram_bot || null,
           description: projectData.description || null, // This is where we're handling the description property
-        };
+        } as Project;
         
         setProject(typedProject);
 

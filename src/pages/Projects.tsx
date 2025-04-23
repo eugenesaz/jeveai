@@ -54,7 +54,7 @@ const Projects = () => {
             // Ensure telegram_bot and description exist (null if not present)
             telegram_bot: project.telegram_bot || null,
             description: project.description || null,
-          };
+          } as Project;
           
           return projectWithDefaults;
         }) || [];

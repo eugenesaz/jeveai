@@ -90,7 +90,7 @@ const EditProject = () => {
           color_scheme: validColorScheme,
           telegram_bot: Object.prototype.hasOwnProperty.call(data, 'telegram_bot') ? data.telegram_bot : null,
           description: data.description || null, // This is where we're handling the description
-        };
+        } as Project;
         
         setProject(typedProject);
         setProjectName(data.name);

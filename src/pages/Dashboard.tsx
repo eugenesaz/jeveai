@@ -49,7 +49,7 @@ const Dashboard = () => {
                          : null,
             telegram_bot: project.telegram_bot || null,
             description: project.description || null,
-          };
+          } as Project;
         }) || [];
         
         setProjects(typedProjects);
