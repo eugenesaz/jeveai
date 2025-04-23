@@ -126,15 +126,19 @@ const Projects = () => {
           <div className="flex gap-4 items-center">
             <div className="hidden md:flex gap-4">
               <Button variant="ghost" onClick={() => navigate('/')}>
+                <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24"><path d="M3 12l9-9 9 9"/><path d="M9 21V9h6v12"/></svg>
                 {t('navigation.home')}
               </Button>
               <Button variant="ghost" onClick={() => navigate('/dashboard')}>
+                <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 15V9a4 4 0 1 1 8 0v6" /></svg>
                 {t('navigation.dashboard')}
               </Button>
               <Button variant="ghost" onClick={() => navigate('/courses')}>
+                <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 3v4" /><path d="M8 3v4" /></svg>
                 {t('navigation.courses')}
               </Button>
               <Button variant="ghost" onClick={signOut}>
+                <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7" /><path d="M3 21V3"/></svg>
                 {t('navigation.logout')}
               </Button>
             </div>

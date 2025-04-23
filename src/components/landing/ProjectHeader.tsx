@@ -1,5 +1,5 @@
 
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { ProjectLanguageSelector } from '@/components/landing/ProjectLanguageSelector';
@@ -9,17 +9,20 @@ import { toast } from '@/components/ui/sonner';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { AuthDialogs } from '@/components/auth/AuthDialogs';
+import { ArrowLeft, BookOpen, LogOut, LogIn, UserPlus } from 'lucide-react';
 
 interface ProjectHeaderProps {
   projectName: string;
   colorScheme?: string;
+  projectUrlName?: string;
 }
 
-export const ProjectHeader = ({ projectName, colorScheme = 'blue' }: ProjectHeaderProps) => {
+export const ProjectHeader = ({ projectName, colorScheme = 'blue', projectUrlName }: ProjectHeaderProps) => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isSignUpOpen, setIsSignUpOpen] = useState(false);
+  const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
@@ -40,26 +43,30 @@ export const ProjectHeader = ({ projectName, colorScheme = 'blue' }: ProjectHead
           </h1>
           <div className="flex items-center space-x-4">
             <ProjectLanguageSelector />
+            <Button
+              variant="outline"
+              className={cn("text-white border-white/30 hover:border-white/50 bg-white/10 hover:bg-white/20 transition-all duration-300 ease-in-out flex items-center gap-2")}
+              onClick={() => navigate(`/${projectUrlName}`)}
+            >
+              <ArrowLeft className="mr-2 w-4 h-4" />
+              {t('Back', 'Back')}
+            </Button>
             {user ? (
               <>
                 <Button 
                   variant="outline" 
-                  className={cn(
-                    "text-white border-white/30 hover:border-white/50 bg-white/10 hover:bg-white/20",
-                    "transition-all duration-300 ease-in-out"
-                  )}
-                  onClick={() => window.location.href = '/enrolled-courses'}
+                  className={cn("text-white border-white/30 hover:border-white/50 bg-white/10 hover:bg-white/20 transition-all duration-300 ease-in-out flex items-center gap-2")}
+                  onClick={() => navigate('/enrolled-courses')}
                 >
+                  <BookOpen className="mr-2 w-4 h-4" />
                   {t('navigation.my_courses', 'My courses')}
                 </Button>
                 <Button 
                   variant="outline" 
-                  className={cn(
-                    "text-white border-white/30 hover:border-white/50 bg-white/10 hover:bg-white/20",
-                    "transition-all duration-300 ease-in-out"
-                  )}
+                  className={cn("text-white border-white/30 hover:border-white/50 bg-white/10 hover:bg-white/20 transition-all duration-300 ease-in-out flex items-center gap-2")}
                   onClick={handleLogout}
                 >
+                  <LogOut className="mr-2 w-4 h-4" />
                   {t('navigation.logout')}
                 </Button>
               </>
@@ -67,19 +74,18 @@ export const ProjectHeader = ({ projectName, colorScheme = 'blue' }: ProjectHead
               <>
                 <Button 
                   variant="outline" 
-                  className={cn(
-                    "text-white border-white/30 hover:border-white/50 bg-white/10 hover:bg-white/20",
-                    "transition-all duration-300 ease-in-out"
-                  )}
+                  className={cn("text-white border-white/30 hover:border-white/50 bg-white/10 hover:bg-white/20 transition-all duration-300 ease-in-out flex items-center gap-2")}
                   onClick={() => setIsLoginOpen(true)}
                 >
+                  <LogIn className="mr-2 w-4 h-4" />
                   {t('navigation.login')}
                 </Button>
                 <Button 
                   variant="default" 
-                  className="text-white"
+                  className="text-white flex items-center gap-2"
                   onClick={() => setIsSignUpOpen(true)}
                 >
+                  <UserPlus className="mr-2 w-4 h-4" />
                   {t('navigation.signup')}
                 </Button>
               </>
@@ -87,7 +93,6 @@ export const ProjectHeader = ({ projectName, colorScheme = 'blue' }: ProjectHead
           </div>
         </div>
       </header>
-      
       <AuthDialogs
         isLoginOpen={isLoginOpen}
         setIsLoginOpen={setIsLoginOpen}

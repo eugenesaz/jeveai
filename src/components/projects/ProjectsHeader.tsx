@@ -1,6 +1,6 @@
 
 import { Button } from '@/components/ui/button';
-import { Plus, BookOpen } from 'lucide-react';
+import { Plus, BookOpen, Home, List, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
@@ -24,13 +24,17 @@ export const ProjectsHeader = () => {
           <Button 
             onClick={() => navigate('/courses')} 
             variant="ghost"
+            className="flex items-center gap-2"
           >
+            <List className="w-4 h-4" />
             {t('navigation.courses')}
           </Button>
           <Button 
             onClick={() => navigate('/create-project')} 
             variant="default"
+            className="flex items-center gap-2"
           >
+            <Plus className="w-4 h-4" />
             {t('influencer.project.createNew')}
           </Button>
         </div>

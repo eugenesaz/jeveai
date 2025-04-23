@@ -31,14 +31,7 @@ export const ProjectHero = ({ project }: ProjectHeroProps) => {
               {project.description}
             </p>
           )}
-          <div className="flex flex-wrap gap-4">
-            <button className="px-8 py-3 bg-white text-gray-900 rounded-lg font-medium hover:bg-gray-100 transition duration-200">
-              Explore Courses
-            </button>
-            <button className="px-8 py-3 bg-transparent border border-white text-white rounded-lg font-medium hover:bg-white/10 transition duration-200">
-              Learn More
-            </button>
-          </div>
+          {/* Removed Explore Courses and Learn More buttons */}
         </div>
       </div>
     </section>

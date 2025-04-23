@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -118,15 +117,19 @@ const Dashboard = () => {
           <div className="flex gap-4 items-center">
             <div className="hidden md:flex gap-4">
               <Button variant="ghost" onClick={() => navigate('/')}>
+                <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24"><path d="M3 12l9-9 9 9"/><path d="M9 21V9h6v12"/></svg>
                 {t('navigation.home')}
               </Button>
               <Button variant="ghost" onClick={() => navigate('/projects')}>
+                <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 15V9a4 4 0 1 1 8 0v6" /></svg>
                 {t('influencer.dashboard.projects')}
               </Button>
               <Button variant="ghost" onClick={() => navigate('/courses')}>
+                <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 3v4" /><path d="M8 3v4" /></svg>
                 {t('navigation.courses')}
               </Button>
               <Button variant="ghost" onClick={signOut}>
+                <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7" /><path d="M3 21V3"/></svg>
                 {t('navigation.logout')}
               </Button>
             </div>
@@ -138,89 +141,6 @@ const Dashboard = () => {
       <main className="container mx-auto px-4 py-10">
         <div className="grid gap-10">
           <EarningsChart />
-          
-          <section className="bg-white rounded-2xl shadow-sm p-8">
-            <h2 className="text-2xl font-bold mb-6">{t('dashboard.quick.actions', 'Quick Actions')}</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card className="bg-blue-50 border-blue-100 hover:shadow-md transition-shadow">
-                <CardContent className="p-6 flex flex-col items-center text-center">
-                  <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-4">
-                    <Plus className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <h3 className="font-semibold text-lg mb-2">{t('dashboard.create.project', 'Create Project')}</h3>
-                  <p className="text-gray-600 text-sm mb-4">{t('dashboard.create.project.desc', 'Start a new project for your audience')}</p>
-                  <Button 
-                    variant="outline" 
-                    className="mt-auto text-blue-600 border-blue-200 hover:bg-blue-100"
-                    onClick={() => navigate('/create-project')}
-                  >
-                    {t('dashboard.get.started', 'Get Started')}
-                  </Button>
-                </CardContent>
-              </Card>
-              
-              <Card className="bg-purple-50 border-purple-100 hover:shadow-md transition-shadow">
-                <CardContent className="p-6 flex flex-col items-center text-center">
-                  <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center mb-4">
-                    <Plus className="h-6 w-6 text-purple-600" />
-                  </div>
-                  <h3 className="font-semibold text-lg mb-2">{t('dashboard.create.course', 'Create Course')}</h3>
-                  <p className="text-gray-600 text-sm mb-4">{t('dashboard.create.course.desc', 'Add a new course to your offerings')}</p>
-                  <Button 
-                    variant="outline" 
-                    className="mt-auto text-purple-600 border-purple-200 hover:bg-purple-100"
-                    onClick={() => navigate('/create-course')}
-                  >
-                    {t('dashboard.get.started', 'Get Started')}
-                  </Button>
-                </CardContent>
-              </Card>
-              
-              <Card className="bg-green-50 border-green-100 hover:shadow-md transition-shadow">
-                <CardContent className="p-6 flex flex-col items-center text-center">
-                  <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mb-4">
-                    <svg className="h-6 w-6 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 20V10" />
-                      <path d="M18 20V4" />
-                      <path d="M6 20v-4" />
-                    </svg>
-                  </div>
-                  <h3 className="font-semibold text-lg mb-2">{t('dashboard.view.analytics', 'View Analytics')}</h3>
-                  <p className="text-gray-600 text-sm mb-4">{t('dashboard.analytics.desc', 'Track your performance and growth')}</p>
-                  <Button 
-                    variant="outline" 
-                    className="mt-auto text-green-600 border-green-200 hover:bg-green-100"
-                    disabled
-                  >
-                    {t('dashboard.coming.soon', 'Coming Soon')}
-                  </Button>
-                </CardContent>
-              </Card>
-              
-              <Card className="bg-amber-50 border-amber-100 hover:shadow-md transition-shadow">
-                <CardContent className="p-6 flex flex-col items-center text-center">
-                  <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mb-4">
-                    <svg className="h-6 w-6 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                      <circle cx="9" cy="7" r="4" />
-                      <path d="M23 21v-2a4 4 0 0 1 0 7.75" />
-                      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                    </svg>
-                  </div>
-                  <h3 className="font-semibold text-lg mb-2">{t('dashboard.manage.users', 'Manage Users')}</h3>
-                  <p className="text-gray-600 text-sm mb-4">{t('dashboard.users.desc', 'View and manage your user base')}</p>
-                  <Button 
-                    variant="outline" 
-                    className="mt-auto text-amber-600 border-amber-200 hover:bg-amber-100"
-                    disabled
-                  >
-                    {t('dashboard.coming.soon', 'Coming Soon')}
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          </section>
-          
           <section className="bg-white rounded-2xl shadow-sm p-8">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-2xl font-bold">{t('influencer.dashboard.projects')}</h2>
@@ -229,7 +149,6 @@ const Dashboard = () => {
                 {t('influencer.project.createNew')}
               </Button>
             </div>
-
             {loading ? (
               <div className="flex justify-center items-center h-40">
                 <p>{t('loading')}</p>
@@ -258,7 +177,6 @@ const Dashboard = () => {
                     />
                   ))}
                 </div>
-                
                 {projects.length > 3 && (
                   <div className="mt-6 text-center">
                     <Button 

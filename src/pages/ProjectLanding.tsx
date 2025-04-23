@@ -85,8 +85,10 @@ const ProjectLanding = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <ProjectHeader projectName={project.name} colorScheme={project.color_scheme} />
+      <ProjectHeader projectName={project.name} colorScheme={project.color_scheme} projectUrlName={project.url_name} />
       <main className="flex-grow">
+        {/* Move CourseGrid to the top */}
+        <CourseGrid courses={courses} projectId={project.id} />
         <ProjectHero project={project} />
         
         {/* Features/Benefits Section */}

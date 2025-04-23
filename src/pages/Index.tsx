@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -20,7 +19,6 @@ const Index = () => {
   const [isSignUpOpen, setIsSignUpOpen] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
 
-  // Check for invalid auth state and force logout if needed
   useEffect(() => {
     if (!isLoading && user?.id && !user.email) {
       console.log('Invalid user state detected, forcing logout');
@@ -28,14 +26,13 @@ const Index = () => {
     }
   }, [isLoading, user, signOut]);
 
-  // Redirect authenticated users to dashboard
   useEffect(() => {
     if (!isLoading && user) {
       console.log('User authenticated, redirecting to dashboard...');
       setRedirecting(true);
       const timer = setTimeout(() => {
         navigate('/dashboard');
-      }, 500); // Increased timeout for better state synchronization
+      }, 500);
       return () => clearTimeout(timer);
     }
   }, [isLoading, user, navigate]);
@@ -54,9 +51,12 @@ const Index = () => {
       <LandingHeader
         onLoginClick={() => setIsLoginOpen(true)}
         onSignUpClick={() => setIsSignUpOpen(true)}
+        title={undefined}
+        subtitle={undefined}
+        backgroundImage={undefined}
+        colorScheme={"blue"}
       />
 
-      {/* Hero Section */}
       <section className="relative bg-gradient-to-r from-purple-900 to-indigo-800 py-20 overflow-hidden">
         <div className="absolute inset-0 bg-pattern opacity-10"></div>
         
@@ -64,7 +64,7 @@ const Index = () => {
           <div className="flex flex-col lg:flex-row items-center gap-12">
             <div className="lg:w-1/2 text-white">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-                {t('landing.hero.title', 'Scale Your Influence Through Personalization')}
+                {"EchoMind"}
               </h1>
               <p className="text-xl md:text-2xl mb-8 text-purple-100">
                 {t('landing.hero.subtitle', 'Create hyper-personalized programs that adapt to your customers\' individual needs')}
@@ -78,12 +78,17 @@ const Index = () => {
                   {t('landing.cta.start', 'Get Started')}
                 </Button>
                 <Button 
-                  variant="outline" 
-                  size="lg" 
-                  className="text-white border-white hover:bg-white/10 px-8 py-6 text-lg font-semibold"
-                  onClick={() => navigate('/projects')}
+                  variant="outline"
+                  size="lg"
+                  className="text-purple-900 border-white bg-white hover:bg-gray-100 px-8 py-6 text-lg font-semibold"
+                  onClick={() =>
+                    document.getElementById("features-section")?.scrollIntoView({ behavior: "smooth" })
+                  }
                 >
-                  {t('landing.cta.explore', 'Explore Features')} <ArrowRight className="ml-2" />
+                  {t('landing.cta.explore', 'Explore Features')}
+                  <span className="ml-2">
+                    <svg className="inline-block h-5 w-5" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+                  </span>
                 </Button>
               </div>
             </div>
@@ -100,101 +105,39 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Value Proposition */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-6">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-16 text-gray-900">
-            {t('landing.value.title', 'Transform How You Connect With Your Audience')}
-          </h2>
-
-          <div className="grid md:grid-cols-3 gap-10">
-            <div className="bg-purple-50 rounded-xl p-8 text-center hover:shadow-lg transition-shadow">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-purple-100 text-purple-800 mb-6">
-                <MessageSquare className="h-8 w-8" />
-              </div>
-              <h3 className="text-xl font-bold mb-4 text-gray-900">{t('landing.value.personalize.title', 'Hyper-Personalized Communication')}</h3>
-              <p className="text-gray-600">{t('landing.value.personalize.description', 'Connect with each customer individually through automated but personalized communications')}</p>
+      <section id="features-section" className="py-20 bg-white">
+        <div className="container mx-auto px-8">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-gray-900">Platform Features</h2>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-10 text-center">
+            <div className="bg-purple-50 rounded-2xl p-7 shadow hover-scale transition">
+              <svg className="mx-auto mb-4 h-10 w-10 text-purple-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" /><path d="M9.09 9.05a6.37 6.37 0 0 1 5.82 0"/><path d="M7.41 13.67A7.35 7.35 0 0 1 12 12.49a7.35 7.35 0 0 1 4.59 1.18"/>
+              </svg>
+              <h3 className="font-bold text-lg mb-2">Create a virtual copy of yourself</h3>
+              <p className="text-gray-600">Train your AI-powered digital persona and let it answer questions just like you do.</p>
             </div>
-            
-            <div className="bg-blue-50 rounded-xl p-8 text-center hover:shadow-lg transition-shadow">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-800 mb-6">
-                <Users className="h-8 w-8" />
-              </div>
-              <h3 className="text-xl font-bold mb-4 text-gray-900">{t('landing.value.scale.title', 'Scale Your Impact')}</h3>
-              <p className="text-gray-600">{t('landing.value.scale.description', 'Reach more people without sacrificing the quality of your program or your personal touch')}</p>
+            <div className="bg-blue-50 rounded-2xl p-7 shadow hover-scale transition">
+              <svg className="mx-auto mb-4 h-10 w-10 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" /><path d="M8 15V9a4 4 0 1 1 8 0v6"/><path d="M9 21V9h6v12"/>
+              </svg>
+              <h3 className="font-bold text-lg mb-2">Let customers access you 24/7</h3>
+              <p className="text-gray-600">Your digital self is always available to help your clients anytime, anywhere.</p>
             </div>
-            
-            <div className="bg-indigo-50 rounded-xl p-8 text-center hover:shadow-lg transition-shadow">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-100 text-indigo-800 mb-6">
-                <Star className="h-8 w-8" />
-              </div>
-              <h3 className="text-xl font-bold mb-4 text-gray-900">{t('landing.value.adapt.title', 'Adaptive Programs')}</h3>
-              <p className="text-gray-600">{t('landing.value.adapt.description', 'Tune your offerings to meet the specific needs of each customer for better results')}</p>
+            <div className="bg-green-50 rounded-2xl p-7 shadow hover-scale transition">
+              <svg className="mx-auto mb-4 h-10 w-10 text-green-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 3v4" /><path d="M8 3v4" />
+              </svg>
+              <h3 className="font-bold text-lg mb-2">Monetize your knowledge</h3>
+              <p className="text-gray-600">Offer digital products, courses and subscriptions directly through your platform.</p>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Social Proof */}
-      <section className="py-20 bg-gray-50">
-        <div className="container mx-auto px-6">
-          <h2 className="text-3xl font-bold text-center mb-12 text-gray-900">
-            {t('landing.testimonials.title', 'Trusted by Influencers Worldwide')}
-          </h2>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-white p-8 rounded-xl shadow-md">
-              <div className="flex items-center mb-4">
-                <div className="flex text-yellow-400">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-5 w-5 fill-current" />
-                  ))}
-                </div>
-              </div>
-              <p className="text-gray-600 mb-6 italic">"{t('landing.testimonials.quote1', 'I\'ve doubled my client base while actually improving my personalized service. The system adapts to each client\'s needs automatically.')}"</p>
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-purple-200 rounded-full flex items-center justify-center text-purple-700 font-bold text-lg mr-4">JD</div>
-                <div>
-                  <p className="font-bold">{t('landing.testimonials.name1', 'Jane Doe')}</p>
-                  <p className="text-sm text-gray-500">{t('landing.testimonials.role1', 'Fitness Coach')}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white p-8 rounded-xl shadow-md">
-              <div className="flex items-center mb-4">
-                <div className="flex text-yellow-400">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-5 w-5 fill-current" />
-                  ))}
-                </div>
-              </div>
-              <p className="text-gray-600 mb-6 italic">"{t('landing.testimonials.quote2', 'The adaptive programs feature has completely transformed how I deliver value to my clients. The results speak for themselves.')}"</p>
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-blue-200 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg mr-4">MS</div>
-                <div>
-                  <p className="font-bold">{t('landing.testimonials.name2', 'Mark Smith')}</p>
-                  <p className="text-sm text-gray-500">{t('landing.testimonials.role2', 'Business Coach')}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white p-8 rounded-xl shadow-md">
-              <div className="flex items-center mb-4">
-                <div className="flex text-yellow-400">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-5 w-5 fill-current" />
-                  ))}
-                </div>
-              </div>
-              <p className="text-gray-600 mb-6 italic">"{t('landing.testimonials.quote3', 'My customers rave about how the program feels like it was made just for them. I\'ve increased retention rates by 70%.')}"</p>
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-indigo-200 rounded-full flex items-center justify-center text-indigo-700 font-bold text-lg mr-4">AL</div>
-                <div>
-                  <p className="font-bold">{t('landing.testimonials.name3', 'Amy Lee')}</p>
-                  <p className="text-sm text-gray-500">{t('landing.testimonials.role3', 'Nutrition Expert')}</p>
-                </div>
-              </div>
+            <div className="bg-orange-50 rounded-2xl p-7 shadow hover-scale transition">
+              <svg className="mx-auto mb-4 h-10 w-10 text-orange-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" x2="12" y1="19" y2="22"></line>
+              </svg>
+              <h3 className="font-bold text-lg mb-2">Scale your business</h3>
+              <p className="text-gray-600">Grow beyond geography, language, and channels with automated, multilingual support.</p>
             </div>
           </div>
         </div>
