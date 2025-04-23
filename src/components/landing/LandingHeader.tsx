@@ -65,7 +65,7 @@ export const LandingHeader = ({
       <div className="container mx-auto p-4 flex justify-between items-center">
         <div className="flex items-center space-x-2">
           <h1 className={`text-2xl font-bold ${user ? 'text-white' : 'text-purple-800'}`}>
-            {t('app.name')}
+            EchoMind
           </h1>
         </div>
         <div className="flex items-center space-x-4">
