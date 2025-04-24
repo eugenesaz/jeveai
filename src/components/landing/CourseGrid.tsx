@@ -1,8 +1,9 @@
+
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import ArrowRight from "@/components/ui/icons/ArrowRight";
+import { ArrowRight } from "lucide-react";
 
 interface Course {
   id: string;
