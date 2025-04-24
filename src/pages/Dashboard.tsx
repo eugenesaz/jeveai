@@ -10,7 +10,6 @@ import { Project } from '@/types/supabase';
 import { toast } from '@/components/ui/sonner';
 import { ProjectTile } from '@/components/projects/ProjectTile';
 import { ProfileButton } from '@/components/profile/ProfileButton';
-import { EarningsChart } from '@/components/dashboard/EarningsChart';
 
 const Dashboard = () => {
   const { t } = useTranslation();
@@ -142,10 +141,6 @@ const Dashboard = () => {
                 <Plus className="h-4 w-4 mr-2 transition-transform group-hover:scale-110" />
                 {t('influencer.project.createNew')}
               </Button>
-            </div>
-            
-            <div className="mb-8">
-              <EarningsChart />
             </div>
 
             {loading ? (
