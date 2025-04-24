@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -56,8 +57,7 @@ const Dashboard = () => {
         setProjects(typedProjects);
       } catch (error) {
         console.error('Error fetching projects:', error);
-        toast({
-          title: 'Error',
+        toast('Error', {
           description: 'Failed to load projects',
           variant: 'destructive',
         });
@@ -72,8 +72,7 @@ const Dashboard = () => {
   const handleCopyUrl = (urlName: string) => {
     const url = `${window.location.origin}/${urlName}`;
     navigator.clipboard.writeText(url);
-    toast({
-      title: 'URL Copied',
+    toast('URL Copied', {
       description: 'Project URL has been copied to clipboard',
     });
   };
