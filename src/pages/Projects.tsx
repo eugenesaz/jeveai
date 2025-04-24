@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -39,9 +38,7 @@ const Projects = () => {
 
         console.log('Projects data:', data);
         
-        // Add description property if it doesn't exist in the database response
         const typedProjects = data?.map(project => {
-          // Add type assertion to access description
           const projectData = project as any;
           
           return {
@@ -52,14 +49,12 @@ const Projects = () => {
             landing_image: project.landing_image,
             user_id: project.user_id,
             created_at: project.created_at,
-            // Set valid color scheme or null if invalid
             color_scheme: (project.color_scheme === 'blue' || 
                           project.color_scheme === 'red' || 
                           project.color_scheme === 'orange' || 
                           project.color_scheme === 'green') 
                           ? project.color_scheme as 'blue' | 'red' | 'orange' | 'green'
                           : null,
-            // Ensure telegram_bot and description exist (null if not present)
             telegram_bot: project.telegram_bot || null,
             description: projectData.description || null,
           } as Project;
@@ -113,7 +108,7 @@ const Projects = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm">
+      <header className="bg-white shadow-sm animate-fade-in">
         <div className="container mx-auto p-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">{t('projects.title', 'Projects')}</h1>
           <div className="flex gap-4 items-center">
@@ -141,8 +136,8 @@ const Projects = () => {
       </header>
 
       <main className="container mx-auto py-10 px-4">
-        <div className="bg-white rounded-2xl shadow-sm p-8 mb-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div className="bg-white rounded-2xl shadow-sm p-8 mb-8 animate-fade-in">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 animate-fade-in">
             <h2 className="text-2xl font-bold">{t('projects.manage', 'Manage Your Projects')}</h2>
             <Button 
               onClick={() => navigate('/create-project')} 
@@ -153,7 +148,7 @@ const Projects = () => {
             </Button>
           </div>
           
-          <div className="relative w-full md:max-w-sm mb-8">
+          <div className="relative w-full md:max-w-sm mb-8 animate-fade-in">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
             <input
               type="text"
@@ -169,7 +164,7 @@ const Projects = () => {
               <p>{t('loading')}</p>
             </div>
           ) : filteredProjects.length === 0 ? (
-            <div className="text-center bg-gray-50 rounded-xl p-10">
+            <div className="text-center bg-gray-50 rounded-xl p-10 animate-fade-in">
               {searchQuery ? (
                 <>
                   <h3 className="text-xl font-semibold mb-4">{t('no.search.results', 'No projects match your search')}</h3>
@@ -188,12 +183,17 @@ const Projects = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredProjects.map((project) => (
-                <ProjectTile
+              {filteredProjects.map((project, index) => (
+                <div 
                   key={project.id}
-                  project={project}
-                  onCopyUrl={handleCopyUrl}
-                />
+                  className="animate-fade-in"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <ProjectTile
+                    project={project}
+                    onCopyUrl={handleCopyUrl}
+                  />
+                </div>
               ))}
             </div>
           )}

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,9 +7,8 @@ import { Plus, ArrowRight, Home, Package, Calendar, LogOut } from 'lucide-react'
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/types/supabase';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/sonner';
 import { ProjectTile } from '@/components/projects/ProjectTile';
-import { EarningsChart } from '@/components/dashboard/EarningsChart';
 import { ProfileButton } from '@/components/profile/ProfileButton';
 
 const Dashboard = () => {
@@ -107,7 +105,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm">
+      <header className="bg-white shadow-sm animate-fade-in">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">{t('influencer.dashboard.title')}</h1>
           <div className="flex gap-4 items-center">
@@ -136,13 +134,13 @@ const Dashboard = () => {
 
       <main className="container mx-auto px-4 py-10">
         <div className="grid gap-10">
-          <div style={{ height: 350 }}>
-            <EarningsChart />
-          </div>
-          <section className="bg-white rounded-2xl shadow-sm p-8">
-            <div className="flex justify-between items-center mb-8">
+          <section className="bg-white rounded-2xl shadow-sm p-8 animate-fade-in">
+            <div className="flex justify-between items-center mb-8 animate-fade-in">
               <h2 className="text-2xl font-bold">{t('influencer.dashboard.projects')}</h2>
-              <Button onClick={handleCreateProject} className="gap-2 bg-blue-600 hover:bg-blue-700">
+              <Button 
+                onClick={handleCreateProject} 
+                className="gap-2 bg-blue-600 hover:bg-blue-700 animate-scale-in"
+              >
                 <Plus className="h-4 w-4" />
                 {t('influencer.project.createNew')}
               </Button>
@@ -152,7 +150,7 @@ const Dashboard = () => {
                 <p>{t('loading')}</p>
               </div>
             ) : projects.length === 0 ? (
-              <Card className="border-dashed border-2 border-gray-300 bg-gray-50">
+              <Card className="border-dashed border-2 border-gray-300 bg-gray-50 animate-fade-in">
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <svg className="w-16 h-16 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -167,20 +165,25 @@ const Dashboard = () => {
             ) : (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {projects.slice(0, 3).map((project) => (
-                    <ProjectTile
+                  {projects.slice(0, 3).map((project, index) => (
+                    <div 
                       key={project.id}
-                      project={project}
-                      onCopyUrl={handleCopyUrl}
-                    />
+                      className="animate-fade-in"
+                      style={{ animationDelay: `${index * 100}ms` }}
+                    >
+                      <ProjectTile
+                        project={project}
+                        onCopyUrl={handleCopyUrl}
+                      />
+                    </div>
                   ))}
                 </div>
                 {projects.length > 3 && (
-                  <div className="mt-6 text-center">
+                  <div className="mt-6 text-center animate-fade-in">
                     <Button 
                       variant="outline" 
                       onClick={() => navigate('/projects')}
-                      className="gap-2"
+                      className="gap-2 hover:scale-105 transition-transform"
                     >
                       {t('view.all.projects', 'View All Projects')}
                       <ArrowRight className="h-4 w-4" />

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -30,7 +29,7 @@ const ProjectLanding = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   useEffect(() => {
     const fetchProjectAndCourses = async () => {
       if (!urlName) {
@@ -80,6 +79,18 @@ const ProjectLanding = () => {
     fetchProjectAndCourses();
   }, [urlName]);
 
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN') {
+        console.log('User signed in:', session?.user?.id);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
   if (loading) return <LoadingState />;
   if (error || !project) return <ErrorState error={error} />;
 
@@ -87,10 +98,7 @@ const ProjectLanding = () => {
     <div className="min-h-screen flex flex-col">
       <ProjectHeader projectName={project.name} colorScheme={project.color_scheme} projectUrlName={project.url_name} />
       <main className="flex-grow">
-        {/* Project Hero with Image at the Top */}
         <ProjectHero project={project} />
-        
-        {/* Available Courses */}
         <CourseGrid courses={courses} projectId={project.id} />
         
         <section className="py-20 bg-white">

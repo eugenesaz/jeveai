@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { UsersList } from '@/components/conversations/UsersList';
 import { MessageList } from '@/components/conversations/MessageList';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, RefreshCcw } from 'lucide-react';
+import { ArrowLeft, RefreshCcw, Folder } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { AddKnowledgeDialog } from '@/components/conversations/AddKnowledgeDialog';
 
@@ -67,8 +66,12 @@ const ViewConversations = () => {
       }));
 
       setUsers(users);
-      if (users.length > 0 && !selectedUserId) {
+
+      if (selectedUserId) {
+        await fetchMessagesForUser(selectedUserId);
+      } else if (users.length > 0) {
         setSelectedUserId(users[0].id);
+        await fetchMessagesForUser(users[0].id);
       }
     } finally {
       setLoading(false);
@@ -76,33 +79,33 @@ const ViewConversations = () => {
     }
   };
 
+  const fetchMessagesForUser = async (userId: string) => {
+    if (!courseId) return;
+
+    const { data, error } = await supabase
+      .from('conversations')
+      .select('*')
+      .eq('course_id', courseId)
+      .eq('user_id', userId)
+      .order('message_time', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching messages:', error);
+      return;
+    }
+
+    setMessages(data);
+  };
+
   useEffect(() => {
     fetchData();
   }, [courseId]);
 
   useEffect(() => {
-    const fetchMessages = async () => {
-      if (!courseId || !selectedUserId) return;
-
-      const { data, error } = await supabase
-        .from('conversations')
-        .select('*')
-        .eq('course_id', courseId)
-        .eq('user_id', selectedUserId)
-        .order('message_time', { ascending: false });  // Sort with latest first
-
-      if (error) {
-        console.error('Error fetching messages:', error);
-        return;
-      }
-
-      setMessages(data);
-    };
-
     if (selectedUserId) {
-      fetchMessages();
+      fetchMessagesForUser(selectedUserId);
     }
-  }, [courseId, selectedUserId]);
+  }, [selectedUserId]);
 
   const handleGoBack = () => {
     navigate(-1);
@@ -127,13 +130,13 @@ const ViewConversations = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <header className="bg-white shadow-sm sticky top-0 z-10">
+      <header className="bg-white shadow-sm sticky top-0 z-10 animate-fade-in">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <Button 
               variant="ghost" 
               onClick={handleGoBack}
-              className="gap-2"
+              className="gap-2 hover:scale-105 transition-transform"
             >
               <ArrowLeft className="h-4 w-4" />
               {t('back')}
@@ -142,10 +145,18 @@ const ViewConversations = () => {
               variant="outline"
               onClick={fetchData}
               disabled={refreshing}
-              className="gap-2"
+              className="gap-2 hover:scale-105 transition-transform"
             >
               <RefreshCcw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
               {t('refresh')}
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/projects')}
+              className="gap-2 hover:scale-105 transition-transform"
+            >
+              <Folder className="h-4 w-4" />
+              {t('navigation.projects', 'Projects')}
             </Button>
           </div>
           <div className="flex gap-2">
@@ -170,7 +181,7 @@ const ViewConversations = () => {
             <p>{t('loading')}</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-white rounded-xl shadow-sm overflow-hidden min-h-[70vh]">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-white rounded-xl shadow-sm overflow-hidden min-h-[70vh] animate-fade-in">
             <div className="border-r p-4">
               <UsersList
                 users={users}
