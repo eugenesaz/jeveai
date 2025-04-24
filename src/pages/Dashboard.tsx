@@ -1,16 +1,16 @@
-
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, ArrowRight, Home, Package, Calendar, LogOut } from 'lucide-react';
+import { Calendar, Home, Package, LogOut, Plus, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/types/supabase';
 import { toast } from '@/components/ui/sonner';
 import { ProjectTile } from '@/components/projects/ProjectTile';
 import { ProfileButton } from '@/components/profile/ProfileButton';
+import { EarningsChart } from '@/components/dashboard/EarningsChart';
 
 const Dashboard = () => {
   const { t } = useTranslation();
@@ -108,20 +108,20 @@ const Dashboard = () => {
           <h1 className="text-2xl font-bold">{t('influencer.dashboard.title')}</h1>
           <div className="flex gap-4 items-center">
             <div className="hidden md:flex gap-4">
-              <Button variant="ghost" onClick={() => navigate('/dashboard')}>
-                <Home className="h-4 w-4 mr-2" />
+              <Button variant="ghost" onClick={() => navigate('/dashboard')} className="group transition-all duration-300">
+                <Home className="h-4 w-4 mr-2 transition-transform group-hover:scale-110" />
                 {t('navigation.home')}
               </Button>
-              <Button variant="ghost" onClick={() => navigate('/projects')}>
-                <Package className="h-4 w-4 mr-2" />
-                {t('influencer.dashboard.projects')}
+              <Button variant="ghost" onClick={() => navigate('/projects')} className="group transition-all duration-300">
+                <Package className="h-4 w-4 mr-2 transition-transform group-hover:scale-110" />
+                {t('navigation.projects')}
               </Button>
-              <Button variant="ghost" onClick={() => navigate('/courses')}>
-                <Calendar className="h-4 w-4 mr-2" />
+              <Button variant="ghost" onClick={() => navigate('/courses')} className="group transition-all duration-300">
+                <Calendar className="h-4 w-4 mr-2 transition-transform group-hover:scale-110" />
                 {t('navigation.courses')}
               </Button>
-              <Button variant="ghost" onClick={signOut}>
-                <LogOut className="h-4 w-4 mr-2" />
+              <Button variant="ghost" onClick={signOut} className="group transition-all duration-300">
+                <LogOut className="h-4 w-4 mr-2 transition-transform group-hover:scale-110" />
                 {t('navigation.logout')}
               </Button>
             </div>
@@ -137,12 +137,17 @@ const Dashboard = () => {
               <h2 className="text-2xl font-bold">{t('influencer.dashboard.projects')}</h2>
               <Button 
                 onClick={handleCreateProject} 
-                className="gap-2 bg-blue-600 hover:bg-blue-700 animate-scale-in"
+                className="group transition-all duration-300 bg-primary hover:bg-primary/90"
               >
-                <Plus className="h-4 w-4" />
+                <Plus className="h-4 w-4 mr-2 transition-transform group-hover:scale-110" />
                 {t('influencer.project.createNew')}
               </Button>
             </div>
+            
+            <div className="mb-8">
+              <EarningsChart />
+            </div>
+
             {loading ? (
               <div className="flex justify-center items-center h-40">
                 <p>{t('loading')}</p>
@@ -198,4 +203,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-

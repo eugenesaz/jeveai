@@ -4,42 +4,26 @@ import { LineChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "rec
 import { useTranslation } from 'react-i18next';
 import { ChartContainer } from "@/components/ui/chart";
 
-const data = [
-  {
-    month: "Jan",
-    earnings: 0,
-  },
-  {
-    month: "Feb",
-    earnings: 180,
-  },
-  {
-    month: "Mar",
-    earnings: 260,
-  },
-  {
-    month: "Apr",
-    earnings: 450,
-  },
-  {
-    month: "May",
-    earnings: 320,
-  },
-  {
-    month: "Jun",
-    earnings: 792,
-  },
+const mockData = [
+  { month: "Jan", earnings: 1200 },
+  { month: "Feb", earnings: 1800 },
+  { month: "Mar", earnings: 2400 },
+  { month: "Apr", earnings: 3600 },
+  { month: "May", earnings: 4200 },
+  { month: "Jun", earnings: 5100 },
+  { month: "Jul", earnings: 6300 },
+  { month: "Aug", earnings: 7200 },
 ];
 
 export function EarningsChart() {
   const { t } = useTranslation();
 
   return (
-    <Card>
+    <Card className="animate-fade-in">
       <CardHeader>
         <CardTitle>{t('dashboard.earnings.title', 'Earnings Overview')}</CardTitle>
         <CardDescription>
-          {t('dashboard.earnings.description', 'Monthly platform revenue')}
+          {t('dashboard.earnings.description', 'Your monthly revenue from all courses')}
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-4">
@@ -56,7 +40,7 @@ export function EarningsChart() {
           >
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
-                data={data}
+                data={mockData}
                 margin={{
                   top: 5,
                   right: 10,
@@ -90,7 +74,6 @@ export function EarningsChart() {
                         </div>
                       );
                     }
-
                     return null;
                   }}
                 />
