@@ -7,7 +7,7 @@ const resources = {
   en: {
     translation: {
       "app": {
-        "name": "Paradise Knowledge Hub",
+        "name": "Jeve",
         "tagline": "Share your expertise with the world"
       },
       "navigation": {
@@ -236,7 +236,7 @@ const resources = {
   ru: {
     translation: {
       "app": {
-        "name": "Paradise Knowledge Hub",
+        "name": "Jeve",
         "tagline": "Поделитесь знаниями со всем миром"
       },
       "navigation": {
