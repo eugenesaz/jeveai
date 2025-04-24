@@ -38,7 +38,7 @@ export function EarningsChart() {
               }
             }}
           >
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer>
               <LineChart
                 data={mockData}
                 margin={{

@@ -40,7 +40,7 @@ export function CourseGrid({ courses, projectId }: { courses: Course[]; projectI
                 <CardFooter className="flex justify-between items-center">
                   <Button 
                     variant="outline"
-                    onClick={() => navigate(`/courses/${course.id}`)}
+                    onClick={() => navigate(`/course/${course.id}`)}
                     className="w-full group transition-all duration-300"
                   >
                     {t('course.view.details', 'View Course Details')}
