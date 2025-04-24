@@ -57,9 +57,8 @@ const Dashboard = () => {
         setProjects(typedProjects);
       } catch (error) {
         console.error('Error fetching projects:', error);
-        toast('Error', {
+        toast.error('Error', {
           description: 'Failed to load projects',
-          variant: 'destructive',
         });
       } finally {
         setLoading(false);
@@ -72,7 +71,7 @@ const Dashboard = () => {
   const handleCopyUrl = (urlName: string) => {
     const url = `${window.location.origin}/${urlName}`;
     navigator.clipboard.writeText(url);
-    toast('URL Copied', {
+    toast.success('URL Copied', {
       description: 'Project URL has been copied to clipboard',
     });
   };
@@ -199,3 +198,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
