@@ -7,18 +7,17 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import ReactMarkdown from 'react-markdown';
-import { Course, Project } from '@/types/supabase';
+import { Course } from '@/types/supabase';
 import { AuthDialogs } from '@/components/auth/AuthDialogs';
 import { toast } from '@/components/ui/use-toast';
 import { FakePaymentDialog } from "@/components/FakePaymentDialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { MessageSquare, Check, Calendar, Star, Users } from 'lucide-react';
+import { MessageSquare, Check, Star } from 'lucide-react';
 import { TelegramWarning } from '@/components/profile/TelegramWarning';
 
 interface CourseWithDates extends Course {
   begin_date?: string;
   end_date?: string;
-  // Add project URL name for navigation
   project_url_name?: string;
 }
 
@@ -234,47 +233,6 @@ const ViewCourse = () => {
                   <div className="p-8 md:p-10">
                     <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-900">Course Information</h2>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                      <div className="bg-blue-50 p-6 rounded-lg">
-                        <div className="flex items-center mb-4">
-                          <Calendar className="h-6 w-6 text-blue-600 mr-3" />
-                          <h3 className="text-lg font-semibold text-gray-900">Duration</h3>
-                        </div>
-                        <div className="pl-9">
-                          <p className="text-gray-600 mb-2">Begin Date:</p>
-                          <p className="text-lg font-medium">{enrollmentInfo.begin_date ? new Date(enrollmentInfo.begin_date).toLocaleDateString() : '-'}</p>
-                          
-                          {enrollmentInfo.end_date && (
-                            <>
-                              <p className="text-gray-600 mt-4 mb-2">End Date:</p>
-                              <p className="text-lg font-medium">{new Date(enrollmentInfo.end_date).toLocaleDateString()}</p>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="bg-indigo-50 p-6 rounded-lg">
-                        <div className="flex items-center mb-4">
-                          <Star className="h-6 w-6 text-indigo-600 mr-3" />
-                          <h3 className="text-lg font-semibold text-gray-900">Benefits</h3>
-                        </div>
-                        <div className="pl-9 space-y-3">
-                          <div className="flex items-start">
-                            <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
-                            <p className="text-gray-800">Personalized guidance</p>
-                          </div>
-                          <div className="flex items-start">
-                            <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
-                            <p className="text-gray-800">Dedicated support</p>
-                          </div>
-                          <div className="flex items-start">
-                            <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
-                            <p className="text-gray-800">Exclusive materials</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
                     {/* Subscription history section */}
                     <div className="mb-10">
                       <h3 className="text-xl font-semibold mb-4 text-gray-900">Your Subscription History</h3>
@@ -341,13 +299,13 @@ const ViewCourse = () => {
                     )}
                     
                     {course?.telegram_bot && (
-                      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-8 border border-blue-100">
+                      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-8 border border-blue-100 mb-10">
                         <div className="flex items-start gap-6">
                           <div className="bg-blue-100 rounded-full p-4">
                             <MessageSquare className="h-12 w-12 text-blue-600" />
                           </div>
                           <div className="flex-1">
-                            <h3 className="text-2xl font-bold mb-4 text-gray-900">Telegram Bot Support</h3>
+                            <h3 className="text-2xl font-bold mb-4 text-gray-900">How to Get Started</h3>
                             <p className="text-gray-600 mb-6">This course includes a Telegram bot assistant. Connect with the bot to get additional support and materials.</p>
                             
                             <Alert className="mb-6 border-blue-200 bg-blue-50">
@@ -411,18 +369,6 @@ const ViewCourse = () => {
                   <Star className="h-5 w-5 mr-2 text-yellow-300" />
                   <span>{getTypeTranslation(course.type)}</span>
                 </div>
-                <div className="bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full flex items-center">
-                  <Calendar className="h-5 w-5 mr-2 text-yellow-300" />
-                  <span>
-                    {course.duration === 0 
-                      ? t('customer.courses.oneTime') 
-                      : `${course.duration} ${t('customer.courses.days')}`}
-                  </span>
-                </div>
-                <div className="bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full flex items-center">
-                  <Users className="h-5 w-5 mr-2 text-yellow-300" />
-                  <span>{t('customer.courses.unlimited.access', 'Unlimited access')}</span>
-                </div>
               </div>
               
               <Button 
@@ -482,27 +428,27 @@ const ViewCourse = () => {
               </div>
             )}
             
-            {/* What You'll Learn */}
+            {/* How to use this course section */}
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-12">
               <div className="p-8 md:p-10">
-                <h2 className="text-2xl md:text-3xl font-bold mb-8 text-gray-900">{t('course.what.youll.learn', "What You'll Learn")}</h2>
+                <h2 className="text-2xl md:text-3xl font-bold mb-8 text-gray-900">{t('course.how.to.use', "How to Use This Course")}</h2>
                 
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid gap-6">
                   <div className="flex items-start">
                     <Check className="h-6 w-6 text-green-500 mr-3 mt-0.5" />
-                    <p className="text-gray-700">{t('course.learn.item1', 'Personalized strategies for your specific goals')}</p>
+                    <p className="text-gray-700">{t('course.instructions.1', 'Subscribe to get immediate access to all materials')}</p>
                   </div>
                   <div className="flex items-start">
                     <Check className="h-6 w-6 text-green-500 mr-3 mt-0.5" />
-                    <p className="text-gray-700">{t('course.learn.item2', 'Practical techniques you can implement immediately')}</p>
+                    <p className="text-gray-700">{t('course.instructions.2', 'Connect with the Telegram bot for personalized assistance')}</p>
                   </div>
                   <div className="flex items-start">
                     <Check className="h-6 w-6 text-green-500 mr-3 mt-0.5" />
-                    <p className="text-gray-700">{t('course.learn.item3', 'Science-backed approaches for lasting results')}</p>
+                    <p className="text-gray-700">{t('course.instructions.3', 'Access course materials anytime through your subscription')}</p>
                   </div>
                   <div className="flex items-start">
                     <Check className="h-6 w-6 text-green-500 mr-3 mt-0.5" />
-                    <p className="text-gray-700">{t('course.learn.item4', 'Customized guidance from experienced mentors')}</p>
+                    <p className="text-gray-700">{t('course.instructions.4', 'Renew your subscription when it expires to maintain access')}</p>
                   </div>
                 </div>
               </div>
