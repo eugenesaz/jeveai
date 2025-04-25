@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import {
   Dialog,
@@ -84,71 +83,36 @@ export function FakePaymentDialog({
       });
       
       if (activeEnrollment) {
-        // For unlimited access courses (no end date)
-        if (!activeEnrollment.end_date) {
-          toast({
-            title: "Already enrolled",
-            description: "You already have unlimited access to this course.",
-          });
-          
-          setLoading(false);
-          onClose();
-          
-          setTimeout(() => navigate('/enrolled-courses'), 600);
-          return;
-        }
-        
-        // For fixed-duration courses, extend the current subscription
-        if (course.duration && course.duration > 0) {
-          // Extend the current subscription
-          const newEndDate = new Date(activeEnrollment.end_date);
-          newEndDate.setDate(newEndDate.getDate() + course.duration);
-          
-          const { error: updateError } = await supabase
-            .from('enrollments')
-            .update({
-              end_date: newEndDate.toISOString(),
-            })
-            .eq('id', activeEnrollment.id);
-            
-          if (updateError) {
-            console.error("Failed to extend enrollment:", updateError);
-            throw new Error("Failed to extend subscription");
-          }
-          
-          toast({
-            title: "Subscription extended",
-            description: `Your subscription has been extended until ${newEndDate.toLocaleDateString()}.`,
-          });
-        }
-      } else {
-        // No active enrollments, create a new one
-        // Use a completely new insert without upsert to avoid conflicts
-        try {
-          const { error: insertError } = await supabase
-            .from('enrollments')
-            .insert({
-              user_id: userId,
-              course_id: course.id,
-              is_paid: true,
-              begin_date: beginDate,
-              end_date: endDate,
-            });
-
-          if (insertError) {
-            console.error("Failed to create enrollment:", insertError);
-            throw new Error("Failed to record enrollment");
-          }
-
-          toast({
-            title: "Payment successful!",
-            description: "You have been enrolled in the course.",
-          });
-        } catch (insertErr) {
-          console.error("Insert error details:", insertErr);
-          throw new Error("Failed to record enrollment");
-        }
+        toast({
+          title: "Already enrolled",
+          description: "You already have an active subscription for this course.",
+          variant: "destructive"
+        });
+        setLoading(false);
+        onClose();
+        return;
       }
+      
+      // No active enrollments, create a new one
+      const { error: insertError } = await supabase
+        .from('enrollments')
+        .insert({
+          user_id: userId,
+          course_id: course.id,
+          is_paid: true,
+          begin_date: beginDate,
+          end_date: endDate,
+        });
+
+      if (insertError) {
+        console.error("Failed to create enrollment:", insertError);
+        throw new Error("Failed to record enrollment");
+      }
+
+      toast({
+        title: "Payment successful!",
+        description: "You have been enrolled in the course.",
+      });
 
       setLoading(false);
       onClose();
