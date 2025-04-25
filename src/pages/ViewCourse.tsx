@@ -39,7 +39,7 @@ const ViewCourse = () => {
   const [loading, setLoading] = useState(true);
   const [enrollmentInfo, setEnrollmentInfo] = useState<EnrollmentInfo>({ is_enrolled: false });
   const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [isSignUpOpen] = useState(false);
+  const [isSignUpOpen, setIsSignUpOpen] = useState(false);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [userTelegram, setUserTelegram] = useState<string | null>(null);
   const [projectUrlName, setProjectUrlName] = useState<string | null>(null);
@@ -53,7 +53,6 @@ const ViewCourse = () => {
       if (!id) return;
 
       try {
-        // First fetch the course data
         const { data: courseData, error: courseError } = await supabase
           .from('courses')
           .select('*')
@@ -64,12 +63,10 @@ const ViewCourse = () => {
           throw courseError;
         }
 
-        // Create a copy of courseData to add project_url_name
         const courseWithProjectUrl: CourseWithDates = {
           ...courseData as Course
         };
 
-        // Then fetch the associated project to get its URL name
         if (courseData.project_id) {
           const { data: projectData, error: projectError } = await supabase
             .from('projects')
@@ -79,7 +76,6 @@ const ViewCourse = () => {
             
           if (!projectError && projectData) {
             setProjectUrlName(projectData.url_name);
-            // Add the project's URL name to the course data
             courseWithProjectUrl.project_url_name = projectData.url_name;
           }
         }
@@ -87,7 +83,6 @@ const ViewCourse = () => {
         setCourse(courseWithProjectUrl);
         
         if (user) {
-          // Check if user is enrolled - don't sort by begin_date as it's not in enrollments
           const { data: enrollment, error: enrollmentError } = await supabase
             .from('enrollments')
             .select('id')
@@ -96,7 +91,6 @@ const ViewCourse = () => {
             .maybeSingle();
             
           if (!enrollmentError && enrollment) {
-            // Fetch all subscriptions for this enrollment
             const { data: subscriptionsData, error: subscriptionsError } = await supabase
               .from('subscriptions')
               .select('*')
@@ -120,7 +114,6 @@ const ViewCourse = () => {
               
               setSubscriptionHistory(processedSubscriptions);
               
-              // Check if there's any active subscription
               const activeSubscription = processedSubscriptions.find(sub => sub.is_active);
               setHasActiveSubscription(!!activeSubscription);
               
@@ -131,14 +124,12 @@ const ViewCourse = () => {
                   subscription: activeSubscription
                 });
               } else {
-                // Has enrollment but no active subscription
                 setEnrollmentInfo({
                   is_enrolled: true,
                   enrollment_id: enrollment.id
                 });
               }
             } else {
-              // Has enrollment but no subscriptions
               setEnrollmentInfo({
                 is_enrolled: true,
                 enrollment_id: enrollment.id
@@ -245,7 +236,6 @@ const ViewCourse = () => {
                   <div className="p-8 md:p-10">
                     <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-900">Course Information</h2>
                     
-                    {/* Subscription history section */}
                     <div className="mb-10">
                       <h3 className="text-xl font-semibold mb-4 text-gray-900">Your Subscription History</h3>
                       <div className="bg-gray-50 p-6 rounded-lg">
@@ -365,7 +355,6 @@ const ViewCourse = () => {
   return (
     <>
       <div className="min-h-screen bg-gray-50">
-        {/* Hero Banner */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
           <div className="container mx-auto p-6 py-10 md:py-16">
             <Button variant="ghost" className="text-white mb-6 hover:bg-white/10" onClick={handleGoBack}>
@@ -396,7 +385,6 @@ const ViewCourse = () => {
 
         <main className="container mx-auto py-16 px-4">
           <div className="max-w-4xl mx-auto">
-            {/* Subscription History for existing users */}
             {user && subscriptionHistory.length > 0 && (
               <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-12">
                 <div className="p-8 md:p-10">
@@ -440,7 +428,6 @@ const ViewCourse = () => {
               </div>
             )}
             
-            {/* How to use this course section */}
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-12">
               <div className="p-8 md:p-10">
                 <h2 className="text-2xl md:text-3xl font-bold mb-8 text-gray-900">{t('course.how.to.use', "How to Use This Course")}</h2>
@@ -466,7 +453,6 @@ const ViewCourse = () => {
               </div>
             </div>
             
-            {/* Course Information */}
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-12">
               <div className="p-8 md:p-10">
                 <h2 className="text-2xl md:text-3xl font-bold mb-8 text-gray-900">{t('course.information', "Course Information")}</h2>
@@ -534,7 +520,6 @@ const ViewCourse = () => {
               </div>
             )}
             
-            {/* Fixed CTA on the bottom for mobile */}
             <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white p-4 border-t border-gray-200 shadow-lg">
               <Button 
                 onClick={handleEnroll}
