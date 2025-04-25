@@ -1,4 +1,3 @@
-
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -63,7 +62,7 @@ export function ProjectHeader({ projectName, colorScheme, projectUrlName }: Proj
                 <Button
                   onClick={() => navigate('/enrolled-courses')}
                   variant="outline"
-                  className="text-white border-white/30 hover:bg-white/10 hover:text-white"
+                  className="text-white border-white/30 bg-white/10 hover:bg-white/20 hover:text-white"
                   size="sm"
                 >
                   {t('navigation.my_courses', 'My Courses')}
@@ -71,7 +70,7 @@ export function ProjectHeader({ projectName, colorScheme, projectUrlName }: Proj
                 <Button
                   onClick={handleLogout}
                   variant="outline"
-                  className="text-white border-white/30 hover:bg-white/10 hover:text-white"
+                  className="text-white border-white/30 bg-white/10 hover:bg-white/20 hover:text-white"
                   size="sm"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
@@ -83,7 +82,7 @@ export function ProjectHeader({ projectName, colorScheme, projectUrlName }: Proj
                 <Button
                   onClick={() => navigate('/')}
                   variant="outline"
-                  className="text-white border-white/30 hover:bg-white/10 hover:text-white"
+                  className="text-white border-white/30 bg-white/10 hover:bg-white/20 hover:text-white"
                   size="sm"
                 >
                   {t('navigation.login', 'Login')}
@@ -91,7 +90,7 @@ export function ProjectHeader({ projectName, colorScheme, projectUrlName }: Proj
                 <Button
                   onClick={() => navigate('/')}
                   variant="outline"
-                  className="text-white border-white/30 hover:bg-white/10 hover:text-white"
+                  className="text-white border-white/30 bg-white/10 hover:bg-white/20 hover:text-white"
                   size="sm"
                 >
                   {t('navigation.signup', 'Sign Up')}
@@ -104,4 +103,3 @@ export function ProjectHeader({ projectName, colorScheme, projectUrlName }: Proj
     </header>
   );
 }
-

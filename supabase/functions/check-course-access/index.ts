@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.31.0";
 
@@ -63,7 +62,6 @@ serve(async (req) => {
       }
     );
 
-    // Find the user profile by Telegram username
     const { data: profileData, error: profileError } = await supabaseClient
       .from('profiles')
       .select('id')
@@ -73,12 +71,17 @@ serve(async (req) => {
     if (profileError || !profileData) {
       console.log('Profile not found or error:', profileError);
       return new Response(
-        JSON.stringify({ status: "Not enrolled", error: "User not found" }),
+        JSON.stringify({ 
+          status: "Not enrolled", 
+          error: "User not found",
+          subscription_begin: null,
+          subscription_end: null,
+          course_info_link: `https://jeve.ai/course/${courseId}`
+        }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Get the enrollment and course data
     const { data: enrollmentData, error: enrollmentError } = await supabaseClient
       .from('enrollments')
       .select('id, courses(name, description)')
@@ -89,12 +92,16 @@ serve(async (req) => {
     if (enrollmentError || !enrollmentData) {
       console.log('No enrollment found or error:', enrollmentError);
       return new Response(
-        JSON.stringify({ status: "Not enrolled" }),
+        JSON.stringify({ 
+          status: "Not enrolled",
+          subscription_begin: null,
+          subscription_end: null,
+          course_info_link: `https://jeve.ai/course/${courseId}`
+        }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Get subscription details
     const { data: subscriptionData, error: subscriptionError } = await supabaseClient
       .from('subscriptions')
       .select('begin_date, end_date, is_paid')
@@ -106,7 +113,13 @@ serve(async (req) => {
     if (subscriptionError) {
       console.log('Error checking subscription:', subscriptionError);
       return new Response(
-        JSON.stringify({ status: "Not enrolled", error: "Error checking subscription" }),
+        JSON.stringify({ 
+          status: "Not enrolled", 
+          error: "Error checking subscription",
+          subscription_begin: null,
+          subscription_end: null,
+          course_info_link: `https://jeve.ai/course/${courseId}`
+        }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -114,17 +127,21 @@ serve(async (req) => {
     if (!subscriptionData) {
       console.log('No subscription found');
       return new Response(
-        JSON.stringify({ status: "Not enrolled", error: "No active subscription" }),
+        JSON.stringify({ 
+          status: "Not enrolled", 
+          error: "No active subscription",
+          subscription_begin: null,
+          subscription_end: null,
+          course_info_link: `https://jeve.ai/course/${courseId}`,
+          course_name: enrollmentData.courses?.name,
+          course_description: enrollmentData.courses?.description
+        }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Check if the subscription is active
     const now = new Date();
     const isActive = subscriptionData.is_paid && (!subscriptionData.end_date || new Date(subscriptionData.end_date) > now);
-
-    // Generate course information link
-    const courseInfoLink = `https://jeve.ai/course/${courseId}`;
 
     if (!isActive) {
       return new Response(
@@ -132,7 +149,7 @@ serve(async (req) => {
           status: "Expired",
           subscription_begin: subscriptionData.begin_date,
           subscription_end: subscriptionData.end_date,
-          course_info_link: courseInfoLink,
+          course_info_link: `https://jeve.ai/course/${courseId}`,
           course_name: enrollmentData.courses?.name,
           course_description: enrollmentData.courses?.description
         }),
@@ -144,7 +161,10 @@ serve(async (req) => {
       JSON.stringify({
         status: "Active",
         subscription_begin: subscriptionData.begin_date,
-        subscription_end: subscriptionData.end_date
+        subscription_end: subscriptionData.end_date,
+        course_info_link: `https://jeve.ai/course/${courseId}`,
+        course_name: enrollmentData.courses?.name,
+        course_description: enrollmentData.courses?.description
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
@@ -152,9 +172,14 @@ serve(async (req) => {
   } catch (err) {
     console.error('Error processing request:', err);
     return new Response(
-      JSON.stringify({ status: "Error", error: "Internal Server Error" }),
+      JSON.stringify({ 
+        status: "Error", 
+        error: "Internal Server Error",
+        subscription_begin: null,
+        subscription_end: null,
+        course_info_link: `https://jeve.ai/course/${courseId}`
+      }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
-
