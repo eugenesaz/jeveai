@@ -15,10 +15,31 @@ serve(async (req) => {
   }
 
   try {
-    // Parse request body
-    const { telegramUsername, courseId } = await req.json();
+    let telegramUsername, courseId;
+
+    // Parse request body - handle both form data and JSON
+    const contentType = req.headers.get("content-type") || "";
     
+    if (contentType.includes("application/json")) {
+      // Handle JSON body
+      const body = await req.json();
+      telegramUsername = body.telegramUsername;
+      courseId = body.courseId;
+    } else if (contentType.includes("application/x-www-form-urlencoded")) {
+      // Handle form data
+      const formData = await req.formData();
+      telegramUsername = formData.get("telegramUsername")?.toString();
+      courseId = formData.get("courseId")?.toString();
+    } else {
+      // Try to get from URL parameters
+      const url = new URL(req.url);
+      telegramUsername = url.searchParams.get("telegramUsername");
+      courseId = url.searchParams.get("courseId");
+    }
+    
+    // Validate required parameters
     if (!telegramUsername || !courseId) {
+      console.log('Missing parameters:', { telegramUsername, courseId });
       return new Response(
         JSON.stringify({ 
           error: "Both telegramUsername and courseId are required" 
