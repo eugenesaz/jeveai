@@ -122,31 +122,31 @@ export function FakePaymentDialog({
           });
         }
       } else {
-        // No active enrollments, create a new one with the upsert method and on_conflict do nothing strategy
-        const { error: insertError } = await supabase
-          .from('enrollments')
-          .upsert(
-            {
+        // No active enrollments, create a new one
+        // Use a completely new insert without upsert to avoid conflicts
+        try {
+          const { error: insertError } = await supabase
+            .from('enrollments')
+            .insert({
               user_id: userId,
               course_id: course.id,
               is_paid: true,
               begin_date: beginDate,
               end_date: endDate,
-            },
-            { 
-              onConflict: 'user_id,course_id',
-              ignoreDuplicates: true 
-            }
-          );
-          
-        if (insertError) {
-          console.error("Failed to create enrollment:", insertError);
-          throw new Error("Failed to record enrollment");
-        } else {
+            });
+
+          if (insertError) {
+            console.error("Failed to create enrollment:", insertError);
+            throw new Error("Failed to record enrollment");
+          }
+
           toast({
             title: "Payment successful!",
             description: "You have been enrolled in the course.",
           });
+        } catch (insertErr) {
+          console.error("Insert error details:", insertErr);
+          throw new Error("Failed to record enrollment");
         }
       }
 
