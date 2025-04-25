@@ -9,7 +9,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders, status: 204 });
   }
@@ -79,10 +78,10 @@ serve(async (req) => {
       );
     }
 
-    // Get the enrollment id
+    // Get the enrollment and course data
     const { data: enrollmentData, error: enrollmentError } = await supabaseClient
       .from('enrollments')
-      .select('id')
+      .select('id, courses(name, description)')
       .eq('user_id', profileData.id)
       .eq('course_id', courseId)
       .maybeSingle();
@@ -95,7 +94,7 @@ serve(async (req) => {
       );
     }
 
-    // Then use enrollment id to get subscription details
+    // Get subscription details
     const { data: subscriptionData, error: subscriptionError } = await supabaseClient
       .from('subscriptions')
       .select('begin_date, end_date, is_paid')
@@ -124,12 +123,18 @@ serve(async (req) => {
     const now = new Date();
     const isActive = subscriptionData.is_paid && (!subscriptionData.end_date || new Date(subscriptionData.end_date) > now);
 
+    // Generate course information link
+    const courseInfoLink = `https://jeve.ai/course/${courseId}`;
+
     if (!isActive) {
       return new Response(
         JSON.stringify({
           status: "Expired",
           subscription_begin: subscriptionData.begin_date,
-          subscription_end: subscriptionData.end_date
+          subscription_end: subscriptionData.end_date,
+          course_info_link: courseInfoLink,
+          course_name: enrollmentData.courses?.name,
+          course_description: enrollmentData.courses?.description
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -152,3 +157,4 @@ serve(async (req) => {
     );
   }
 });
+
