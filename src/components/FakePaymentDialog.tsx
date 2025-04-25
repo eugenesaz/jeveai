@@ -122,40 +122,35 @@ export function FakePaymentDialog({
           });
         }
       } else {
-        // No active enrollments, create a new one
-        // Use RPC to handle duplicates properly
-        const { error: insertError } = await supabase.rpc('create_enrollment', { 
-          p_user_id: userId,
-          p_course_id: course.id,
-          p_is_paid: true,
-          p_begin_date: beginDate,
-          p_end_date: endDate
-        });
-
-        if (insertError) {
-          console.error("Failed to create enrollment using RPC:", insertError);
+        // No active enrollments, create a new one using direct insert
+        const { error: insertError } = await supabase
+          .from('enrollments')
+          .insert({
+            user_id: userId,
+            course_id: course.id,
+            is_paid: true,
+            begin_date: beginDate,
+            end_date: endDate,
+          });
           
-          // Fallback method if RPC fails
-          const { error: directInsertError } = await supabase
-            .from('enrollments')
-            .insert({
-              user_id: userId,
-              course_id: course.id,
-              is_paid: true,
-              begin_date: beginDate,
-              end_date: endDate,
+        if (insertError) {
+          console.error("Failed to create enrollment:", insertError);
+          
+          if (insertError.code === '23505') { // Unique constraint violation
+            // Handle the case where an enrollment already exists
+            toast({
+              title: "Already enrolled",
+              description: "You are already enrolled in this course.",
             });
-            
-          if (directInsertError) {
-            console.error("Direct insert also failed:", directInsertError);
+          } else {
             throw new Error("Failed to record enrollment");
           }
+        } else {
+          toast({
+            title: "Payment successful!",
+            description: "You have been enrolled in the course.",
+          });
         }
-        
-        toast({
-          title: "Payment successful!",
-          description: "You have been enrolled in the course.",
-        });
       }
 
       setLoading(false);
