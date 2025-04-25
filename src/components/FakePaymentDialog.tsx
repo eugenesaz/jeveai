@@ -53,6 +53,8 @@ export function FakePaymentDialog({
         end_date = end.toISOString();
       }
 
+      console.log("Checking for existing enrollment:", { userId, courseId: course.id });
+      
       // Check if there's an existing enrollment for this course/user combination
       const { data: existingEnrollment, error: existingEnrollmentError } = await supabase
         .from('enrollments')
@@ -68,14 +70,23 @@ export function FakePaymentDialog({
         throw new Error("Failed to check existing enrollment");
       }
 
+      console.log("Existing enrollment check result:", existingEnrollment);
+
       if (existingEnrollment) {
         // There's an existing enrollment
         const now = new Date();
         const isActive = existingEnrollment.is_paid && 
           (!existingEnrollment.end_date || new Date(existingEnrollment.end_date) > now);
         
+        console.log("Enrollment status check:", { 
+          isActive, 
+          isPaid: existingEnrollment.is_paid,
+          endDate: existingEnrollment.end_date,
+          hasDuration: !!course.duration
+        });
+        
+        // For unlimited duration courses with existing active enrollment, just return success
         if (isActive && !course.duration) {
-          // For unlimited duration courses with existing active enrollment, just return success
           toast({
             title: "Already enrolled!",
             description: "You already have an active unlimited subscription to this course.",
@@ -92,16 +103,28 @@ export function FakePaymentDialog({
           return;
         }
         
+        // Handle enrollments with end dates (fixed duration courses)
         if (existingEnrollment.end_date && course.duration && course.duration > 0) {
-          // If there's an existing enrollment with an end date, extend it
           const currentEnd = new Date(existingEnrollment.end_date);
           // Check if it's expired
           const isExpired = currentEnd < now;
+          
+          console.log("Handling timed subscription:", { 
+            isExpired,
+            currentEnd: currentEnd.toISOString(),
+            now: now.toISOString()
+          });
           
           if (isExpired) {
             // If expired, start a new subscription from now
             const newEnd = new Date(now);
             newEnd.setDate(newEnd.getDate() + course.duration);
+            
+            console.log("Updating expired enrollment:", {
+              enrollmentId: existingEnrollment.id,
+              newBeginDate: now.toISOString(),
+              newEndDate: newEnd.toISOString()
+            });
             
             const { error: updateError } = await supabase
               .from('enrollments')
@@ -121,6 +144,12 @@ export function FakePaymentDialog({
             // If not expired, extend from current end date
             currentEnd.setDate(currentEnd.getDate() + course.duration);
             
+            console.log("Extending active enrollment:", {
+              enrollmentId: existingEnrollment.id,
+              currentEndDate: existingEnrollment.end_date,
+              newEndDate: currentEnd.toISOString()
+            });
+            
             const { error: updateError } = await supabase
               .from('enrollments')
               .update({ 
@@ -131,12 +160,23 @@ export function FakePaymentDialog({
               .eq('id', existingEnrollment.id);
               
             if (updateError) {
-              console.error("Enrollment update error:", updateError);
-              throw new Error("Failed to update enrollment");
+              console.error("Enrollment extension error:", updateError);
+              throw new Error("Failed to extend enrollment");
             }
           }
         } else {
-          // Create a new enrollment (this handles cases where there was an enrollment but it's different from current conditions)
+          // Create a new enrollment for cases where:
+          // 1. We had an enrollment without end date but want to switch to one with end date
+          // 2. We had an enrollment with end date but want to switch to one without end date
+          // 3. Other edge cases
+          console.log("Creating new enrollment record (conditions changed):", {
+            userId, 
+            courseId: course.id,
+            isPaid: true,
+            beginDate: begin_date,
+            endDate: end_date
+          });
+          
           const { error: insertError } = await supabase
             .from('enrollments')
             .insert({
@@ -149,11 +189,41 @@ export function FakePaymentDialog({
 
           if (insertError) {
             console.error("New enrollment insert error:", insertError);
-            throw new Error("Failed to record new enrollment");
+            
+            // If we get a duplicate key error, try updating the existing enrollment instead
+            if (insertError.code === '23505') { // Postgres unique constraint violation
+              console.log("Duplicate enrollment detected, updating instead");
+              
+              const { error: updateError } = await supabase
+                .from('enrollments')
+                .update({ 
+                  is_paid: true,
+                  begin_date,
+                  end_date,
+                  updated_at: now.toISOString()
+                })
+                .eq('user_id', userId)
+                .eq('course_id', course.id);
+                
+              if (updateError) {
+                console.error("Enrollment update fallback error:", updateError);
+                throw new Error("Failed to update enrollment");
+              }
+            } else {
+              throw new Error("Failed to record new enrollment");
+            }
           }
         }
       } else {
         // No existing enrollment, create a new one
+        console.log("No existing enrollment, creating new one:", {
+          userId, 
+          courseId: course.id,
+          isPaid: true,
+          beginDate: begin_date,
+          endDate: end_date
+        });
+        
         const { error: insertError } = await supabase
           .from('enrollments')
           .insert({

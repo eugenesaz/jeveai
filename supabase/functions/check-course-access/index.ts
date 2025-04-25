@@ -229,9 +229,28 @@ serve(async (req) => {
     // Sanitize courseId and make sure it's correctly formatted
     if (formattedCourseId) {
       formattedCourseId = formattedCourseId.trim();
-      // Ensure it's a valid UUID format
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      if (!uuidRegex.test(formattedCourseId)) {
+      
+      // Fix courseId if it's missing the last character (which seems to be happening)
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{11,12}$/i;
+      if (uuidRegex.test(formattedCourseId) && formattedCourseId.length === 35) {
+        // If it's 35 characters (missing one), try to query the database for the full ID
+        console.log('Course ID appears to be missing a character:', formattedCourseId);
+        
+        const { data: possibleCourses, error: courseSearchError } = await supabaseClient
+          .from('courses')
+          .select('id')
+          .ilike('id', `${formattedCourseId}%`)
+          .limit(1);
+          
+        if (!courseSearchError && possibleCourses && possibleCourses.length > 0) {
+          formattedCourseId = possibleCourses[0].id;
+          console.log('Found matching course ID:', formattedCourseId);
+        }
+      }
+      
+      // Final check to ensure it's a valid UUID
+      const finalUuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!finalUuidRegex.test(formattedCourseId)) {
         console.log('Invalid course ID format:', formattedCourseId);
         return new Response(
           JSON.stringify({ status: "Not enrolled", error: "Invalid course ID format" }),
