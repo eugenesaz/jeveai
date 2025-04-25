@@ -40,188 +40,144 @@ export function FakePaymentDialog({
       onClose();
       return;
     }
+    
     setLoading(true);
 
     try {
       // Calculate dates
       const now = new Date();
-      const begin_date = now.toISOString();
-      let end_date: string | null = null;
+      const beginDate = now.toISOString();
+      let endDate: string | null = null;
+      
+      // Set end date if course has a duration
       if (course.duration && course.duration > 0) {
         const end = new Date(now);
         end.setDate(end.getDate() + course.duration);
-        end_date = end.toISOString();
+        endDate = end.toISOString();
       }
 
-      console.log("Checking for existing enrollment:", { userId, courseId: course.id });
+      console.log("Processing enrollment:", { userId, courseId: course.id });
       
-      // Check if there's an existing enrollment for this course/user combination
-      const { data: existingEnrollment, error: existingEnrollmentError } = await supabase
+      // Check for existing enrollment
+      const { data: existingEnrollment, error: fetchError } = await supabase
         .from('enrollments')
-        .select('id, end_date, is_paid')
+        .select('id, begin_date, end_date, is_paid')
         .eq('user_id', userId)
         .eq('course_id', course.id)
         .order('begin_date', { ascending: false })
         .limit(1)
         .maybeSingle();
-
-      if (existingEnrollmentError) {
-        console.error("Error checking existing enrollment:", existingEnrollmentError);
-        throw new Error("Failed to check existing enrollment");
-      }
-
-      console.log("Existing enrollment check result:", existingEnrollment);
-
-      if (existingEnrollment) {
-        // There's an existing enrollment
-        const now = new Date();
-        const isActive = existingEnrollment.is_paid && 
-          (!existingEnrollment.end_date || new Date(existingEnrollment.end_date) > now);
         
-        console.log("Enrollment status check:", { 
-          isActive, 
-          isPaid: existingEnrollment.is_paid,
-          endDate: existingEnrollment.end_date,
-          hasDuration: !!course.duration
+      if (fetchError) {
+        console.error("Error checking enrollment:", fetchError);
+        throw new Error("Failed to check enrollment status");
+      }
+      
+      console.log("Existing enrollment check:", existingEnrollment);
+      
+      if (existingEnrollment) {
+        // Handle existing enrollment
+        const currentDate = new Date();
+        const hasEndDate = !!existingEnrollment.end_date;
+        const isExpired = hasEndDate && new Date(existingEnrollment.end_date) < currentDate;
+        
+        console.log("Enrollment status:", { 
+          hasEndDate, 
+          isExpired: isExpired ? "yes" : "no",
+          endDate: existingEnrollment.end_date
         });
         
-        // For unlimited duration courses with existing active enrollment, just return success
-        if (isActive && !course.duration) {
+        // For unlimited access courses (no end date)
+        if (!hasEndDate && existingEnrollment.is_paid) {
           toast({
-            title: "Already enrolled!",
-            description: "You already have an active unlimited subscription to this course.",
+            title: "Already enrolled",
+            description: "You already have unlimited access to this course.",
           });
           
           setLoading(false);
           onClose();
           
-          // Redirect after a short pause
-          setTimeout(() => {
-            navigate('/enrolled-courses');
-          }, 600);
-          
+          setTimeout(() => navigate('/enrolled-courses'), 600);
           return;
         }
         
-        // Handle enrollments with end dates (fixed duration courses)
-        if (existingEnrollment.end_date && course.duration && course.duration > 0) {
-          const currentEnd = new Date(existingEnrollment.end_date);
-          // Check if it's expired
-          const isExpired = currentEnd < now;
-          
-          console.log("Handling timed subscription:", { 
-            isExpired,
-            currentEnd: currentEnd.toISOString(),
-            now: now.toISOString()
-          });
+        // For fixed duration courses
+        if (course.duration && course.duration > 0) {
+          let newEndDate: Date;
           
           if (isExpired) {
-            // If expired, start a new subscription from now
-            const newEnd = new Date(now);
-            newEnd.setDate(newEnd.getDate() + course.duration);
+            // If expired, start a fresh period from today
+            newEndDate = new Date(currentDate);
+            newEndDate.setDate(newEndDate.getDate() + course.duration);
             
-            console.log("Updating expired enrollment:", {
-              enrollmentId: existingEnrollment.id,
-              newBeginDate: now.toISOString(),
-              newEndDate: newEnd.toISOString()
-            });
+            const updateData = {
+              begin_date: currentDate.toISOString(),
+              end_date: newEndDate.toISOString(),
+              is_paid: true,
+              updated_at: currentDate.toISOString()
+            };
+            
+            console.log("Updating expired enrollment:", { id: existingEnrollment.id, ...updateData });
             
             const { error: updateError } = await supabase
               .from('enrollments')
-              .update({ 
-                begin_date: now.toISOString(),
-                end_date: newEnd.toISOString(),
-                is_paid: true,
-                updated_at: now.toISOString()
-              })
+              .update(updateData)
               .eq('id', existingEnrollment.id);
               
             if (updateError) {
-              console.error("Enrollment update error:", updateError);
-              throw new Error("Failed to update enrollment");
+              console.error("Failed to update enrollment:", updateError);
+              throw new Error("Failed to renew subscription");
             }
           } else {
-            // If not expired, extend from current end date
-            currentEnd.setDate(currentEnd.getDate() + course.duration);
+            // If not expired, extend the current end date
+            newEndDate = existingEnrollment.end_date 
+              ? new Date(existingEnrollment.end_date) 
+              : new Date(currentDate);
             
-            console.log("Extending active enrollment:", {
-              enrollmentId: existingEnrollment.id,
-              currentEndDate: existingEnrollment.end_date,
-              newEndDate: currentEnd.toISOString()
-            });
+            newEndDate.setDate(newEndDate.getDate() + course.duration);
+            
+            const updateData = {
+              end_date: newEndDate.toISOString(),
+              is_paid: true,
+              updated_at: currentDate.toISOString()
+            };
+            
+            console.log("Extending active enrollment:", { id: existingEnrollment.id, ...updateData });
             
             const { error: updateError } = await supabase
               .from('enrollments')
-              .update({ 
-                end_date: currentEnd.toISOString(),
-                is_paid: true,
-                updated_at: now.toISOString()
-              })
+              .update(updateData)
               .eq('id', existingEnrollment.id);
               
             if (updateError) {
-              console.error("Enrollment extension error:", updateError);
-              throw new Error("Failed to extend enrollment");
+              console.error("Failed to extend enrollment:", updateError);
+              throw new Error("Failed to extend subscription");
             }
           }
         } else {
-          // Create a new enrollment for cases where:
-          // 1. We had an enrollment without end date but want to switch to one with end date
-          // 2. We had an enrollment with end date but want to switch to one without end date
-          // 3. Other edge cases
-          console.log("Creating new enrollment record (conditions changed):", {
-            userId, 
-            courseId: course.id,
-            isPaid: true,
-            beginDate: begin_date,
-            endDate: end_date
-          });
+          // For unlimited duration courses, ensure is_paid is true
+          console.log("Ensuring unlimited enrollment is marked as paid:", existingEnrollment.id);
           
-          const { error: insertError } = await supabase
+          const { error: updateError } = await supabase
             .from('enrollments')
-            .insert({
-              user_id: userId,
-              course_id: course.id,
+            .update({ 
               is_paid: true,
-              begin_date,
-              end_date,
-            });
-
-          if (insertError) {
-            console.error("New enrollment insert error:", insertError);
+              updated_at: currentDate.toISOString() 
+            })
+            .eq('id', existingEnrollment.id);
             
-            // If we get a duplicate key error, try updating the existing enrollment instead
-            if (insertError.code === '23505') { // Postgres unique constraint violation
-              console.log("Duplicate enrollment detected, updating instead");
-              
-              const { error: updateError } = await supabase
-                .from('enrollments')
-                .update({ 
-                  is_paid: true,
-                  begin_date,
-                  end_date,
-                  updated_at: now.toISOString()
-                })
-                .eq('user_id', userId)
-                .eq('course_id', course.id);
-                
-              if (updateError) {
-                console.error("Enrollment update fallback error:", updateError);
-                throw new Error("Failed to update enrollment");
-              }
-            } else {
-              throw new Error("Failed to record new enrollment");
-            }
+          if (updateError) {
+            console.error("Failed to update enrollment payment status:", updateError);
+            throw new Error("Failed to process payment");
           }
         }
       } else {
         // No existing enrollment, create a new one
-        console.log("No existing enrollment, creating new one:", {
+        console.log("Creating new enrollment:", { 
           userId, 
-          courseId: course.id,
-          isPaid: true,
-          beginDate: begin_date,
-          endDate: end_date
+          courseId: course.id, 
+          beginDate, 
+          endDate 
         });
         
         const { error: insertError } = await supabase
@@ -230,12 +186,12 @@ export function FakePaymentDialog({
             user_id: userId,
             course_id: course.id,
             is_paid: true,
-            begin_date,
-            end_date,
+            begin_date: beginDate,
+            end_date: endDate,
           });
 
         if (insertError) {
-          console.error("Enrollment insert error:", insertError);
+          console.error("Failed to create enrollment:", insertError);
           throw new Error("Failed to record enrollment");
         }
       }
