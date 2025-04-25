@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.31.0";
 
@@ -48,8 +47,8 @@ serve(async (req) => {
     // Validate required parameters
     if (!telegramUsername || !courseId) {
       return new Response(
-        JSON.stringify({ error: "Both telegramUsername and courseId are required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ status: "Not enrolled", error: "Both telegramUsername and courseId are required" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -75,10 +74,18 @@ serve(async (req) => {
       .from('profiles')
       .select('id')
       .ilike('telegram', cleanTelegramUsername)
-      .single();
+      .maybeSingle();
 
-    if (profileError || !profileData) {
-      console.log('Profile not found:', { username: cleanTelegramUsername, error: profileError });
+    if (profileError) {
+      console.log('Profile query error:', profileError);
+      return new Response(
+        JSON.stringify({ status: "Not enrolled", error: "Error finding user" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!profileData) {
+      console.log('Profile not found:', { username: cleanTelegramUsername });
       return new Response(
         JSON.stringify({ status: "Not enrolled", error: "User not found" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -87,97 +94,85 @@ serve(async (req) => {
 
     console.log('Profile found:', profileData);
     
-    // Get course with the provided courseId
+    // Check if course exists
     const { data: courseData, error: courseError } = await supabaseClient
       .from('courses')
-      .select('id, duration, recurring')
+      .select('id')
       .eq('id', courseId)
       .maybeSingle();
 
-    if (courseError) {
-      console.log('Course query error:', courseError);
-      return new Response(
-        JSON.stringify({ status: "Not enrolled", error: "Course query error" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    if (!courseData) {
-      console.log('Course not found:', courseId);
+    if (courseError || !courseData) {
+      console.log('Course not found or error:', courseId, courseError);
       return new Response(
         JSON.stringify({ status: "Not enrolled", error: "Course not found" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log('Course found:', courseData);
-
-    // Check if user is enrolled in the course
+    // Get current date for comparisons
+    const now = new Date();
+    
+    // Find the most recent active enrollment for this user and course
     const { data: enrollmentData, error: enrollmentError } = await supabaseClient
       .from('enrollments')
-      .select('begin_date, end_date, is_paid')
+      .select('id, begin_date, end_date, is_paid')
       .eq('user_id', profileData.id)
       .eq('course_id', courseData.id)
-      .order('begin_date', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .eq('is_paid', true)
+      .order('begin_date', { ascending: false });
 
     if (enrollmentError) {
       console.log('Enrollment query error:', enrollmentError);
       return new Response(
-        JSON.stringify({ status: "Not enrolled", error: "Enrollment query error" }),
+        JSON.stringify({ status: "Not enrolled", error: "Error checking enrollment" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    if (!enrollmentData) {
+    if (!enrollmentData || enrollmentData.length === 0) {
       console.log('No enrollment found');
       return new Response(
         JSON.stringify({ status: "Not enrolled" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    // Check if the enrollment has expired
-    const now = new Date();
-    let expired = false;
     
-    if (enrollmentData.end_date) {
-      const endDate = new Date(enrollmentData.end_date);
-      expired = now > endDate;
-    }
-
-    // Check if payment is complete
-    if (!enrollmentData.is_paid) {
-      return new Response(
-        JSON.stringify({ status: "Not paid" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    if (expired) {
+    // Find active enrollment (either no end_date or end_date in the future)
+    const activeEnrollment = enrollmentData.find(enrollment => {
+      // If no end date, it's an unlimited subscription
+      if (!enrollment.end_date) return true;
+      
+      // Otherwise check if the end date is in the future
+      return new Date(enrollment.end_date) > now;
+    });
+    
+    // If no active enrollment found, the subscription has expired
+    if (!activeEnrollment) {
+      const mostRecent = enrollmentData[0]; // Already sorted by begin_date desc
       return new Response(
         JSON.stringify({ 
           status: "Expired",
-          subscription_begin: enrollmentData.begin_date,
-          subscription_end: enrollmentData.end_date
+          subscription_begin: mostRecent.begin_date,
+          subscription_end: mostRecent.end_date
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    // Active subscription found
     return new Response(
       JSON.stringify({ 
         status: "Active",
-        subscription_begin: enrollmentData.begin_date,
-        subscription_end: enrollmentData.end_date
+        subscription_begin: activeEnrollment.begin_date,
+        subscription_end: activeEnrollment.end_date
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
+
   } catch (err) {
     console.error('Error processing request:', err);
     return new Response(
-      JSON.stringify({ error: "Internal Server Error" }),
+      JSON.stringify({ status: "Error", error: "Internal Server Error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
