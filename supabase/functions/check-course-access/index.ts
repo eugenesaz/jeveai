@@ -79,7 +79,7 @@ serve(async (req) => {
       );
     }
 
-    // First, get the enrollment id WITHOUT ordering by begin_date
+    // Get the enrollment id without ordering by begin_date
     const { data: enrollmentData, error: enrollmentError } = await supabaseClient
       .from('enrollments')
       .select('id')
