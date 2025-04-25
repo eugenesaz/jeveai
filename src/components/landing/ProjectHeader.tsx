@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from 'react-i18next';
-import { LanguageSelector } from '@/components/LanguageSelector';
+import { ProjectLanguageSelector } from '@/components/landing/ProjectLanguageSelector';
 import { cn } from '@/lib/utils';
 
 interface ProjectHeaderProps {
@@ -44,7 +44,7 @@ export function ProjectHeader({ projectName, colorScheme, projectUrlName }: Proj
             {projectName}
           </h1>
           <div className="flex items-center gap-4">
-            <LanguageSelector />
+            <ProjectLanguageSelector />
             {user && (
               <Button
                 onClick={() => navigate('/enrolled-courses')}

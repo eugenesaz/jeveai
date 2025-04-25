@@ -1,3 +1,4 @@
+
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
@@ -22,7 +23,8 @@ const resources = {
         "language": "Language",
         "cancel": "Cancel",
         "logout_success": "Successfully logged out",
-        "logout_error": "Failed to log out. Please try again."
+        "logout_error": "Failed to log out. Please try again.",
+        "my_courses": "My Courses"
       },
       "auth": {
         "email": "Email",
@@ -108,137 +110,7 @@ const resources = {
         "knowledge": "Project Knowledge",
         "addKnowledge": "Add Knowledge",
         "orUploadDocuments": "Or Upload Documents",
-        "noKnowledge": "No knowledge added to this project yet"
-      },
-      "profile": {
-        "title": "User Profile",
-        "email": "Email",
-        "telegram": "Telegram",
-        "save": "Save Profile",
-        "updateSuccess": "Profile updated successfully",
-        "updateError": "Failed to update profile"
-      },
-      "no": {
-        "courses": "No courses yet",
-        "project": "No Project",
-        "projects": "No projects yet"
-      },
-      "view": "View",
-      "editButton": "Edit",
-      "loading": "Loading...",
-      "customer": {
-        "courses": {
-          "title": "Courses",
-          "active": "Active Courses",
-          "available": "Available Courses",
-          "enroll": "Enroll Now",
-          "view": "View Details",
-          "courseInfo": "Course Information",
-          "duration": "Duration",
-          "price": "Price",
-          "type": "Type",
-          "recurring": "Recurring",
-          "oneTime": "One-time payment",
-          "purchase": "Purchase",
-          "cancel": "Cancel",
-          "days": "days",
-          "viewDetails": "View Details",
-          "myEnrollments": "My Enrolled Courses",
-          "noEnrollments": "You are not enrolled in any courses yet",
-          "noEnrollmentsDescription": "Browse available courses and enroll to start learning",
-          "browseCourses": "Browse Courses",
-          "subscription": "Subscription",
-          "startDate": "Start Date",
-          "endDate": "End Date",
-          "renew": "Renew Subscription"
-        },
-        "social": {
-          "title": "Connect Social Media",
-          "description": "Please provide at least one social media account:",
-          "telegram": "Telegram (@username)",
-          "instagram": "Instagram (username)",
-          "tiktok": "TikTok (username)",
-          "save": "Save and Continue"
-        }
-      },
-      "admin": {
-        "title": "Administration",
-        "influencers": "Influencers",
-        "projects": "Projects",
-        "keys": {
-          "stripe": "Stripe Secret Key",
-          "gemini": "Gemini API Key",
-          "save": "Save Keys"
-        }
-      },
-      "errors": {
-        "required": "This field is required",
-        "invalidEmail": "Please enter a valid email",
-        "passwordLength": "Password must be at least 8 characters",
-        "passwordMatch": "Passwords do not match",
-        "uniqueUrlName": "This URL name is already taken",
-        "uniqueCourseName": "This course name is already taken",
-        "uniqueBotName": "This bot name is already taken",
-        "minPrice": "Price must be greater than 0",
-        "socialRequired": "At least one social media account is required",
-        "botNameInvalid": "Bot name can only contain letters, numbers, and underscores",
-        "projectNotFound": "Project not found"
-      },
-      "success": {
-        "projectCreated": "Project created successfully!",
-        "projectUpdated": "Project updated successfully!",
-        "courseCreated": "Course created successfully!",
-        "courseUpdated": "Course updated successfully!",
-        "enrolled": "Successfully enrolled in course!",
-        "socialSaved": "Social media accounts saved successfully!"
-      },
-      "editCourse": {
-        "title": "Edit Course",
-        "save": "Save Changes",
-        "cancel": "Cancel",
-        "success": "Course updated successfully!",
-        "error": "Failed to update course"
-      },
-      "go": {
-        "back": "Go Back"
-      },
-      "goBack": "Go Back",
-      "login": {
-        "required": "Login Required",
-        "please": {
-          "login": {
-            "to": {
-              "access": "Please log in to access this content"
-            }
-          }
-        }
-      },
-      "please": {
-        "login": {
-          "to": {
-            "access": "Please log in to access this content"
-          }
-        }
-      },
-      "cancel": "Cancel",
-      "save": "Save",
-      "landing": {
-        "loading": "Loading...",
-        "redirecting": "Redirecting to dashboard...",
-        "footer": "© 2025 Paradise Knowledge Hub. All rights reserved.",
-        "cta": {
-          "start": "Get Started",
-          "join": "Join thousands of influencers who are already scaling their business with Paradise.",
-          "ready": "Ready to Start Your Journey?"
-        }
-      },
-      "dashboard": {
-        "earnings": {
-          "title": "Earnings Overview",
-          "earnings": "Earnings"
-        }
-      },
-      "project": {
+        "noKnowledge": "No knowledge added to this project yet",
         "landing": {
           "benefits": {
             "title": "What You'll Gain",
@@ -426,7 +298,8 @@ const resources = {
         "language": "Язык",
         "cancel": "Отмена",
         "logout_success": "Вы успешно вышли из системы",
-        "logout_error": "Не удалось выйти. Пожалуйста, попробуйте снова."
+        "logout_error": "Не удалось выйти. Пожалуйста, попробуйте снова.",
+        "my_courses": "Мои курсы"
       },
       "auth": {
         "email": "Эл. почта",
@@ -512,137 +385,7 @@ const resources = {
         "knowledge": "Знания проекта",
         "addKnowledge": "Добавить знание",
         "orUploadDocuments": "Или загрузить документы",
-        "noKnowledge": "К этому проекту еще не добавлены знания"
-      },
-      "profile": {
-        "title": "Профиль пользователя",
-        "email": "Эл. почта",
-        "telegram": "Telegram",
-        "save": "Сохранить профиль",
-        "updateSuccess": "Профиль успешно обновлен",
-        "updateError": "Не удалось обновить профиль"
-      },
-      "no": {
-        "courses": "Пока нет курсов",
-        "project": "Нет проекта",
-        "projects": "Пока нет проектов"
-      },
-      "view": "Просмотр",
-      "editButton": "Редактировать",
-      "loading": "Загрузка...",
-      "customer": {
-        "courses": {
-          "title": "Курсы",
-          "active": "Активные курсы",
-          "available": "Доступные курсы",
-          "enroll": "Записаться сейчас",
-          "view": "Подробнее",
-          "courseInfo": "Информация о курсе",
-          "duration": "Продолжительность",
-          "price": "Цена",
-          "type": "Тип",
-          "recurring": "Повторяющийся",
-          "oneTime": "Разовый платеж",
-          "purchase": "Купить",
-          "cancel": "Отмена",
-          "days": "дней",
-          "viewDetails": "Подробнее",
-          "myEnrollments": "Мои курсы",
-          "noEnrollments": "Вы еще не записаны ни на один курс",
-          "noEnrollmentsDescription": "Просмотрите доступные курсы и запишитесь, чтобы начать обучение",
-          "browseCourses": "Просмотреть курсы",
-          "subscription": "Подписка",
-          "startDate": "Дата начала",
-          "endDate": "Дата окончания",
-          "renew": "Продлить подписку"
-        },
-        "social": {
-          "title": "Подключить социальные сети",
-          "description": "Укажите хотя бы один аккаунт в социальных сетях:",
-          "telegram": "Telegram (@username)",
-          "instagram": "Instagram (username)",
-          "tiktok": "TikTok (username)",
-          "save": "Сохранить и продолжить"
-        }
-      },
-      "admin": {
-        "title": "Администрирование",
-        "influencers": "Инфлюэнсеры",
-        "projects": "Проекты",
-        "keys": {
-          "stripe": "Ключ Stripe",
-          "gemini": "Ключ API Gemini",
-          "save": "Сохранить ключи"
-        }
-      },
-      "errors": {
-        "required": "Это поле обязательно",
-        "invalidEmail": "Введите корректный email",
-        "passwordLength": "Пароль должен содержать не менее 8 символов",
-        "passwordMatch": "Пароли не совпадают",
-        "uniqueUrlName": "Это URL-имя уже занято",
-        "uniqueCourseName": "Это название курса уже занято",
-        "uniqueBotName": "Это имя бота уже занято",
-        "minPrice": "Цена должна быть больше 0",
-        "socialRequired": "Требуется указать хотя бы один аккаунт в социальных сетях",
-        "botNameInvalid": "Имя бота может содержать только буквы, цифры и знаки подчеркивания",
-        "projectNotFound": "Проект не найден"
-      },
-      "success": {
-        "projectCreated": "Проект успешно создан!",
-        "projectUpdated": "Проект успешно обновлен!",
-        "courseCreated": "Курс успешно создан!",
-        "courseUpdated": "Курс успешно обновлен!",
-        "enrolled": "Вы успешно записались на курс!",
-        "socialSaved": "Аккаунты социальных сетей успешно сохранены!"
-      },
-      "editCourse": {
-        "title": "Редактировать курс",
-        "save": "Сохранить изменения",
-        "cancel": "Отмена",
-        "success": "Курс успешно обновлен!",
-        "error": "Не удалось обновить курс"
-      },
-      "go": {
-        "back": "Назад"
-      },
-      "goBack": "Назад",
-      "login": {
-        "required": "Требуется вход",
-        "please": {
-          "login": {
-            "to": {
-              "access": "Пожалуйста, войдите чтобы получить доступ"
-            }
-          }
-        }
-      },
-      "please": {
-        "login": {
-          "to": {
-            "access": "Пожалуйста, войдите чтобы получить доступ"
-          }
-        }
-      },
-      "cancel": "Отмена",
-      "save": "Сохранить",
-      "landing": {
-        "loading": "Загрузка...",
-        "redirecting": "Перенаправление в панель управления...",
-        "footer": "© 2025 Paradise Knowledge Hub. Все права защищены.",
-        "cta": {
-          "start": "Начать",
-          "join": "Присоединяйтесь к тысячам инфлюенсеров, которые уже масштабируют свой бизнес с Paradise.",
-          "ready": "Готовы начать свой путь?"
-        }
-      },
-      "dashboard": {
-        "earnings": {
-          "title": "Обзор доходов",
-          "earnings": "Доход"
-        }
-      },
-      "project": {
+        "noKnowledge": "К этому проекту еще не добавлены знания",
         "landing": {
           "benefits": {
             "title": "Что вы получите",
