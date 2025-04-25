@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -11,6 +10,7 @@ import { Calendar, BookOpen } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { getActiveSubscription, formatDate } from '@/utils/subscriptionUtils';
 import { FakePaymentDialog } from "@/components/FakePaymentDialog";
+import { getUserEnrollments } from '@/utils/enrollmentUtils';
 
 interface EnrolledCourseData extends Course {
   subscription_active: boolean;
@@ -31,13 +31,9 @@ const EnrolledCourses = () => {
       if (!user) return;
 
       try {
-        // Get enrollments without referencing begin_date
-        const { data: enrollments, error: enrollmentError } = await supabase
-          .from('enrollments')
-          .select('id, course_id')
-          .eq('user_id', user.id);
-
-        if (enrollmentError) throw enrollmentError;
+        // Use the utility function to get enrollments without referencing begin_date
+        const enrollments = await getUserEnrollments(user.id);
+        
         if (!enrollments || enrollments.length === 0) {
           setLoading(false);
           return;

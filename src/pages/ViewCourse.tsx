@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
@@ -15,6 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { MessageSquare, Check, Star } from 'lucide-react';
 import { TelegramWarning } from '@/components/profile/TelegramWarning';
 import { getActiveSubscription, formatDate } from '@/utils/subscriptionUtils';
+import { getEnrollmentByUserAndCourse } from '@/utils/enrollmentUtils';
 
 interface CourseWithDates extends Course {
   project_url_name?: string;
@@ -84,16 +84,9 @@ const ViewCourse = () => {
         setCourse(courseWithProjectUrl);
         
         if (user) {
-          // Get enrollment without referencing begin_date
-          const { data: enrollment, error: enrollmentError } = await supabase
-            .from('enrollments')
-            .select('id')
-            .eq('user_id', user.id)
-            .eq('course_id', id)
-            .maybeSingle();
+          const enrollment = await getEnrollmentByUserAndCourse(user.id, id);
             
-          if (!enrollmentError && enrollment) {
-            // If there's an enrollment, get the subscriptions
+          if (enrollment) {
             const { data: subscriptionsData, error: subscriptionsError } = await supabase
               .from('subscriptions')
               .select('*')
