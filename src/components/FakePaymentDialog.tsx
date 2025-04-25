@@ -42,49 +42,54 @@ export function FakePaymentDialog({
     }
     setLoading(true);
 
-    // Calculate dates
-    const now = new Date();
-    const begin_date = now.toISOString();
-    let end_date: string | null = null;
-    if (course.duration && course.duration > 0) {
-      const end = new Date(now);
-      end.setDate(end.getDate() + course.duration);
-      end_date = end.toISOString();
-    }
-
-    // Insert enrollment
-    const { error } = await supabase.from('enrollments').insert([
-      {
-        user_id: userId,
-        course_id: course.id,
-        is_paid: true,
-        begin_date,
-        end_date,
+    try {
+      // Calculate dates
+      const now = new Date();
+      const begin_date = now.toISOString();
+      let end_date: string | null = null;
+      if (course.duration && course.duration > 0) {
+        const end = new Date(now);
+        end.setDate(end.getDate() + course.duration);
+        end_date = end.toISOString();
       }
-    ]);
 
-    if (error) {
+      // Insert enrollment - always create a new record for each subscription period
+      const { error } = await supabase.from('enrollments').insert([
+        {
+          user_id: userId,
+          course_id: course.id,
+          is_paid: true,
+          begin_date,
+          end_date,
+        }
+      ]);
+
+      if (error) {
+        console.error("Enrollment error:", error);
+        throw new Error("Failed to record enrollment");
+      }
+
+      toast({
+        title: "Payment successful!",
+        description: "You have been enrolled in the course.",
+      });
+
+      setLoading(false);
+      onClose();
+
+      // Redirect after a short pause
+      setTimeout(() => {
+        navigate('/enrolled-courses');
+      }, 600);
+    } catch (error) {
+      console.error("Payment processing error:", error);
       toast({
         title: "Error",
-        description: "Failed to record enrollment",
+        description: error instanceof Error ? error.message : "Failed to process payment",
         variant: "destructive",
       });
       setLoading(false);
-      return;
     }
-
-    toast({
-      title: "Payment successful!",
-      description: "You have been enrolled in the course.",
-    });
-
-    setLoading(false);
-    onClose();
-
-    // Redirect after a short pause
-    setTimeout(() => {
-      navigate('/enrolled-courses');
-    }, 600);
   };
 
   return (

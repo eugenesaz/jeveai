@@ -16,12 +16,12 @@ serve(async (req) => {
 
   try {
     // Parse request body
-    const { telegramUsername, botUsername } = await req.json();
+    const { telegramUsername, courseId } = await req.json();
     
-    if (!telegramUsername || !botUsername) {
+    if (!telegramUsername || !courseId) {
       return new Response(
         JSON.stringify({ 
-          error: "Both telegramUsername and botUsername are required" 
+          error: "Both telegramUsername and courseId are required" 
         }),
         { 
           status: 400, 
@@ -60,15 +60,15 @@ serve(async (req) => {
       );
     }
 
-    // 2. Get course with the provided bot name
+    // 2. Get course with the provided courseId
     const { data: courseData, error: courseError } = await supabaseClient
       .from('courses')
       .select('id, duration, recurring')
-      .eq('telegram_bot', botUsername.replace('@', ''))
+      .eq('id', courseId)
       .single();
 
     if (courseError || !courseData) {
-      console.log('Course not found:', botUsername);
+      console.log('Course not found:', courseId);
       return new Response(
         JSON.stringify({ status: "Not enrolled", error: "Course not found" }),
         { 
@@ -84,6 +84,8 @@ serve(async (req) => {
       .select('begin_date, end_date, is_paid')
       .eq('user_id', profileData.id)
       .eq('course_id', courseData.id)
+      .order('begin_date', { ascending: false })
+      .limit(1)
       .single();
 
     if (enrollmentError || !enrollmentData) {
@@ -121,7 +123,11 @@ serve(async (req) => {
 
     if (expired) {
       return new Response(
-        JSON.stringify({ status: "Expired" }),
+        JSON.stringify({ 
+          status: "Expired",
+          subscription_begin: enrollmentData.begin_date,
+          subscription_end: enrollmentData.end_date
+        }),
         { 
           status: 200, 
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
@@ -130,7 +136,11 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ status: "Active" }),
+      JSON.stringify({ 
+        status: "Active",
+        subscription_begin: enrollmentData.begin_date,
+        subscription_end: enrollmentData.end_date
+      }),
       { 
         status: 200, 
         headers: { ...corsHeaders, "Content-Type": "application/json" } 

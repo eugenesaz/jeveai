@@ -19,3 +19,4 @@ enabled = true
 [[edge_functions.function]]
 name = "check-course-access"
 verify_jwt = false
+
