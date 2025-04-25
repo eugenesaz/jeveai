@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -6,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { Course } from '@/types/supabase';
-import { Calendar, BookOpen } from 'lucide-react';
+import { Calendar, BookOpen, ArrowLeft } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/utils/subscriptionUtils';
 import { FakePaymentDialog } from "@/components/FakePaymentDialog";
@@ -94,6 +95,10 @@ const EnrolledCourses = () => {
     setSelectedCourseForPayment(course);
     setPaymentDialogOpen(true);
   };
+  
+  const handleGoBack = () => {
+    navigate(-1);
+  };
 
   if (loading) {
     return (
@@ -107,6 +112,14 @@ const EnrolledCourses = () => {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow">
         <div className="container mx-auto p-6">
+          <Button 
+            variant="outline" 
+            className="mb-4" 
+            onClick={handleGoBack}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            {t('go.back', 'Back')}
+          </Button>
           <h1 className="text-2xl font-bold text-gray-800">{t('customer.courses.myEnrollments')}</h1>
         </div>
       </header>

@@ -126,7 +126,7 @@ export default function ViewCourse() {
                   {course?.duration && (
                     <div className="bg-purple-50 rounded-lg px-4 py-2">
                       <span className="text-purple-600 font-medium">
-                        {course?.duration} {t('course.hours', 'hours')}
+                        {course?.duration} {t('course.days', 'days')}
                       </span>
                     </div>
                   )}
@@ -204,7 +204,7 @@ export default function ViewCourse() {
                     </ol>
                   </div>
 
-                  {!hasActiveSubscription && (
+                  {!hasActiveSubscription && enrollment?.subscriptions?.length >= 0 && (
                     <Button
                       onClick={handleRenewSubscription}
                       className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 py-6 rounded-xl shadow-lg"

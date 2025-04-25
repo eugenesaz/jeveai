@@ -38,7 +38,7 @@ export function CourseGrid({ courses, projectId }: { courses: Course[]; projectI
                   <p className="text-lg font-semibold text-primary">${course.price}</p>
                   {course.duration && (
                     <p className="text-sm text-muted-foreground mt-2">
-                      {t('course.duration', 'Duration')}: {course.duration} {t('course.hours', 'hours')}
+                      {t('course.duration', 'Duration')}: {course.duration} {t('course.days', 'days')}
                     </p>
                   )}
                 </CardContent>
