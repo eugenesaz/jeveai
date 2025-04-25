@@ -43,7 +43,7 @@ export function FakePaymentDialog({
     setLoading(true);
 
     try {
-      // Calculate dates
+      // Calculate dates for the subscription
       const now = new Date();
       const beginDate = now.toISOString();
       let endDate: string | null = null;
@@ -55,36 +55,51 @@ export function FakePaymentDialog({
         endDate = end.toISOString();
       }
 
-      console.log("Processing enrollment:", { userId, courseId: course.id });
-      
-      // First, check if there are any existing active enrollments
-      const { data: existingEnrollments, error: fetchError } = await supabase
+      // First, get or create enrollment
+      const { data: existingEnrollment, error: enrollmentError } = await supabase
         .from('enrollments')
-        .select('id, begin_date, end_date, is_paid')
+        .select('id')
         .eq('user_id', userId)
         .eq('course_id', course.id)
-        .order('begin_date', { ascending: false });
-        
-      if (fetchError) {
-        console.error("Error checking enrollments:", fetchError);
-        throw new Error("Failed to check enrollment status");
+        .single();
+
+      let enrollmentId: string;
+
+      if (enrollmentError) {
+        // Create new enrollment if it doesn't exist
+        const { data: newEnrollment, error: createError } = await supabase
+          .from('enrollments')
+          .insert({
+            user_id: userId,
+            course_id: course.id,
+          })
+          .select('id')
+          .single();
+
+        if (createError) {
+          throw new Error('Failed to create enrollment');
+        }
+        enrollmentId = newEnrollment.id;
+      } else {
+        enrollmentId = existingEnrollment.id;
       }
-      
-      console.log("Existing enrollments check:", existingEnrollments);
-      
-      // Find if there's an active enrollment
-      const currentDate = new Date();
-      const activeEnrollment = existingEnrollments?.find(enrollment => {
-        // For subscriptions with no end date
-        if (!enrollment.end_date && enrollment.is_paid) return true;
-        
-        // For subscriptions with end dates
-        return enrollment.is_paid && new Date(enrollment.end_date) >= currentDate;
-      });
-      
-      if (activeEnrollment) {
+
+      // Check for active subscription
+      const { data: activeSubscription, error: subCheckError } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('enrollment_id', enrollmentId)
+        .is('end_date', null)
+        .eq('is_paid', true)
+        .maybeSingle();
+
+      if (subCheckError) {
+        throw new Error('Failed to check subscription status');
+      }
+
+      if (activeSubscription) {
         toast({
-          title: "Already enrolled",
+          title: "Already subscribed",
           description: "You already have an active subscription for this course.",
           variant: "destructive"
         });
@@ -92,26 +107,24 @@ export function FakePaymentDialog({
         onClose();
         return;
       }
-      
-      // No active enrollments, create a new one
-      const { error: insertError } = await supabase
-        .from('enrollments')
+
+      // Create new subscription
+      const { error: subscriptionError } = await supabase
+        .from('subscriptions')
         .insert({
-          user_id: userId,
-          course_id: course.id,
-          is_paid: true,
+          enrollment_id: enrollmentId,
           begin_date: beginDate,
           end_date: endDate,
+          is_paid: true
         });
 
-      if (insertError) {
-        console.error("Failed to create enrollment:", insertError);
-        throw new Error("Failed to record enrollment");
+      if (subscriptionError) {
+        throw new Error('Failed to create subscription');
       }
 
       toast({
         title: "Payment successful!",
-        description: "You have been enrolled in the course.",
+        description: "Your subscription has been activated.",
       });
 
       setLoading(false);

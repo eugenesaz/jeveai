@@ -120,30 +120,21 @@ export type Database = {
       }
       enrollments: {
         Row: {
-          begin_date: string | null
           course_id: string
           created_at: string | null
-          end_date: string | null
           id: string
-          is_paid: boolean | null
           user_id: string
         }
         Insert: {
-          begin_date?: string | null
           course_id: string
           created_at?: string | null
-          end_date?: string | null
           id?: string
-          is_paid?: boolean | null
           user_id: string
         }
         Update: {
-          begin_date?: string | null
           course_id?: string
           created_at?: string | null
-          end_date?: string | null
           id?: string
-          is_paid?: boolean | null
           user_id?: string
         }
         Relationships: [
@@ -309,6 +300,41 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          begin_date: string | null
+          created_at: string | null
+          end_date: string | null
+          enrollment_id: string
+          id: string
+          is_paid: boolean | null
+        }
+        Insert: {
+          begin_date?: string | null
+          created_at?: string | null
+          end_date?: string | null
+          enrollment_id: string
+          id?: string
+          is_paid?: boolean | null
+        }
+        Update: {
+          begin_date?: string | null
+          created_at?: string | null
+          end_date?: string | null
+          enrollment_id?: string
+          id?: string
+          is_paid?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_subscription_enrollment"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "enrollments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_project_roles: {
         Row: {
