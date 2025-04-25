@@ -55,6 +55,12 @@ export interface Enrollment {
   id: string;
   user_id: string;
   course_id: string;
+  created_at: string | null;
+}
+
+export interface Subscription {
+  id: string;
+  enrollment_id: string;
   is_paid: boolean | null;
   begin_date: string | null;
   end_date: string | null;

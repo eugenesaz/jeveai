@@ -79,51 +79,57 @@ serve(async (req) => {
       );
     }
 
-    // Get enrollment and latest active subscription
+    // Check for enrollment first
     const { data: enrollmentData, error: enrollmentError } = await supabaseClient
       .from('enrollments')
-      .select(`
-        id,
-        subscriptions (
-          begin_date,
-          end_date,
-          is_paid
-        )
-      `)
+      .select('id')
       .eq('user_id', profileData.id)
       .eq('course_id', courseId)
-      .single();
+      .maybeSingle();
 
-    if (enrollmentError) {
-      console.log('Error checking enrollment:', enrollmentError);
-      return new Response(
-        JSON.stringify({ status: "Not enrolled", error: "Error checking enrollment" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    if (!enrollmentData) {
-      console.log('No enrollment found');
+    if (enrollmentError || !enrollmentData) {
+      console.log('No enrollment found or error:', enrollmentError);
       return new Response(
         JSON.stringify({ status: "Not enrolled" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Check for active subscription
-    const now = new Date();
-    const subscriptions = enrollmentData.subscriptions || [];
-    const activeSubscription = subscriptions.find(sub => 
-      sub.is_paid && (!sub.end_date || new Date(sub.end_date) > now)
-    );
+    // Get latest subscription for the enrollment
+    const { data: subscriptionData, error: subscriptionError } = await supabaseClient
+      .from('subscriptions')
+      .select('begin_date, end_date, is_paid')
+      .eq('enrollment_id', enrollmentData.id)
+      .order('begin_date', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-    if (!activeSubscription) {
-      const mostRecent = subscriptions[0];
+    if (subscriptionError) {
+      console.log('Error checking subscription:', subscriptionError);
+      return new Response(
+        JSON.stringify({ status: "Not enrolled", error: "Error checking subscription" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!subscriptionData) {
+      console.log('No subscription found');
+      return new Response(
+        JSON.stringify({ status: "Not enrolled", error: "No active subscription" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Check if the subscription is active
+    const now = new Date();
+    const isActive = subscriptionData.is_paid && (!subscriptionData.end_date || new Date(subscriptionData.end_date) > now);
+
+    if (!isActive) {
       return new Response(
         JSON.stringify({
           status: "Expired",
-          subscription_begin: mostRecent?.begin_date,
-          subscription_end: mostRecent?.end_date
+          subscription_begin: subscriptionData.begin_date,
+          subscription_end: subscriptionData.end_date
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -132,8 +138,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         status: "Active",
-        subscription_begin: activeSubscription.begin_date,
-        subscription_end: activeSubscription.end_date
+        subscription_begin: subscriptionData.begin_date,
+        subscription_end: subscriptionData.end_date
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

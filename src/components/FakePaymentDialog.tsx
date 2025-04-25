@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import {
   Dialog,
@@ -55,7 +56,7 @@ export function FakePaymentDialog({
         endDate = end.toISOString();
       }
 
-      // First, get or create enrollment
+      // First, check if enrollment exists or create one
       const { data: existingEnrollment, error: enrollmentError } = await supabase
         .from('enrollments')
         .select('id')
@@ -85,19 +86,20 @@ export function FakePaymentDialog({
       }
 
       // Check for active subscription
-      const { data: activeSubscription, error: subCheckError } = await supabase
+      const now2 = new Date();
+      const { data: activeSubscriptions, error: subCheckError } = await supabase
         .from('subscriptions')
         .select('*')
         .eq('enrollment_id', enrollmentId)
-        .is('end_date', null)
         .eq('is_paid', true)
-        .maybeSingle();
+        .is('end_date', null)
+        .or(`end_date.gt.${now2.toISOString()}`);
 
       if (subCheckError) {
         throw new Error('Failed to check subscription status');
       }
 
-      if (activeSubscription) {
+      if (activeSubscriptions && activeSubscriptions.length > 0) {
         toast({
           title: "Already subscribed",
           description: "You already have an active subscription for this course.",

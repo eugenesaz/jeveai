@@ -7,31 +7,26 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import ReactMarkdown from 'react-markdown';
-import { Course } from '@/types/supabase';
+import { Course, Subscription } from '@/types/supabase';
 import { AuthDialogs } from '@/components/auth/AuthDialogs';
 import { toast } from '@/components/ui/use-toast';
 import { FakePaymentDialog } from "@/components/FakePaymentDialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { MessageSquare, Check, Star } from 'lucide-react';
 import { TelegramWarning } from '@/components/profile/TelegramWarning';
+import { getActiveSubscription, formatDate } from '@/utils/subscriptionUtils';
 
 interface CourseWithDates extends Course {
-  begin_date?: string;
-  end_date?: string;
   project_url_name?: string;
 }
 
 interface EnrollmentInfo {
   is_enrolled: boolean;
-  begin_date?: string;
-  end_date?: string;
+  enrollment_id?: string;
+  subscription?: Subscription;
 }
 
-interface SubscriptionHistory {
-  id: string;
-  begin_date: string;
-  end_date: string | null;
-  is_paid: boolean;
+interface SubscriptionWithStatus extends Subscription {
   is_active: boolean;
 }
 
@@ -49,7 +44,7 @@ const ViewCourse = () => {
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [userTelegram, setUserTelegram] = useState<string | null>(null);
   const [projectUrlName, setProjectUrlName] = useState<string | null>(null);
-  const [subscriptionHistory, setSubscriptionHistory] = useState<SubscriptionHistory[]>([]);
+  const [subscriptionHistory, setSubscriptionHistory] = useState<SubscriptionWithStatus[]>([]);
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
 
   const isFromProjectLanding = location.state?.fromProjectLanding || false;
@@ -93,43 +88,61 @@ const ViewCourse = () => {
         setCourse(courseWithProjectUrl);
         
         if (user) {
-          // Fetch all enrollments for this course to track subscription history
-          const { data: enrollmentsData, error: enrollmentsError } = await supabase
+          // First check if user is enrolled
+          const { data: enrollment, error: enrollmentError } = await supabase
             .from('enrollments')
-            .select('*')
+            .select('id')
             .eq('user_id', user.id)
             .eq('course_id', id)
-            .order('begin_date', { ascending: false });
+            .maybeSingle();
             
-          if (!enrollmentsError && enrollmentsData) {
-            const now = new Date();
-            const history: SubscriptionHistory[] = enrollmentsData.map(enrollment => {
-              const beginDate = enrollment.begin_date ? new Date(enrollment.begin_date) : null;
-              const endDate = enrollment.end_date ? new Date(enrollment.end_date) : null;
-              const isActive = enrollment.is_paid && 
-                beginDate !== null && 
-                (endDate === null || now <= endDate);
-                
-              return {
-                id: enrollment.id,
-                begin_date: enrollment.begin_date || '',
-                end_date: enrollment.end_date,
-                is_paid: !!enrollment.is_paid,
-                is_active: isActive
-              };
-            });
-            
-            setSubscriptionHistory(history);
-            
-            // Check if there's any active subscription
-            const activeSubscription = history.find(sub => sub.is_active);
-            setHasActiveSubscription(!!activeSubscription);
-            
-            if (activeSubscription) {
+          if (!enrollmentError && enrollment) {
+            // Fetch all subscriptions for this enrollment
+            const { data: subscriptionsData, error: subscriptionsError } = await supabase
+              .from('subscriptions')
+              .select('*')
+              .eq('enrollment_id', enrollment.id)
+              .order('begin_date', { ascending: false });
+              
+            if (!subscriptionsError && subscriptionsData && subscriptionsData.length > 0) {
+              const now = new Date();
+              const processedSubscriptions: SubscriptionWithStatus[] = subscriptionsData.map(sub => {
+                const beginDate = sub.begin_date ? new Date(sub.begin_date) : null;
+                const endDate = sub.end_date ? new Date(sub.end_date) : null;
+                const isActive = sub.is_paid && 
+                  beginDate !== null && 
+                  (endDate === null || now <= endDate);
+                  
+                return {
+                  ...sub,
+                  is_active: isActive
+                };
+              });
+              
+              setSubscriptionHistory(processedSubscriptions);
+              
+              // Check if there's any active subscription
+              const activeSubscription = processedSubscriptions.find(sub => sub.is_active);
+              setHasActiveSubscription(!!activeSubscription);
+              
+              if (activeSubscription) {
+                setEnrollmentInfo({
+                  is_enrolled: true,
+                  enrollment_id: enrollment.id,
+                  subscription: activeSubscription
+                });
+              } else {
+                // Has enrollment but no active subscription
+                setEnrollmentInfo({
+                  is_enrolled: true,
+                  enrollment_id: enrollment.id
+                });
+              }
+            } else {
+              // Has enrollment but no subscriptions
               setEnrollmentInfo({
                 is_enrolled: true,
-                begin_date: activeSubscription.begin_date,
-                end_date: activeSubscription.end_date || undefined
+                enrollment_id: enrollment.id
               });
             }
           }

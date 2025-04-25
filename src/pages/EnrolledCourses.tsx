@@ -5,25 +5,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
-import { Course } from "@/types/supabase";
+import { Course, Enrollment, Subscription } from "@/types/supabase";
 import { toast } from "@/components/ui/use-toast";
 
-interface Enrollment {
-  id: string;
-  begin_date: string | null;
-  end_date: string | null;
-  course_id: string;
-  is_paid: boolean | null;
-  created_at: string | null;
-  user_id: string;
+interface EnrollmentWithCourse extends Enrollment {
   course: Course;
+  subscriptions?: Subscription[];
+}
+
+interface ActiveSubscription extends Subscription {
+  is_active: boolean;
 }
 
 const N8N_WEBHOOK_URL = "https://n8n.example.com/webhook/enrolled-courses"; // TODO: Replace with your actual n8n endpoint
 
 export default function EnrolledCourses() {
   const { user, isLoading, signOut } = useAuth();
-  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [enrollments, setEnrollments] = useState<EnrollmentWithCourse[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -33,24 +31,32 @@ export default function EnrolledCourses() {
       setLoading(false);
       return;
     }
-    // Fetch enrollments and join courses
+    // Fetch enrollments with courses and subscriptions
     const fetchData = async () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('enrollments')
-        .select('*, course:courses(*)')
+        .select(`
+          *,
+          course:courses(*),
+          subscriptions(
+            *
+          )
+        `)
         .eq('user_id', user.id)
-        .eq('is_paid', true)
         .order('created_at', { ascending: false });
 
       if (error) {
+        console.error('Error fetching enrollments:', error);
         setEnrollments([]);
         setLoading(false);
         return;
       }
-      // Remove enrollments without course data (shouldn't happen, but just in case)
-      const filtered = (data ?? []).filter((e: any) => e.course);
-      setEnrollments(filtered);
+
+      // Filter out enrollments without courses (shouldn't happen, but just in case)
+      const filteredData = (data ?? []).filter((e: any) => e.course);
+      
+      setEnrollments(filteredData as EnrollmentWithCourse[]);
       setLoading(false);
     };
     fetchData();
@@ -90,6 +96,27 @@ export default function EnrolledCourses() {
     navigate("/", { replace: true });
   };
 
+  // Helper to find active subscription for an enrollment
+  const getActiveSubscription = (enrollment: EnrollmentWithCourse): ActiveSubscription | null => {
+    if (!enrollment.subscriptions || enrollment.subscriptions.length === 0) return null;
+    
+    const now = new Date();
+    const subscriptions = [...enrollment.subscriptions].sort(
+      (a, b) => new Date(b.begin_date || "").getTime() - new Date(a.begin_date || "").getTime()
+    );
+    
+    for (const sub of subscriptions) {
+      const isActive = sub.is_paid && 
+        (!sub.end_date || new Date(sub.end_date) > now);
+      
+      if (isActive) {
+        return { ...sub, is_active: true };
+      }
+    }
+    
+    return subscriptions.length > 0 ? { ...subscriptions[0], is_active: false } : null;
+  };
+
   if (isLoading || loading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -127,31 +154,39 @@ export default function EnrolledCourses() {
         </div>
       </header>
       <main className="container mx-auto py-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {enrollments.map(({ id, begin_date, end_date, course }) => (
-          <Card
-            key={id}
-            className="flex flex-col gap-6 p-6 shadow-lg border-2 border-blue-100 bg-white rounded-2xl"
-            style={{
-              borderColor: "#3B82F6",
-              background: "linear-gradient(135deg,#dbedff 10%,#EFF6FF 90%)",
-            }}
-          >
-            <h2 className="font-semibold text-xl">{course.name}</h2>
-            <div className="flex flex-col gap-1">
-              <span>
-                <span className="font-medium">Begin date:</span> {begin_date ? (new Date(begin_date)).toLocaleDateString() : "-"}
-              </span>
-              {end_date && (
-                <span>
-                  <span className="font-medium">End date:</span> {(new Date(end_date)).toLocaleDateString()}
-                </span>
+        {enrollments.map((enrollment) => {
+          const activeSubscription = getActiveSubscription(enrollment);
+          return (
+            <Card
+              key={enrollment.id}
+              className="flex flex-col gap-6 p-6 shadow-lg border-2 border-blue-100 bg-white rounded-2xl"
+              style={{
+                borderColor: "#3B82F6",
+                background: "linear-gradient(135deg,#dbedff 10%,#EFF6FF 90%)",
+              }}
+            >
+              <h2 className="font-semibold text-xl">{enrollment.course.name}</h2>
+              {activeSubscription && (
+                <div className="flex flex-col gap-1">
+                  <span>
+                    <span className="font-medium">Begin date:</span> {activeSubscription.begin_date ? new Date(activeSubscription.begin_date).toLocaleDateString() : "-"}
+                  </span>
+                  {activeSubscription.end_date && (
+                    <span>
+                      <span className="font-medium">End date:</span> {new Date(activeSubscription.end_date).toLocaleDateString()}
+                    </span>
+                  )}
+                  <span className={`mt-2 text-sm font-semibold px-2 py-1 rounded-full inline-block w-fit ${activeSubscription.is_active ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                    {activeSubscription.is_active ? 'Active' : 'Expired'}
+                  </span>
+                </div>
               )}
-            </div>
-            <Button variant="outline" onClick={() => navigate(`/course/${course.id}`)}>
-              Continue course
-            </Button>
-          </Card>
-        ))}
+              <Button variant="outline" onClick={() => navigate(`/course/${enrollment.course.id}`)}>
+                Continue course
+              </Button>
+            </Card>
+          );
+        })}
       </main>
     </div>
   );
