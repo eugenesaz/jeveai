@@ -51,6 +51,15 @@ serve(async (req) => {
       );
     }
 
+    // Clean up telegramUsername by removing @ if present
+    const cleanTelegramUsername = telegramUsername.replace('@', '').trim();
+    
+    console.log('Processing request for:', { 
+      cleanTelegramUsername, 
+      originalUsername: telegramUsername,
+      courseId 
+    });
+
     // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -63,15 +72,18 @@ serve(async (req) => {
       }
     );
 
-    // 1. Get user profile by telegram username
+    // 1. Get user profile by telegram username - case insensitive search
     const { data: profileData, error: profileError } = await supabaseClient
       .from('profiles')
       .select('id')
-      .eq('telegram', telegramUsername.replace('@', ''))
+      .ilike('telegram', cleanTelegramUsername)
       .single();
 
     if (profileError || !profileData) {
-      console.log('Profile not found:', telegramUsername);
+      console.log('Profile not found. Search details:', { 
+        cleanTelegramUsername,
+        error: profileError
+      });
       return new Response(
         JSON.stringify({ status: "Not enrolled", error: "User not found" }),
         { 
@@ -80,6 +92,8 @@ serve(async (req) => {
         }
       );
     }
+
+    console.log('Profile found:', profileData);
 
     // 2. Get course with the provided courseId
     const { data: courseData, error: courseError } = await supabaseClient
