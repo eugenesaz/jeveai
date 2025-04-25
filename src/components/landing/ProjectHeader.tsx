@@ -1,98 +1,73 @@
 
-import { Link, useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
-import { ProjectLanguageSelector } from '@/components/landing/ProjectLanguageSelector';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from '@/components/ui/sonner';
+import { Button } from '@/components/ui/button';
+import { useTranslation } from 'react-i18next';
+import { LanguageSelector } from '@/components/LanguageSelector';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
-import { AuthDialogs } from '@/components/auth/AuthDialogs';
-import { ArrowLeft, BookOpen, LogOut, LogIn, UserPlus } from 'lucide-react';
 
 interface ProjectHeaderProps {
   projectName: string;
-  colorScheme?: string;
-  projectUrlName?: string;
+  colorScheme: string | null;
+  projectUrlName: string;
 }
 
-export const ProjectHeader = ({ projectName, colorScheme = 'blue', projectUrlName }: ProjectHeaderProps) => {
+export function ProjectHeader({ projectName, colorScheme, projectUrlName }: ProjectHeaderProps) {
   const { t } = useTranslation();
-  const { user, signOut } = useAuth();
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [isSignUpOpen, setIsSignUpOpen] = useState(false);
+  const { user } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = async () => {
-    try {
-      await signOut();
-      toast.success(t('navigation.logout_success', 'Successfully logged out!'));
-    } catch (error) {
-      toast.error(t('navigation.logout_error', 'Logout failed!'));
-      console.error('Logout error:', error);
+  const getHeaderColorClass = (colorScheme: string | null) => {
+    switch (colorScheme) {
+      case 'blue':
+        return 'bg-blue-600';
+      case 'red':
+        return 'bg-red-600';
+      case 'orange':
+        return 'bg-orange-500';
+      case 'green':
+        return 'bg-green-600';
+      default:
+        return 'bg-purple-600';
     }
   };
 
+  const getTextColorClass = () => {
+    return 'text-white';
+  };
+
   return (
-    <>
-      <header className={`bg-${colorScheme}-500 text-white`}>
-        <div className="container mx-auto p-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-white">
+    <header className={cn(getHeaderColorClass(colorScheme), "shadow-lg")}>
+      <div className="container mx-auto py-3 px-6">
+        <div className="flex items-center justify-between">
+          <h1 className={cn("text-xl font-bold", getTextColorClass())}>
             {projectName}
           </h1>
-          <div className="flex items-center space-x-4">
-            <ProjectLanguageSelector />
-            {user ? (
-              <>
-                <Button 
-                  variant="outline" 
-                  className={cn("text-white border-white/30 hover:border-white/50 bg-white/10 hover:bg-white/20 transition-all duration-300 ease-in-out flex items-center gap-2")}
-                  onClick={() => navigate('/enrolled-courses')}
-                >
-                  <BookOpen className="mr-2 w-4 h-4" />
-                  {t('navigation.my_courses', 'My courses')}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className={cn("text-white border-white/30 hover:border-white/50 bg-white/10 hover:bg-white/20 transition-all duration-300 ease-in-out flex items-center gap-2")}
-                  onClick={handleLogout}
-                  data-testid="logout-btn"
-                >
-                  <LogOut className="mr-2 w-4 h-4" />
-                  {t('navigation.logout')}
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button 
-                  variant="outline" 
-                  className={cn("text-white border-white/30 hover:border-white/50 bg-white/10 hover:bg-white/20 transition-all duration-300 ease-in-out flex items-center gap-2")}
-                  onClick={() => setIsLoginOpen(true)}
-                >
-                  <LogIn className="mr-2 w-4 h-4" />
-                  {t('navigation.login')}
-                </Button>
-                <Button 
-                  variant="default" 
-                  className="text-white flex items-center gap-2"
-                  onClick={() => setIsSignUpOpen(true)}
-                >
-                  <UserPlus className="mr-2 w-4 h-4" />
-                  {t('navigation.signup')}
-                </Button>
-              </>
+          <div className="flex items-center gap-4">
+            <LanguageSelector />
+            {user && (
+              <Button
+                onClick={() => navigate('/enrolled-courses')}
+                variant="outline"
+                className="text-white border-white/30 hover:bg-white/10 hover:text-white"
+                size="sm"
+              >
+                {t('navigation.my_courses', 'My Courses')}
+              </Button>
+            )}
+            {!user && (
+              <Button
+                onClick={() => navigate('/')}
+                variant="outline"
+                className="text-white border-white/30 hover:bg-white/10 hover:text-white"
+                size="sm"
+              >
+                {t('navigation.login', 'Login')}
+              </Button>
             )}
           </div>
         </div>
-      </header>
-      <AuthDialogs
-        isLoginOpen={isLoginOpen}
-        setIsLoginOpen={setIsLoginOpen}
-        isSignUpOpen={isSignUpOpen}
-        setIsSignUpOpen={setIsSignUpOpen}
-      />
-    </>
+      </div>
+    </header>
   );
-};
-
-// no changes below
+}

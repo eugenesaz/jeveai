@@ -18,6 +18,11 @@ export function CourseGrid({ courses, projectId }: { courses: Course[]; projectI
   const navigate = useNavigate();
   const { t } = useTranslation();
 
+  const handleViewCourse = (courseId: string) => {
+    console.log('Navigating to course:', courseId);
+    navigate(`/course/${courseId}`);
+  };
+
   return (
     <section id="courses" className="py-20">
       <div className="container mx-auto px-6">
@@ -40,7 +45,7 @@ export function CourseGrid({ courses, projectId }: { courses: Course[]; projectI
                 <CardFooter className="flex justify-between items-center">
                   <Button 
                     variant="outline"
-                    onClick={() => navigate(`/course/${course.id}`)}
+                    onClick={() => handleViewCourse(course.id)}
                     className="w-full group transition-all duration-300"
                   >
                     {t('course.view.details', 'View Course Details')}
