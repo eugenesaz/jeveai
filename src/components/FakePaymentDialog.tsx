@@ -54,13 +54,17 @@ export function FakePaymentDialog({
       }
 
       // Check if there's an existing enrollment for this course/user combination
-      const { data: existingEnrollment } = await supabase
+      const { data: existingEnrollment, error: existingEnrollmentError } = await supabase
         .from('enrollments')
         .select('id, end_date')
         .eq('user_id', userId)
         .eq('course_id', course.id)
         .eq('is_paid', true)
         .maybeSingle();
+
+      if (existingEnrollmentError) {
+        console.error("Error checking existing enrollment:", existingEnrollmentError);
+      }
 
       if (existingEnrollment && existingEnrollment.end_date) {
         // If there's an existing enrollment with an end date, extend it
@@ -84,36 +88,37 @@ export function FakePaymentDialog({
             throw new Error("Failed to update enrollment duration");
           }
         } else {
-          // For unlimited duration courses, create a new enrollment record
-          const { error } = await supabase.from('enrollments').insert([
-            {
-              user_id: userId,
-              course_id: course.id,
-              is_paid: true,
-              begin_date,
-              end_date,
-            }
-          ]);
-
-          if (error) {
-            console.error("Enrollment error:", error);
-            throw new Error("Failed to record enrollment");
-          }
+          // For unlimited duration courses with existing enrollment, just return success
+          // No need to create a duplicate enrollment
+          toast({
+            title: "Payment successful!",
+            description: "Your enrollment has been extended.",
+          });
+          
+          setLoading(false);
+          onClose();
+          
+          // Redirect after a short pause
+          setTimeout(() => {
+            navigate('/enrolled-courses');
+          }, 600);
+          
+          return;
         }
       } else {
         // No existing active enrollment, create a new one
-        const { error } = await supabase.from('enrollments').insert([
-          {
+        const { error: insertError } = await supabase
+          .from('enrollments')
+          .insert({
             user_id: userId,
             course_id: course.id,
             is_paid: true,
             begin_date,
             end_date,
-          }
-        ]);
+          });
 
-        if (error) {
-          console.error("Enrollment error:", error);
+        if (insertError) {
+          console.error("Enrollment insert error:", insertError);
           throw new Error("Failed to record enrollment");
         }
       }
@@ -186,7 +191,7 @@ export function FakePaymentDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
-              Pay
+              {loading ? "Processing..." : "Pay"}
             </Button>
           </DialogFooter>
         </form>

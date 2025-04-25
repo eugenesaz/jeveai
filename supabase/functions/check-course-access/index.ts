@@ -208,16 +208,34 @@ serve(async (req) => {
     }
 
     console.log('Profile found:', profileData);
+    
+    // Ensure courseId is properly formatted 
+    let formattedCourseId = courseId;
+    
+    // Sanitize courseId if needed (remove any non-UUID characters)
+    formattedCourseId = courseId.trim();
+    console.log("Formatted course ID:", formattedCourseId);
 
     // 2. Get course with the provided courseId
     const { data: courseData, error: courseError } = await supabaseClient
       .from('courses')
       .select('id, duration, recurring')
-      .eq('id', courseId)
-      .single();
+      .eq('id', formattedCourseId)
+      .maybeSingle();
 
-    if (courseError || !courseData) {
-      console.log('Course not found:', courseId);
+    if (courseError) {
+      console.log('Course query error:', courseError);
+      return new Response(
+        JSON.stringify({ status: "Not enrolled", error: "Course query error" }),
+        { 
+          status: 200, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+    }
+
+    if (!courseData) {
+      console.log('Course not found:', formattedCourseId);
       return new Response(
         JSON.stringify({ status: "Not enrolled", error: "Course not found" }),
         { 
@@ -227,6 +245,8 @@ serve(async (req) => {
       );
     }
 
+    console.log('Course found:', courseData);
+
     // 3. Check if user is enrolled in the course
     const { data: enrollmentData, error: enrollmentError } = await supabaseClient
       .from('enrollments')
@@ -235,9 +255,20 @@ serve(async (req) => {
       .eq('course_id', courseData.id)
       .order('begin_date', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
-    if (enrollmentError || !enrollmentData) {
+    if (enrollmentError) {
+      console.log('Enrollment query error:', enrollmentError);
+      return new Response(
+        JSON.stringify({ status: "Not enrolled", error: "Enrollment query error" }),
+        { 
+          status: 200, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+    }
+
+    if (!enrollmentData) {
       console.log('Enrollment not found for user in course');
       return new Response(
         JSON.stringify({ status: "Not enrolled" }),
