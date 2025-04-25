@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import {
   Dialog,
@@ -13,6 +12,7 @@ import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Course } from "@/types/supabase";
+import { getOrCreateEnrollment } from "@/utils/enrollmentUtils";
 
 interface FakePaymentDialogProps {
   open: boolean;
@@ -56,41 +56,19 @@ export function FakePaymentDialog({
         endDate = end.toISOString();
       }
 
-      // Step 1: Check if enrollment exists or create one
-      const { data: existingEnrollment, error: enrollmentError } = await supabase
-        .from('enrollments')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('course_id', course.id)
-        .maybeSingle();
-
-      let enrollmentId: string;
-
-      if (enrollmentError || !existingEnrollment) {
-        // Create new enrollment only with user_id and course_id
-        const { data: newEnrollment, error: createError } = await supabase
-          .from('enrollments')
-          .insert({
-            user_id: userId,
-            course_id: course.id
-          })
-          .select('id')
-          .single();
-
-        if (createError) {
-          throw new Error('Failed to create enrollment');
-        }
-        enrollmentId = newEnrollment.id;
-      } else {
-        enrollmentId = existingEnrollment.id;
+      // Step 1: Get or create enrollment
+      const enrollment = await getOrCreateEnrollment(userId, course.id);
+      
+      if (!enrollment) {
+        throw new Error('Failed to create enrollment');
       }
-
+      
       // Step 2: Check for active subscription
       const now2 = new Date();
       const { data: activeSubscriptions, error: subCheckError } = await supabase
         .from('subscriptions')
         .select('*')
-        .eq('enrollment_id', enrollmentId)
+        .eq('enrollment_id', enrollment.id)
         .eq('is_paid', true)
         .or(`end_date.gt.${now2.toISOString()},end_date.is.null`);
 
@@ -113,7 +91,7 @@ export function FakePaymentDialog({
       const { error: subscriptionError } = await supabase
         .from('subscriptions')
         .insert({
-          enrollment_id: enrollmentId,
+          enrollment_id: enrollment.id,
           begin_date: beginDate,
           end_date: endDate,
           is_paid: true
