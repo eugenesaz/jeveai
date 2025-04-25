@@ -64,6 +64,12 @@ export default function ViewCourse() {
     isSubscriptionActive(sub)
   );
 
+  // Debug logs to help diagnose the issue
+  console.log("User:", user?.id);
+  console.log("Enrollment:", enrollment);
+  console.log("Has active subscription:", hasActiveSubscription);
+  console.log("Subscriptions:", enrollment?.subscriptions);
+
   const handleRenewSubscription = () => {
     if (!user) {
       toast.error(t('auth.required', 'Please sign in to enroll in courses'));
@@ -94,6 +100,9 @@ export default function ViewCourse() {
       </div>
     );
   }
+
+  // Determine if we should show the enrollment/subscription button
+  const shouldShowSubscriptionButton = !hasActiveSubscription;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -204,7 +213,7 @@ export default function ViewCourse() {
                     </ol>
                   </div>
 
-                  {!hasActiveSubscription && (
+                  {shouldShowSubscriptionButton && (
                     <Button
                       onClick={handleRenewSubscription}
                       className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 py-6 rounded-xl shadow-lg"
