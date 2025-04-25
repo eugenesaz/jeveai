@@ -51,8 +51,8 @@ serve(async (req) => {
       );
     }
 
-    // Clean up telegramUsername by removing @ if present
-    const cleanTelegramUsername = telegramUsername.replace('@', '').trim();
+    // Clean up telegramUsername by removing @ if present and trim spaces
+    const cleanTelegramUsername = telegramUsername.replace('@', '').trim().toLowerCase();
     
     console.log('Processing request for:', { 
       cleanTelegramUsername, 
@@ -72,15 +72,73 @@ serve(async (req) => {
       }
     );
 
-    // 1. Get user profile by telegram username - case insensitive search
-    const { data: profileData, error: profileError } = await supabaseClient
+    // 1. First attempt - direct query with case insensitive search
+    let { data: profileData, error: profileError } = await supabaseClient
       .from('profiles')
-      .select('id')
+      .select('id, telegram')
       .ilike('telegram', cleanTelegramUsername)
       .single();
 
+    // Debug log
+    console.log('First query attempt:', { 
+      query: `ILIKE '${cleanTelegramUsername}'`,
+      result: profileData, 
+      error: profileError 
+    });
+
+    // 2. If first attempt fails, try with exact match after removing any special characters
     if (profileError || !profileData) {
-      console.log('Profile not found. Search details:', { 
+      const { data: secondAttemptData, error: secondAttemptError } = await supabaseClient
+        .from('profiles')
+        .select('id, telegram')
+        .eq('telegram', cleanTelegramUsername)
+        .single();
+        
+      console.log('Second query attempt (exact match):', { 
+        query: `= '${cleanTelegramUsername}'`, 
+        result: secondAttemptData, 
+        error: secondAttemptError 
+      });
+        
+      if (!secondAttemptError && secondAttemptData) {
+        profileData = secondAttemptData;
+        profileError = null;
+      }
+    }
+
+    // 3. If still no match, try with a broader search
+    if (profileError || !profileData) {
+      // Get all profiles and find a match manually (last resort)
+      const { data: allProfiles, error: allProfilesError } = await supabaseClient
+        .from('profiles')
+        .select('id, telegram')
+        .not('telegram', 'is', null);
+        
+      if (!allProfilesError && allProfiles && allProfiles.length > 0) {
+        console.log('Getting all profiles to search manually:', { 
+          profileCount: allProfiles.length,
+          allTelegrams: allProfiles.map(p => p.telegram)
+        });
+        
+        // Find a profile with a similar telegram username
+        const matchingProfile = allProfiles.find(profile => {
+          if (!profile.telegram) return false;
+          const normalizedProfileTelegram = profile.telegram.toLowerCase().replace('@', '').trim();
+          const normalizedRequestTelegram = cleanTelegramUsername.toLowerCase();
+          
+          return normalizedProfileTelegram === normalizedRequestTelegram;
+        });
+        
+        if (matchingProfile) {
+          console.log('Found matching profile through manual search:', matchingProfile);
+          profileData = matchingProfile;
+          profileError = null;
+        }
+      }
+    }
+
+    if (profileError || !profileData) {
+      console.log('Profile not found after all attempts. Search details:', { 
         cleanTelegramUsername,
         error: profileError
       });
