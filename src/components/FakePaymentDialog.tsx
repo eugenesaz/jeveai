@@ -122,29 +122,26 @@ export function FakePaymentDialog({
           });
         }
       } else {
-        // No active enrollments, create a new one using direct insert
+        // No active enrollments, create a new one with the upsert method and on_conflict do nothing strategy
         const { error: insertError } = await supabase
           .from('enrollments')
-          .insert({
-            user_id: userId,
-            course_id: course.id,
-            is_paid: true,
-            begin_date: beginDate,
-            end_date: endDate,
-          });
+          .upsert(
+            {
+              user_id: userId,
+              course_id: course.id,
+              is_paid: true,
+              begin_date: beginDate,
+              end_date: endDate,
+            },
+            { 
+              onConflict: 'user_id,course_id',
+              ignoreDuplicates: true 
+            }
+          );
           
         if (insertError) {
           console.error("Failed to create enrollment:", insertError);
-          
-          if (insertError.code === '23505') { // Unique constraint violation
-            // Handle the case where an enrollment already exists
-            toast({
-              title: "Already enrolled",
-              description: "You are already enrolled in this course.",
-            });
-          } else {
-            throw new Error("Failed to record enrollment");
-          }
+          throw new Error("Failed to record enrollment");
         } else {
           toast({
             title: "Payment successful!",
