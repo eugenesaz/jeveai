@@ -204,12 +204,12 @@ export default function ViewCourse() {
                     </ol>
                   </div>
 
-                  {!hasActiveSubscription && enrollment?.subscriptions?.length >= 0 && (
+                  {!hasActiveSubscription && (
                     <Button
                       onClick={handleRenewSubscription}
                       className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 py-6 rounded-xl shadow-lg"
                     >
-                      {enrollment?.subscriptions?.length > 0
+                      {enrollment?.subscriptions && enrollment.subscriptions.length > 0
                         ? t('course.renew_subscription', 'Renew Subscription')
                         : t('course.enroll', 'Enroll Now')}
                     </Button>
