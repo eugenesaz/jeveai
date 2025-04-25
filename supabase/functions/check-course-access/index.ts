@@ -20,7 +20,6 @@ serve(async (req) => {
     const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     
     if (!supabaseUrl || !supabaseServiceRoleKey) {
-      console.error("Missing required environment variables: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
       return new Response(
         JSON.stringify({ status: "Error", error: "Server configuration error" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -88,15 +87,6 @@ serve(async (req) => {
 
     console.log('Profile found:', profileData);
     
-    // Ensure courseId is valid
-    if (!courseId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-      console.log('Invalid course ID format:', courseId);
-      return new Response(
-        JSON.stringify({ status: "Not enrolled", error: "Invalid course ID format" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     // Get course with the provided courseId
     const { data: courseData, error: courseError } = await supabaseClient
       .from('courses')

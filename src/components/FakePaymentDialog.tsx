@@ -114,7 +114,6 @@ export function FakePaymentDialog({
               begin_date: currentDate.toISOString(),
               end_date: newEndDate.toISOString(),
               is_paid: true,
-              updated_at: currentDate.toISOString()
             };
             
             console.log("Updating expired enrollment:", { id: existingEnrollment.id, ...updateData });
@@ -139,7 +138,6 @@ export function FakePaymentDialog({
             const updateData = {
               end_date: newEndDate.toISOString(),
               is_paid: true,
-              updated_at: currentDate.toISOString()
             };
             
             console.log("Extending active enrollment:", { id: existingEnrollment.id, ...updateData });
@@ -160,10 +158,7 @@ export function FakePaymentDialog({
           
           const { error: updateError } = await supabase
             .from('enrollments')
-            .update({ 
-              is_paid: true,
-              updated_at: currentDate.toISOString() 
-            })
+            .update({ is_paid: true })
             .eq('id', existingEnrollment.id);
             
           if (updateError) {
@@ -173,6 +168,7 @@ export function FakePaymentDialog({
         }
       } else {
         // No existing enrollment, create a new one
+        // Using upsert instead of insert to prevent conflicts
         console.log("Creating new enrollment:", { 
           userId, 
           courseId: course.id, 
@@ -182,13 +178,19 @@ export function FakePaymentDialog({
         
         const { error: insertError } = await supabase
           .from('enrollments')
-          .insert({
-            user_id: userId,
-            course_id: course.id,
-            is_paid: true,
-            begin_date: beginDate,
-            end_date: endDate,
-          });
+          .upsert(
+            {
+              user_id: userId,
+              course_id: course.id,
+              is_paid: true,
+              begin_date: beginDate,
+              end_date: endDate,
+            },
+            { 
+              onConflict: 'user_id,course_id',
+              ignoreDuplicates: false 
+            }
+          );
 
         if (insertError) {
           console.error("Failed to create enrollment:", insertError);
