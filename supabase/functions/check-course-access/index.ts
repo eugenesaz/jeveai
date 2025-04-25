@@ -61,9 +61,23 @@ serve(async (req) => {
     });
 
     // Initialize Supabase client with service role key to bypass RLS
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    
+    if (!supabaseUrl || !supabaseServiceRoleKey) {
+      console.error("Missing required environment variables: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
+      return new Response(
+        JSON.stringify({ status: "Error", error: "Server configuration error" }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+    }
+    
     const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "", // Use service role key for admin privileges
+      supabaseUrl,
+      supabaseServiceRoleKey,
       {
         auth: {
           autoRefreshToken: false,
@@ -212,8 +226,23 @@ serve(async (req) => {
     // Ensure courseId is properly formatted 
     let formattedCourseId = courseId;
     
-    // Sanitize courseId if needed (remove any non-UUID characters)
-    formattedCourseId = courseId.trim();
+    // Sanitize courseId and make sure it's correctly formatted
+    if (formattedCourseId) {
+      formattedCourseId = formattedCourseId.trim();
+      // Ensure it's a valid UUID format
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(formattedCourseId)) {
+        console.log('Invalid course ID format:', formattedCourseId);
+        return new Response(
+          JSON.stringify({ status: "Not enrolled", error: "Invalid course ID format" }),
+          { 
+            status: 200, 
+            headers: { ...corsHeaders, "Content-Type": "application/json" } 
+          }
+        );
+      }
+    }
+    
     console.log("Formatted course ID:", formattedCourseId);
 
     // 2. Get course with the provided courseId
