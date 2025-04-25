@@ -72,6 +72,40 @@ serve(async (req) => {
       }
     );
 
+    // DIAGNOSTICS: Fetch all profiles to inspect in logs
+    const { data: allProfilesForDiagnostic, error: allProfilesError } = await supabaseClient
+      .from('profiles')
+      .select('id, telegram')
+      .not('telegram', 'is', null);
+    
+    console.log('DIAGNOSTIC - All profiles with telegram username:', {
+      totalProfiles: allProfilesForDiagnostic?.length || 0,
+      profiles: allProfilesForDiagnostic,
+      error: allProfilesError
+    });
+
+    if (allProfilesForDiagnostic) {
+      // Log detailed formatting of each telegram value for comparison
+      const formattedTelegrams = allProfilesForDiagnostic.map(p => ({
+        id: p.id,
+        originalTelegram: p.telegram,
+        cleanedTelegram: p.telegram?.toLowerCase().replace('@', '').trim(),
+        bytesLength: p.telegram ? [...p.telegram].length : 0,
+        charCodes: p.telegram ? [...p.telegram].map(c => c.charCodeAt(0)) : []
+      }));
+      
+      console.log('DIAGNOSTIC - Telegram username formats:', formattedTelegrams);
+      
+      // Add specific check for the telegram username we're looking for
+      console.log('DIAGNOSTIC - Direct string comparison results:', formattedTelegrams.map(p => ({
+        id: p.id,
+        telegram: p.originalTelegram,
+        cleanedTelegram: p.cleanedTelegram,
+        matchesCleanTelegram: p.cleanedTelegram === cleanTelegramUsername,
+        stringEquality: p.cleanedTelegram == cleanTelegramUsername
+      })));
+    }
+
     // 1. First attempt - direct query with case insensitive search
     let { data: profileData, error: profileError } = await supabaseClient
       .from('profiles')
@@ -134,6 +168,28 @@ serve(async (req) => {
           profileData = matchingProfile;
           profileError = null;
         }
+      }
+    }
+
+    // 4. Try one more attempt - direct search for usernames containing the value
+    if (profileError || !profileData) {
+      const { data: containsAttemptData, error: containsAttemptError } = await supabaseClient
+        .from('profiles')
+        .select('id, telegram')
+        .ilike('telegram', `%${cleanTelegramUsername}%`)
+        .limit(5);
+        
+      console.log('Contains search attempt:', { 
+        query: `ILIKE '%${cleanTelegramUsername}%'`, 
+        results: containsAttemptData, 
+        error: containsAttemptError 
+      });
+        
+      if (!containsAttemptError && containsAttemptData && containsAttemptData.length > 0) {
+        // Use the first match
+        profileData = containsAttemptData[0];
+        profileError = null;
+        console.log('Using first match from contains search:', profileData);
       }
     }
 
