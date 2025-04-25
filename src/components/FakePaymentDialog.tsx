@@ -43,6 +43,7 @@ export function FakePaymentDialog({
     }
     
     setLoading(true);
+    console.log("Processing payment for user:", userId, "course:", course.id);
 
     try {
       // Calculate dates for the subscription
@@ -64,6 +65,8 @@ export function FakePaymentDialog({
         throw new Error('Failed to create enrollment');
       }
       
+      console.log("Enrollment created/found:", enrollment);
+      
       // Step 2: Check for active subscription
       const now2 = new Date();
       const { data: activeSubscriptions, error: subCheckError } = await supabase
@@ -74,6 +77,7 @@ export function FakePaymentDialog({
         .or(`end_date.gt.${now2.toISOString()},end_date.is.null`);
 
       if (subCheckError) {
+        console.error("Error checking subscriptions:", subCheckError);
         throw new Error('Failed to check subscription status');
       }
 
@@ -89,7 +93,7 @@ export function FakePaymentDialog({
       }
 
       // Step 3: Create new subscription with the enrollment_id
-      const { error: subscriptionError } = await supabase
+      const { data: subscriptionData, error: subscriptionError } = await supabase
         .from('subscriptions')
         .insert({
           enrollment_id: enrollment.id,
@@ -99,8 +103,11 @@ export function FakePaymentDialog({
         });
 
       if (subscriptionError) {
+        console.error("Error creating subscription:", subscriptionError);
         throw new Error('Failed to create subscription');
       }
+
+      console.log("Subscription created:", subscriptionData);
 
       toast({
         title: "Payment successful!",
@@ -126,7 +133,9 @@ export function FakePaymentDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      if (!isOpen) onClose();
+    }}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Pay & Enroll</DialogTitle>

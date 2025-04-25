@@ -26,6 +26,7 @@ const EnrolledCourses = () => {
   const [enrolledCourses, setEnrolledCourses] = useState<EnrolledCourseData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCourseForPayment, setSelectedCourseForPayment] = useState<Course | null>(null);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchEnrolledCourses = async () => {
@@ -83,14 +84,16 @@ const EnrolledCourses = () => {
     };
 
     fetchEnrolledCourses();
-  }, [user]);
+  }, [user, paymentDialogOpen]); // Added paymentDialogOpen to refresh after payment
 
   const handleViewCourse = (courseId: string) => {
     navigate(`/courses/${courseId}`);
   };
 
   const handleRenewSubscription = (course: Course) => {
+    console.log('Renew subscription clicked for course:', course);
     setSelectedCourseForPayment(course);
+    setPaymentDialogOpen(true);
   };
 
   if (loading) {
@@ -197,8 +200,8 @@ const EnrolledCourses = () => {
       </main>
 
       <FakePaymentDialog
-        open={!!selectedCourseForPayment}
-        onClose={() => setSelectedCourseForPayment(null)}
+        open={paymentDialogOpen}
+        onClose={() => setPaymentDialogOpen(false)}
         course={selectedCourseForPayment}
         userId={user?.id || null}
       />
