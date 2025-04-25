@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { Course } from '@/types/supabase';
 import { Calendar, BookOpen } from 'lucide-react';
@@ -31,7 +31,7 @@ const EnrolledCourses = () => {
       if (!user) return;
 
       try {
-        // First get enrollments
+        // First get enrollments - WITHOUT sorting by begin_date which doesn't exist in this table
         const { data: enrollments, error: enrollmentError } = await supabase
           .from('enrollments')
           .select('id, course_id')

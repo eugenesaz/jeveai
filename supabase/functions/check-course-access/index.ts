@@ -79,7 +79,7 @@ serve(async (req) => {
       );
     }
 
-    // Check for enrollment first (without trying to sort by begin_date)
+    // Check for enrollment without sorting by begin_date (which doesn't exist in enrollments table)
     const { data: enrollmentData, error: enrollmentError } = await supabaseClient
       .from('enrollments')
       .select('id')
