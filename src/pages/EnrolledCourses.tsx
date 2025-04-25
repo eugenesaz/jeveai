@@ -4,61 +4,80 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Enrollment, Course, Subscription } from '@/types/supabase';
+import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { getActiveSubscription, formatDate } from '@/utils/subscriptionUtils';
+import { Course } from '@/types/supabase';
+import { Calendar, BookOpen } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, MessageSquare } from 'lucide-react';
+import { getActiveSubscription, formatDate } from '@/utils/subscriptionUtils';
+import { FakePaymentDialog } from "@/components/FakePaymentDialog";
 
-interface EnrollmentWithCourse extends Enrollment {
-  course: Course;
-  subscriptions?: Subscription[];
+interface EnrolledCourseData extends Course {
+  subscription_active: boolean;
+  subscription_begin?: string | null;
+  subscription_end?: string | null;
 }
 
 const EnrolledCourses = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [enrollments, setEnrollments] = useState<EnrollmentWithCourse[]>([]);
+  const [enrolledCourses, setEnrolledCourses] = useState<EnrolledCourseData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCourseForPayment, setSelectedCourseForPayment] = useState<Course | null>(null);
 
   useEffect(() => {
     const fetchEnrolledCourses = async () => {
       if (!user) return;
 
-      setLoading(true);
       try {
-        // Get enrollments without sorting by begin_date
-        const { data: enrollmentData, error } = await supabase
+        // First get enrollments
+        const { data: enrollments, error: enrollmentError } = await supabase
           .from('enrollments')
-          .select(`
-            *,
-            course:courses(*)
-          `)
+          .select('id, course_id')
           .eq('user_id', user.id);
 
-        if (error) throw error;
-
-        if (enrollmentData) {
-          // Now get subscriptions for each enrollment
-          const enrichedEnrollments = await Promise.all(
-            enrollmentData.map(async (enrollment) => {
-              const { data: subscriptionsData } = await supabase
-                .from('subscriptions')
-                .select('*')
-                .eq('enrollment_id', enrollment.id)
-                .order('begin_date', { ascending: false });
-              
-              return {
-                ...enrollment,
-                subscriptions: subscriptionsData || []
-              };
-            })
-          );
-
-          setEnrollments(enrichedEnrollments as EnrollmentWithCourse[]);
+        if (enrollmentError) throw enrollmentError;
+        if (!enrollments || enrollments.length === 0) {
+          setLoading(false);
+          return;
         }
+
+        // Get all courses data
+        const courseIds = enrollments.map(enrollment => enrollment.course_id);
+        const { data: coursesData, error: coursesError } = await supabase
+          .from('courses')
+          .select('*')
+          .in('id', courseIds);
+
+        if (coursesError) throw coursesError;
+
+        // For each enrollment, get the subscription data and merge with course data
+        const coursesWithSubscription = await Promise.all(
+          enrollments.map(async (enrollment) => {
+            const { data: subscriptions, error: subscriptionsError } = await supabase
+              .from('subscriptions')
+              .select('*')
+              .eq('enrollment_id', enrollment.id)
+              .order('begin_date', { ascending: false });
+
+            if (subscriptionsError) throw subscriptionsError;
+            
+            const course = coursesData?.find(c => c.id === enrollment.course_id);
+            if (!course) return null;
+            
+            const activeSubscription = getActiveSubscription(subscriptions || []);
+            
+            return {
+              ...course,
+              subscription_active: !!activeSubscription?.is_active,
+              subscription_begin: activeSubscription?.begin_date,
+              subscription_end: activeSubscription?.end_date
+            };
+          })
+        );
+
+        setEnrolledCourses(coursesWithSubscription.filter(Boolean) as EnrolledCourseData[]);
       } catch (error) {
         console.error('Error fetching enrolled courses:', error);
       } finally {
@@ -69,105 +88,123 @@ const EnrolledCourses = () => {
     fetchEnrolledCourses();
   }, [user]);
 
+  const handleViewCourse = (courseId: string) => {
+    navigate(`/courses/${courseId}`);
+  };
+
+  const handleRenewSubscription = (course: Course) => {
+    setSelectedCourseForPayment(course);
+  };
+
   if (loading) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <h1 className="text-2xl font-bold mb-6">{t('customer.enrolledCourses.title', 'My Courses')}</h1>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <p>{t('loading')}</p>
       </div>
     );
   }
 
-  if (!user) {
-    return (
-      <div className="container mx-auto py-8 px-4">
-        <h1 className="text-2xl font-bold mb-6">{t('customer.enrolledCourses.title', 'My Courses')}</h1>
-        <p>{t('customer.enrolledCourses.loginRequired', 'Please log in to see your enrolled courses.')}</p>
-        <Button onClick={() => navigate('/')} className="mt-4">
-          {t('goToHome', 'Go to Home')}
-        </Button>
-      </div>
-    );
-  }
-
-  if (enrollments.length === 0) {
-    return (
-      <div className="container mx-auto py-8 px-4">
-        <h1 className="text-2xl font-bold mb-6">{t('customer.enrolledCourses.title', 'My Courses')}</h1>
-        <p>{t('customer.enrolledCourses.noCourses', 'You are not enrolled in any courses yet.')}</p>
-        <Button onClick={() => navigate('/')} className="mt-4">
-          {t('exploreMore', 'Explore Courses')}
-        </Button>
-      </div>
-    );
-  }
-
   return (
-    <div className="container mx-auto py-8 px-4">
-      <h1 className="text-2xl font-bold mb-6">{t('customer.enrolledCourses.title', 'My Courses')}</h1>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {enrollments.map((enrollment) => {
-          const course = enrollment.course;
-          const activeSubscription = enrollment.subscriptions ? 
-            getActiveSubscription(enrollment.subscriptions) : null;
-          
-          return (
-            <Card key={enrollment.id} className="overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-                <CardTitle>{course?.name}</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <p className="text-gray-600 mb-4 line-clamp-2">{course?.description}</p>
-                
-                <div className="space-y-2">
-                  <div className="flex items-center text-sm">
-                    <Calendar className="h-4 w-4 mr-2 text-blue-500" />
-                    <span className="text-gray-500 mr-2">{t('customer.courses.subscription')}:</span>
-                    {activeSubscription ? (
-                      <Badge variant={activeSubscription.is_active ? "default" : "outline"} className={`ml-auto ${activeSubscription.is_active ? 'bg-green-500 hover:bg-green-600' : ''}`}>
-                        {activeSubscription.is_active ? 
-                          t('customer.courses.active') : 
-                          t('customer.courses.expired')}
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="ml-auto">
-                        {t('customer.courses.noSubscription')}
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  {activeSubscription && (
-                    <div className="grid grid-cols-2 gap-2 text-sm">
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-white shadow">
+        <div className="container mx-auto p-6">
+          <h1 className="text-2xl font-bold text-gray-800">{t('customer.courses.myEnrollments')}</h1>
+        </div>
+      </header>
+
+      <main className="container mx-auto py-10 px-4">
+        {enrolledCourses.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {enrolledCourses.map((course) => {
+              const activeSubscription = {
+                is_active: course.subscription_active,
+                begin_date: course.subscription_begin,
+                end_date: course.subscription_end
+              };
+
+              return (
+                <Card key={course.id} className="overflow-hidden transition-all hover:shadow-lg">
+                  <div className="p-6">
+                    <div className="flex flex-col h-full">
                       <div>
-                        <span className="text-gray-500">{t('customer.courses.startDate')}:</span>
-                        <div>{formatDate(activeSubscription.begin_date)}</div>
+                        <h2 className="text-xl font-semibold mb-2">{course.name}</h2>
+                        <p className="text-gray-600 mb-4 line-clamp-2">{course.description}</p>
                       </div>
-                      <div>
-                        <span className="text-gray-500">{t('customer.courses.endDate')}:</span>
-                        <div>
-                          {activeSubscription.end_date ? 
-                            formatDate(activeSubscription.end_date) : 
-                            t('customer.courses.unlimited')}
+
+                      <div className="mt-4 space-y-3">
+                        <div className="flex items-center">
+                          <BookOpen className="h-4 w-4 mr-2 text-blue-500" />
+                          <span className="text-gray-500 mr-2">{t('customer.courses.type')}:</span>
+                          <span className="font-medium">{course.type || t('common.notSpecified')}</span>
                         </div>
+
+                        <div className="flex items-center">
+                          <Calendar className="h-4 w-4 mr-2 text-blue-500" />
+                          <span className="text-gray-500 mr-2">{t('customer.courses.subscription')}:</span>
+                          <Badge variant={activeSubscription.is_active ? "success" : "outline"} className="ml-auto">
+                            {activeSubscription.is_active ? 
+                              t('customer.courses.active') : 
+                              t('customer.courses.expired')}
+                          </Badge>
+                        </div>
+
+                        {activeSubscription.begin_date && (
+                          <div className="flex items-center">
+                            <Calendar className="h-4 w-4 mr-2 text-blue-500 opacity-0" />
+                            <span className="text-gray-500 mr-2">{t('customer.courses.startDate')}:</span>
+                            <span className="font-medium">{formatDate(activeSubscription.begin_date)}</span>
+                          </div>
+                        )}
+
+                        {activeSubscription.end_date && (
+                          <div className="flex items-center">
+                            <Calendar className="h-4 w-4 mr-2 text-blue-500 opacity-0" />
+                            <span className="text-gray-500 mr-2">{t('customer.courses.endDate')}:</span>
+                            <span className="font-medium">{formatDate(activeSubscription.end_date)}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="mt-6 flex gap-3 justify-end">
+                        {!activeSubscription.is_active && (
+                          <Button 
+                            onClick={() => handleRenewSubscription(course)}
+                            variant="outline"
+                            size="sm"
+                            className="text-blue-600 border-blue-200 hover:border-blue-300 hover:bg-blue-50"
+                          >
+                            {t('customer.courses.renew')}
+                          </Button>
+                        )}
+                        <Button 
+                          onClick={() => handleViewCourse(course.id)}
+                          variant="default"
+                          size="sm"
+                        >
+                          {t('common.view')}
+                        </Button>
                       </div>
                     </div>
-                  )}
-                </div>
-              </CardContent>
-              <CardFooter className="bg-gray-50 border-t">
-                <Button 
-                  variant="ghost" 
-                  onClick={() => navigate(`/course/${course?.id}`)}
-                  className="w-full"
-                >
-                  {t('customer.courses.viewDetails')}
-                </Button>
-              </CardFooter>
-            </Card>
-          );
-        })}
-      </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-20">
+            <h2 className="text-xl font-semibold mb-4 text-gray-700">{t('customer.courses.noEnrollments')}</h2>
+            <p className="text-gray-500 mb-8">{t('customer.courses.noEnrollmentsDescription')}</p>
+            <Button onClick={() => navigate('/projects')}>{t('customer.courses.browseCourses')}</Button>
+          </div>
+        )}
+      </main>
+
+      <FakePaymentDialog
+        open={!!selectedCourseForPayment}
+        onClose={() => setSelectedCourseForPayment(null)}
+        course={selectedCourseForPayment}
+        userId={user?.id || null}
+      />
     </div>
   );
 };
