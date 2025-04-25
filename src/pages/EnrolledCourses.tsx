@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Course } from '@/types/supabase';
 import { Calendar, BookOpen } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { getActiveSubscription, formatDate } from '@/utils/subscriptionUtils';
+import { formatDate } from '@/utils/subscriptionUtils';
 import { FakePaymentDialog } from "@/components/FakePaymentDialog";
 import { getUserEnrollments } from '@/utils/enrollmentUtils';
 
@@ -64,13 +64,17 @@ const EnrolledCourses = () => {
             const course = coursesData?.find(c => c.id === enrollment.course_id);
             if (!course) return null;
             
-            const activeSubscription = getActiveSubscription(subscriptions || []);
+            // Check for active subscription
+            const now = new Date();
+            const latestSubscription = subscriptions && subscriptions.length > 0 ? subscriptions[0] : null;
+            const isActive = latestSubscription?.is_paid && 
+                            (!latestSubscription?.end_date || new Date(latestSubscription.end_date) > now);
             
             return {
               ...course,
-              subscription_active: !!activeSubscription?.is_active,
-              subscription_begin: activeSubscription?.begin_date,
-              subscription_end: activeSubscription?.end_date
+              subscription_active: isActive,
+              subscription_begin: latestSubscription?.begin_date,
+              subscription_end: latestSubscription?.end_date
             };
           })
         );
@@ -116,12 +120,6 @@ const EnrolledCourses = () => {
         {enrolledCourses.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {enrolledCourses.map((course) => {
-              const activeSubscription = {
-                is_active: course.subscription_active,
-                begin_date: course.subscription_begin,
-                end_date: course.subscription_end
-              };
-
               return (
                 <Card key={course.id} className="overflow-hidden transition-all hover:shadow-lg">
                   <div className="p-6">
@@ -141,32 +139,32 @@ const EnrolledCourses = () => {
                         <div className="flex items-center">
                           <Calendar className="h-4 w-4 mr-2 text-blue-500" />
                           <span className="text-gray-500 mr-2">{t('customer.courses.subscription')}:</span>
-                          <Badge variant={activeSubscription.is_active ? "success" : "outline"} className="ml-auto">
-                            {activeSubscription.is_active ? 
+                          <Badge variant={course.subscription_active ? "success" : "outline"} className="ml-auto">
+                            {course.subscription_active ? 
                               t('customer.courses.active') : 
                               t('customer.courses.expired')}
                           </Badge>
                         </div>
 
-                        {activeSubscription.begin_date && (
+                        {course.subscription_begin && (
                           <div className="flex items-center">
                             <Calendar className="h-4 w-4 mr-2 text-blue-500 opacity-0" />
                             <span className="text-gray-500 mr-2">{t('customer.courses.startDate')}:</span>
-                            <span className="font-medium">{formatDate(activeSubscription.begin_date)}</span>
+                            <span className="font-medium">{formatDate(course.subscription_begin)}</span>
                           </div>
                         )}
 
-                        {activeSubscription.end_date && (
+                        {course.subscription_end && (
                           <div className="flex items-center">
                             <Calendar className="h-4 w-4 mr-2 text-blue-500 opacity-0" />
                             <span className="text-gray-500 mr-2">{t('customer.courses.endDate')}:</span>
-                            <span className="font-medium">{formatDate(activeSubscription.end_date)}</span>
+                            <span className="font-medium">{formatDate(course.subscription_end)}</span>
                           </div>
                         )}
                       </div>
 
                       <div className="mt-6 flex gap-3 justify-end">
-                        {!activeSubscription.is_active && (
+                        {!course.subscription_active && (
                           <Button 
                             onClick={() => handleRenewSubscription(course)}
                             variant="outline"
