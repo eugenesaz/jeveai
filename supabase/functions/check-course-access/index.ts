@@ -79,7 +79,7 @@ serve(async (req) => {
       );
     }
 
-    // First, get the enrollment id
+    // First, get the enrollment id without referencing begin_date
     const { data: enrollmentData, error: enrollmentError } = await supabaseClient
       .from('enrollments')
       .select('id')

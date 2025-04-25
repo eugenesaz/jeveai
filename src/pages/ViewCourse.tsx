@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
@@ -83,6 +84,7 @@ const ViewCourse = () => {
         setCourse(courseWithProjectUrl);
         
         if (user) {
+          // Get enrollment without referencing begin_date
           const { data: enrollment, error: enrollmentError } = await supabase
             .from('enrollments')
             .select('id')
@@ -91,6 +93,7 @@ const ViewCourse = () => {
             .maybeSingle();
             
           if (!enrollmentError && enrollment) {
+            // If there's an enrollment, get the subscriptions
             const { data: subscriptionsData, error: subscriptionsError } = await supabase
               .from('subscriptions')
               .select('*')

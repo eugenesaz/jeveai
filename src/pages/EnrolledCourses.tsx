@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -31,7 +30,7 @@ const EnrolledCourses = () => {
       if (!user) return;
 
       try {
-        // First get enrollments - without the subscription fields
+        // Get enrollments without trying to access begin_date
         const { data: enrollments, error: enrollmentError } = await supabase
           .from('enrollments')
           .select('id, course_id')
