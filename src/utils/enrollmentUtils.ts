@@ -32,3 +32,31 @@ export async function getUserEnrollments(userId: string) {
   if (error || !data) return [];
   return data;
 }
+
+/**
+ * Creates a new enrollment if it doesn't exist yet, or returns the existing one
+ */
+export async function getOrCreateEnrollment(userId: string, courseId: string) {
+  if (!userId || !courseId) return null;
+  
+  // First check for existing enrollment
+  const existingEnrollment = await getEnrollmentByUserAndCourse(userId, courseId);
+  if (existingEnrollment) return existingEnrollment;
+  
+  // Create a new enrollment with only the required fields
+  const { data, error } = await supabase
+    .from('enrollments')
+    .insert({
+      user_id: userId,
+      course_id: courseId
+    })
+    .select('id')
+    .single();
+    
+  if (error) {
+    console.error('Error creating enrollment:', error);
+    return null;
+  }
+  
+  return data;
+}

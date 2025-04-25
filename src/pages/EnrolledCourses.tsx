@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -31,7 +32,7 @@ const EnrolledCourses = () => {
       if (!user) return;
 
       try {
-        // Use the utility function to get enrollments without referencing begin_date
+        // Use the utility function to get enrollments
         const enrollments = await getUserEnrollments(user.id);
         
         if (!enrollments || enrollments.length === 0) {

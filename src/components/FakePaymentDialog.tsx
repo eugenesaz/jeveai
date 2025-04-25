@@ -56,23 +56,23 @@ export function FakePaymentDialog({
         endDate = end.toISOString();
       }
 
-      // First, check if enrollment exists or create one - but DON'T include any subscription fields
+      // Step 1: Check if enrollment exists or create one
       const { data: existingEnrollment, error: enrollmentError } = await supabase
         .from('enrollments')
         .select('id')
         .eq('user_id', userId)
         .eq('course_id', course.id)
-        .maybeSingle();  // Use maybeSingle instead of single to avoid errors if no enrollment exists
+        .maybeSingle();
 
       let enrollmentId: string;
 
       if (enrollmentError || !existingEnrollment) {
-        // Create new enrollment if it doesn't exist - only include user_id and course_id
+        // Create new enrollment only with user_id and course_id
         const { data: newEnrollment, error: createError } = await supabase
           .from('enrollments')
           .insert({
             user_id: userId,
-            course_id: course.id,
+            course_id: course.id
           })
           .select('id')
           .single();
@@ -85,7 +85,7 @@ export function FakePaymentDialog({
         enrollmentId = existingEnrollment.id;
       }
 
-      // Check for active subscription
+      // Step 2: Check for active subscription
       const now2 = new Date();
       const { data: activeSubscriptions, error: subCheckError } = await supabase
         .from('subscriptions')
@@ -109,7 +109,7 @@ export function FakePaymentDialog({
         return;
       }
 
-      // Create new subscription
+      // Step 3: Create new subscription with the enrollment_id
       const { error: subscriptionError } = await supabase
         .from('subscriptions')
         .insert({
