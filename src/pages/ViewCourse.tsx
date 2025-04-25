@@ -88,7 +88,7 @@ const ViewCourse = () => {
         setCourse(courseWithProjectUrl);
         
         if (user) {
-          // First check if user is enrolled
+          // Check if user is enrolled - don't sort by begin_date as it's not in enrollments
           const { data: enrollment, error: enrollmentError } = await supabase
             .from('enrollments')
             .select('id')
