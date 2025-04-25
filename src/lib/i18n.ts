@@ -1,4 +1,3 @@
-
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
@@ -276,6 +275,16 @@ const resources = {
         "view": {
           "details": "View Course Details"
         }
+      },
+      "subscription": {
+        "active": "Active",
+        "expired": "Expired", 
+        "history": "Your Subscription History",
+        "status": "Status",
+        "beginDate": "Begin Date",
+        "endDate": "End Date",
+        "unlimited": "Unlimited",
+        "noHistory": "No subscription history found."
       }
     }
   },
@@ -551,6 +560,16 @@ const resources = {
         "view": {
           "details": "Подробнее о курсе"
         }
+      },
+      "subscription": {
+        "active": "Активна",
+        "expired": "Истекла", 
+        "history": "История вашей подписки",
+        "status": "Статус",
+        "beginDate": "Дата начала",
+        "endDate": "Дата окончания",
+        "unlimited": "Бессрочно",
+        "noHistory": "История подписки не найдена."
       }
     }
   }

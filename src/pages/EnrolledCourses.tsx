@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -33,7 +32,6 @@ const EnrolledCourses = () => {
       if (!user) return;
 
       try {
-        // Use the utility function to get enrollments
         const enrollments = await getUserEnrollments(user.id);
         
         if (!enrollments || enrollments.length === 0) {
@@ -41,7 +39,6 @@ const EnrolledCourses = () => {
           return;
         }
 
-        // Get all courses data
         const courseIds = enrollments.map(enrollment => enrollment.course_id);
         const { data: coursesData, error: coursesError } = await supabase
           .from('courses')
@@ -50,7 +47,6 @@ const EnrolledCourses = () => {
 
         if (coursesError) throw coursesError;
 
-        // For each enrollment, get the subscription data and merge with course data
         const coursesWithSubscription = await Promise.all(
           enrollments.map(async (enrollment) => {
             const { data: subscriptions, error: subscriptionsError } = await supabase
@@ -64,7 +60,6 @@ const EnrolledCourses = () => {
             const course = coursesData?.find(c => c.id === enrollment.course_id);
             if (!course) return null;
             
-            // Check for active subscription
             const now = new Date();
             const latestSubscription = subscriptions && subscriptions.length > 0 ? subscriptions[0] : null;
             const isActive = latestSubscription?.is_paid && 
@@ -88,10 +83,10 @@ const EnrolledCourses = () => {
     };
 
     fetchEnrolledCourses();
-  }, [user, paymentDialogOpen]); // Added paymentDialogOpen to refresh after payment
+  }, [user, paymentDialogOpen]);
 
   const handleViewCourse = (courseId: string) => {
-    navigate(`/courses/${courseId}`);
+    navigate(`/course/${courseId}`);
   };
 
   const handleRenewSubscription = (course: Course) => {
@@ -141,8 +136,8 @@ const EnrolledCourses = () => {
                           <span className="text-gray-500 mr-2">{t('customer.courses.subscription')}:</span>
                           <Badge variant={course.subscription_active ? "success" : "outline"} className="ml-auto">
                             {course.subscription_active ? 
-                              t('customer.courses.active') : 
-                              t('customer.courses.expired')}
+                              t('subscription.active', 'Active') : 
+                              t('subscription.expired', 'Expired')}
                           </Badge>
                         </div>
 
@@ -179,7 +174,7 @@ const EnrolledCourses = () => {
                           variant="default"
                           size="sm"
                         >
-                          {t('common.view')}
+                          {t('customer.courses.viewDetails', 'View Details')}
                         </Button>
                       </div>
                     </div>

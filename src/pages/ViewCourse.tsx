@@ -46,6 +46,7 @@ const ViewCourse = () => {
   const [projectUrlName, setProjectUrlName] = useState<string | null>(null);
   const [subscriptionHistory, setSubscriptionHistory] = useState<SubscriptionWithStatus[]>([]);
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
+  const [hasHadSubscriptionBefore, setHasHadSubscriptionBefore] = useState(false);
 
   const isFromProjectLanding = location.state?.fromProjectLanding || false;
 
@@ -109,6 +110,7 @@ const ViewCourse = () => {
               });
               
               setSubscriptionHistory(processedSubscriptions);
+              setHasHadSubscriptionBefore(true);
               
               const activeSubscription = processedSubscriptions.find(sub => sub.is_active);
               setHasActiveSubscription(!!activeSubscription);
@@ -201,7 +203,7 @@ const ViewCourse = () => {
           <div className="container mx-auto p-6 flex justify-between items-center">
             <h1 className="text-2xl md:text-3xl font-bold">{course?.name}</h1>
             <Button variant="outline" className="text-white border-white hover:bg-white/10" onClick={handleGoBack}>
-              Back
+              {t('go.back', 'Back')}
             </Button>
           </div>
         </header>
@@ -230,19 +232,19 @@ const ViewCourse = () => {
               <div className="max-w-4xl mx-auto">
                 <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-10">
                   <div className="p-8 md:p-10">
-                    <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-900">Course Information</h2>
+                    <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-900">{t('course.information', 'Course Information')}</h2>
                     
                     <div className="mb-10">
-                      <h3 className="text-xl font-semibold mb-4 text-gray-900">Your Subscription History</h3>
+                      <h3 className="text-xl font-semibold mb-4 text-gray-900">{t('subscription.history', 'Your Subscription History')}</h3>
                       <div className="bg-gray-50 p-6 rounded-lg">
                         {subscriptionHistory.length > 0 ? (
                           <div className="overflow-x-auto">
                             <table className="w-full text-sm text-left">
                               <thead className="text-xs text-gray-700 uppercase bg-gray-100">
                                 <tr>
-                                  <th className="px-6 py-3">Begin Date</th>
-                                  <th className="px-6 py-3">End Date</th>
-                                  <th className="px-6 py-3">Status</th>
+                                  <th className="px-6 py-3">{t('subscription.beginDate', 'Begin Date')}</th>
+                                  <th className="px-6 py-3">{t('subscription.endDate', 'End Date')}</th>
+                                  <th className="px-6 py-3">{t('subscription.status', 'Status')}</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -252,16 +254,16 @@ const ViewCourse = () => {
                                       {sub.begin_date ? new Date(sub.begin_date).toLocaleDateString() : '-'}
                                     </td>
                                     <td className="px-6 py-4">
-                                      {sub.end_date ? new Date(sub.end_date).toLocaleDateString() : 'Unlimited'}
+                                      {sub.end_date ? new Date(sub.end_date).toLocaleDateString() : t('subscription.unlimited', 'Unlimited')}
                                     </td>
                                     <td className="px-6 py-4">
                                       {sub.is_active ? (
                                         <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
-                                          Active
+                                          {t('subscription.active', 'Active')}
                                         </span>
                                       ) : (
                                         <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-semibold">
-                                          Expired
+                                          {t('subscription.expired', 'Expired')}
                                         </span>
                                       )}
                                     </td>
@@ -271,7 +273,7 @@ const ViewCourse = () => {
                             </table>
                           </div>
                         ) : (
-                          <p className="text-gray-600">No subscription history found.</p>
+                          <p className="text-gray-600">{t('subscription.noHistory', 'No subscription history found.')}</p>
                         )}
                         
                         {!hasActiveSubscription && (
@@ -280,7 +282,7 @@ const ViewCourse = () => {
                               onClick={handleEnroll} 
                               className="bg-blue-600 hover:bg-blue-700 text-white"
                             >
-                              Subscribe
+                              {t('customer.courses.renew', 'Renew Subscription')}
                             </Button>
                           </div>
                         )}
@@ -372,7 +374,9 @@ const ViewCourse = () => {
                 onClick={handleEnroll}
                 className="bg-white text-blue-700 hover:bg-blue-50 px-8 py-6 text-lg font-semibold rounded-lg shadow-lg"
               >
-                {user ? t('customer.courses.subscribe', 'Subscribe') : t('customer.courses.enroll', 'Enroll')}
+                {hasHadSubscriptionBefore ? 
+                  t('customer.courses.renew', 'Renew Subscription') : 
+                  (user ? t('customer.courses.subscribe', 'Subscribe') : t('customer.courses.enroll', 'Enroll'))}
                 <span className="ml-2 font-bold">${course.price.toFixed(2)}</span>
               </Button>
             </div>
@@ -521,7 +525,9 @@ const ViewCourse = () => {
                 onClick={handleEnroll}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4"
               >
-                {user ? t('customer.courses.subscribe', 'Subscribe') : t('customer.courses.enroll', 'Enroll')}
+                {hasHadSubscriptionBefore ? 
+                  t('customer.courses.renew', 'Renew Subscription') : 
+                  (user ? t('customer.courses.subscribe', 'Subscribe') : t('customer.courses.enroll', 'Enroll'))}
                 <span className="ml-2 font-bold">${course.price.toFixed(2)}</span>
               </Button>
             </div>
