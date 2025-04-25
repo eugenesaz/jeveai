@@ -42,13 +42,6 @@ export const ProjectHero = ({ project }: ProjectHeroProps) => {
               {t('project.landing.explore.courses', 'Explore Courses')}
               <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Button>
-            <Button 
-              variant="outline" 
-              className="group border-white text-white hover:bg-white/10 transition-all duration-300"
-            >
-              {t('project.landing.learn.more', 'Learn More')}
-              <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </Button>
           </div>
         </div>
       </div>

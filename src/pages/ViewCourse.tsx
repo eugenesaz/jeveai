@@ -186,10 +186,10 @@ export default function ViewCourse() {
           </div>
 
           <div className="md:col-span-1">
-            {course.telegram_bot && (
-              <section className="bg-white rounded-2xl shadow-sm p-6 sticky top-6">
-                <h2 className="text-xl font-semibold mb-4">{t('course.access', 'How to Access')}</h2>
-                <div className="space-y-4">
+            <section className="bg-white rounded-2xl shadow-sm p-6 sticky top-6">
+              <h2 className="text-xl font-semibold mb-4">{t('course.access', 'How to Access')}</h2>
+              <div className="space-y-4">
+                {course.telegram_bot && (
                   <div className="bg-blue-50 rounded-xl p-4">
                     <div className="flex items-center gap-3 mb-3">
                       <MessageSquare className="w-5 h-5 text-blue-600" />
@@ -212,20 +212,20 @@ export default function ViewCourse() {
                       <li>{t('course.telegram_step4', 'Follow the bot instructions')}</li>
                     </ol>
                   </div>
+                )}
 
-                  {shouldShowSubscriptionButton && (
-                    <Button
-                      onClick={handleRenewSubscription}
-                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 py-6 rounded-xl shadow-lg"
-                    >
-                      {enrollment?.subscriptions && enrollment.subscriptions.length > 0
-                        ? t('course.renew_subscription', 'Renew Subscription')
-                        : t('course.enroll', 'Enroll Now')}
-                    </Button>
-                  )}
-                </div>
-              </section>
-            )}
+                {shouldShowSubscriptionButton && (
+                  <Button
+                    onClick={handleRenewSubscription}
+                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 py-6 rounded-xl shadow-lg"
+                  >
+                    {enrollment?.subscriptions && enrollment.subscriptions.length > 0
+                      ? t('course.renew_subscription', 'Renew Subscription')
+                      : t('course.enroll', 'Enroll Now')}
+                  </Button>
+                )}
+              </div>
+            </section>
           </div>
         </div>
       </main>
