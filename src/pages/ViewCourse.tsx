@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
@@ -40,7 +39,7 @@ const ViewCourse = () => {
   const [loading, setLoading] = useState(true);
   const [enrollmentInfo, setEnrollmentInfo] = useState<EnrollmentInfo>({ is_enrolled: false });
   const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [isSignUpOpen, setIsSignUpOpen] = useState(false);
+  const [isSignUpOpen] = useState(false);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [userTelegram, setUserTelegram] = useState<string | null>(null);
   const [projectUrlName, setProjectUrlName] = useState<string | null>(null);
