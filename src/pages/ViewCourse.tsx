@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +9,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { FakePaymentDialog } from '@/components/FakePaymentDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table';
+import { formatDate, isSubscriptionActive } from '@/utils/subscriptionUtils';
 
 export default function ViewCourse() {
   const { id } = useParams<{ id: string }>();
@@ -48,6 +57,11 @@ export default function ViewCourse() {
       return data;
     }
   });
+
+  // Check if there's an active subscription
+  const hasActiveSubscription = enrollment?.subscriptions?.some(sub => 
+    isSubscriptionActive(sub)
+  );
 
   const handleRenewSubscription = () => {
     if (!user) {
@@ -106,15 +120,76 @@ export default function ViewCourse() {
           </div>
         </section>
 
+        {enrollment && (
+          <>
+            <section className="mb-8">
+              <h2 className="text-xl font-semibold mb-4">{t('course.subscriptions', 'Your Subscriptions')}</h2>
+              {enrollment.subscriptions && enrollment.subscriptions.length > 0 ? (
+                <div className="bg-white rounded-lg shadow overflow-hidden mb-6">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t('subscription.begin_date', 'Start Date')}</TableHead>
+                        <TableHead>{t('subscription.end_date', 'End Date')}</TableHead>
+                        <TableHead>{t('subscription.status', 'Status')}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {enrollment.subscriptions.map((subscription) => {
+                        const active = isSubscriptionActive(subscription);
+                        return (
+                          <TableRow key={subscription.id}>
+                            <TableCell>{formatDate(subscription.begin_date)}</TableCell>
+                            <TableCell>
+                              {subscription.end_date ? formatDate(subscription.end_date) : t('subscription.unlimited', 'Unlimited')}
+                            </TableCell>
+                            <TableCell>
+                              <span className={`px-2 py-1 rounded-full text-xs font-semibold ${active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                {active ? t('subscription.active', 'Active') : t('subscription.expired', 'Expired')}
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <p className="text-gray-500">{t('subscription.none', 'You have not subscribed to this course yet.')}</p>
+              )}
+            </section>
+
+            {course.telegram_bot && (
+              <section className="mb-8">
+                <h2 className="text-xl font-semibold mb-4">{t('course.access', 'How to Access the Course')}</h2>
+                <div className="bg-white rounded-lg shadow p-6">
+                  <h3 className="font-medium text-lg mb-2">{t('course.telegram_instructions', 'Telegram Bot Instructions')}</h3>
+                  <ol className="list-decimal pl-5 mb-4 space-y-2">
+                    <li>{t('course.telegram_step1', 'Go to Telegram and search for the bot:')} <strong>@{course.telegram_bot}</strong></li>
+                    <li>{t('course.telegram_step2', 'Start a conversation with the bot by clicking the Start button')}</li>
+                    <li>{t('course.telegram_step3', 'The bot will verify your subscription status automatically')}</li>
+                    <li>{t('course.telegram_step4', 'Follow the instructions from the bot to access course materials')}</li>
+                  </ol>
+                  <p className="text-sm text-gray-500">
+                    {t('course.telegram_note', 'Note: Make sure your Telegram username is added to your profile for verification purposes.')}
+                  </p>
+                </div>
+              </section>
+            )}
+          </>
+        )}
+
         <div className="mt-8 flex justify-center">
-          <Button
-            onClick={handleRenewSubscription}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg shadow-lg"
-          >
-            {enrollment?.subscriptions?.[0]?.id
-              ? t('course.renew_subscription', 'Renew Subscription')
-              : t('course.enroll', 'Enroll Now')}
-          </Button>
+          {!hasActiveSubscription && (
+            <Button
+              onClick={handleRenewSubscription}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg shadow-lg"
+            >
+              {enrollment?.subscriptions?.length > 0
+                ? t('course.renew_subscription', 'Renew Subscription')
+                : t('course.enroll', 'Enroll Now')}
+            </Button>
+          )}
         </div>
       </main>
 
