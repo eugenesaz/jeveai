@@ -30,7 +30,7 @@ export const ProjectsHeader = () => {
           <Button
             variant="outline"
             onClick={() => navigate('/enrolled-courses')}
-            className="flex items-center gap-2 bg-white/10 hover:bg-gray-100"
+            className="flex items-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-800"
           >
             <BookOpen className="w-4 h-4" />
             {t('navigation.my_courses', 'My courses')}
@@ -38,7 +38,7 @@ export const ProjectsHeader = () => {
           <Button 
             onClick={() => navigate('/courses')} 
             variant="ghost"
-            className="flex items-center gap-2 bg-white/10 hover:bg-gray-100"
+            className="flex items-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-800"
           >
             <List className="w-4 h-4" />
             {t('navigation.courses')}
@@ -46,7 +46,7 @@ export const ProjectsHeader = () => {
           <Button 
             onClick={handleLogout} 
             variant="ghost"
-            className="flex items-center gap-2 bg-white/10 hover:bg-gray-100"
+            className="flex items-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-800"
           >
             <LogOut className="w-4 h-4" />
             {t('navigation.logout')}
