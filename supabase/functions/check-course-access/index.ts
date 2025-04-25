@@ -79,7 +79,7 @@ serve(async (req) => {
       );
     }
 
-    // Check for enrollment without sorting by begin_date (which doesn't exist in enrollments table)
+    // First, get the enrollment id
     const { data: enrollmentData, error: enrollmentError } = await supabaseClient
       .from('enrollments')
       .select('id')
@@ -95,7 +95,7 @@ serve(async (req) => {
       );
     }
 
-    // Get latest subscription for the enrollment
+    // Then use enrollment id to get subscription details
     const { data: subscriptionData, error: subscriptionError } = await supabaseClient
       .from('subscriptions')
       .select('begin_date, end_date, is_paid')

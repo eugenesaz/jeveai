@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -30,7 +31,7 @@ const EnrolledCourses = () => {
       if (!user) return;
 
       try {
-        // First get enrollments - WITHOUT sorting by begin_date which doesn't exist in this table
+        // First get enrollments - without the subscription fields
         const { data: enrollments, error: enrollmentError } = await supabase
           .from('enrollments')
           .select('id, course_id')
