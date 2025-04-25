@@ -79,7 +79,7 @@ serve(async (req) => {
       );
     }
 
-    // Check for enrollment first
+    // Check for enrollment first (without trying to sort by begin_date)
     const { data: enrollmentData, error: enrollmentError } = await supabaseClient
       .from('enrollments')
       .select('id')

@@ -67,7 +67,7 @@ export function FakePaymentDialog({
       let enrollmentId: string;
 
       if (enrollmentError) {
-        // Create new enrollment if it doesn't exist
+        // Create new enrollment if it doesn't exist - only add user_id and course_id
         const { data: newEnrollment, error: createError } = await supabase
           .from('enrollments')
           .insert({

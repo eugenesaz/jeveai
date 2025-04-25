@@ -125,7 +125,7 @@ const EnrolledCourses = () => {
                     <Calendar className="h-4 w-4 mr-2 text-blue-500" />
                     <span className="text-gray-500 mr-2">{t('customer.courses.subscription')}:</span>
                     {activeSubscription ? (
-                      <Badge variant={activeSubscription.is_active ? "success" : "outline"} className="ml-auto">
+                      <Badge variant={activeSubscription.is_active ? "default" : "outline"} className={`ml-auto ${activeSubscription.is_active ? 'bg-green-500 hover:bg-green-600' : ''}`}>
                         {activeSubscription.is_active ? 
                           t('customer.courses.active') : 
                           t('customer.courses.expired')}
