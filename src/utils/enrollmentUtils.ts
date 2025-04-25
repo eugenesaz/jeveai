@@ -2,7 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Gets an enrollment by user and course id without referencing begin_date
+ * Gets an enrollment by user and course id
  */
 export async function getEnrollmentByUserAndCourse(userId: string, courseId: string) {
   if (!userId || !courseId) return null;
@@ -19,7 +19,7 @@ export async function getEnrollmentByUserAndCourse(userId: string, courseId: str
 }
 
 /**
- * Gets all enrollments for a user without referencing begin_date
+ * Gets all enrollments for a user
  */
 export async function getUserEnrollments(userId: string) {
   if (!userId) return [];
