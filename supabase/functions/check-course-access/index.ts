@@ -79,7 +79,7 @@ serve(async (req) => {
       );
     }
 
-    // Get the enrollment id without ordering by any columns that don't exist
+    // Get the enrollment id
     const { data: enrollmentData, error: enrollmentError } = await supabaseClient
       .from('enrollments')
       .select('id')
