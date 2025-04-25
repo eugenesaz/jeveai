@@ -53,20 +53,69 @@ export function FakePaymentDialog({
         end_date = end.toISOString();
       }
 
-      // Insert enrollment - always create a new record for each subscription period
-      const { error } = await supabase.from('enrollments').insert([
-        {
-          user_id: userId,
-          course_id: course.id,
-          is_paid: true,
-          begin_date,
-          end_date,
-        }
-      ]);
+      // Check if there's an existing enrollment for this course/user combination
+      const { data: existingEnrollment } = await supabase
+        .from('enrollments')
+        .select('id, end_date')
+        .eq('user_id', userId)
+        .eq('course_id', course.id)
+        .eq('is_paid', true)
+        .maybeSingle();
 
-      if (error) {
-        console.error("Enrollment error:", error);
-        throw new Error("Failed to record enrollment");
+      if (existingEnrollment && existingEnrollment.end_date) {
+        // If there's an existing enrollment with an end date, extend it
+        const currentEnd = new Date(existingEnrollment.end_date);
+        const extension = course.duration ? course.duration : 0;
+        
+        if (extension > 0) {
+          // Extend from current end date
+          currentEnd.setDate(currentEnd.getDate() + extension);
+          
+          const { error: updateError } = await supabase
+            .from('enrollments')
+            .update({ 
+              end_date: currentEnd.toISOString(),
+              updated_at: now.toISOString()
+            })
+            .eq('id', existingEnrollment.id);
+            
+          if (updateError) {
+            console.error("Enrollment update error:", updateError);
+            throw new Error("Failed to update enrollment duration");
+          }
+        } else {
+          // For unlimited duration courses, create a new enrollment record
+          const { error } = await supabase.from('enrollments').insert([
+            {
+              user_id: userId,
+              course_id: course.id,
+              is_paid: true,
+              begin_date,
+              end_date,
+            }
+          ]);
+
+          if (error) {
+            console.error("Enrollment error:", error);
+            throw new Error("Failed to record enrollment");
+          }
+        }
+      } else {
+        // No existing active enrollment, create a new one
+        const { error } = await supabase.from('enrollments').insert([
+          {
+            user_id: userId,
+            course_id: course.id,
+            is_paid: true,
+            begin_date,
+            end_date,
+          }
+        ]);
+
+        if (error) {
+          console.error("Enrollment error:", error);
+          throw new Error("Failed to record enrollment");
+        }
       }
 
       toast({
