@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.31.0";
 
@@ -117,7 +118,7 @@ serve(async (req) => {
       .from('enrollments')
       .select('id, begin_date, end_date, is_paid')
       .eq('user_id', profileData.id)
-      .eq('course_id', courseData.id)
+      .eq('course_id', courseId)
       .eq('is_paid', true)
       .order('begin_date', { ascending: false });
 

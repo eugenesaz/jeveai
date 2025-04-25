@@ -2,20 +2,73 @@
 project_id = "lxiqvvourradjjhocxrd"
 
 [api]
-enabled = false
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
 
 [db]
-enabled = false
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[db.pooler]
+port = 54329
+pool_mode = "transaction"
+default_pool_size = 15
+max_client_conn = 100
 
 [realtime]
-enabled = false
+webhook_port = 54323
+ws_afterconnect = "select realtime.channel_join();"
+enable_permcaching = true
+enable_permission_sync = true
+
+[studio]
+port = 54324
+
+[inbucket]
+port = 54325
+smtp_port = 54326
+pop3_port = 54327
 
 [storage]
+file_size_limit = "50MiB"
+
+[auth]
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://localhost:3000"]
+jwt_expiry = 3600
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+
+[auth.sms]
+enable_signup = true
+enable_confirmations = true
+
+[auth.external.github]
 enabled = false
+client_id = ""
+secret = ""
+redirect_uri = ""
+url = ""
 
-[edge_functions]
-enabled = true
+[analytics]
+enabled = false
+port = 54328
+vector_port = 54331
 
-[[edge_functions.function]]
-name = "check-course-access"
-verify_jwt = false
+[experimental]
+pre_compilation = true
+enable_notify_summary = false
+enable_pgsql_notify = true
+
+[[migrations]]
+file = "20250421_add_project_knowledge_direct_function.sql"
+
+[[migrations]]
+file = "20250425_create_enrollment_function.sql"
