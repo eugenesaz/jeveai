@@ -18,6 +18,7 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { formatDate, isSubscriptionActive } from '@/utils/subscriptionUtils';
+import { MessageSquare, ArrowLeft } from 'lucide-react';
 
 export default function ViewCourse() {
   const { id } = useParams<{ id: string }>();
@@ -97,99 +98,126 @@ export default function ViewCourse() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md">
-        <div className="container mx-auto p-6 flex justify-between items-center">
-          <h1 className="text-2xl md:text-3xl font-bold">{course?.name}</h1>
+        <div className="container mx-auto p-6">
           <Button 
             variant="outline" 
-            className="text-white border-white/30 bg-white/20 hover:bg-white/30 hover:text-white" 
+            className="mb-4 text-white border-white/30 bg-white/20 hover:bg-white/30 hover:text-white" 
             onClick={handleGoBack}
           >
+            <ArrowLeft className="w-4 h-4 mr-2" />
             {t('go.back', 'Back')}
           </Button>
+          <h1 className="text-3xl md:text-4xl font-bold mt-4">{course?.name}</h1>
+          <p className="text-lg text-white/80 mt-2">{course?.description}</p>
         </div>
       </header>
 
       <main className="container mx-auto p-6">
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">{t('course.details', 'Course Details')}</h2>
-          <div className="prose prose-sm md:prose-base lg:prose-lg max-w-none">
-            <p>{course?.description}</p>
-            <p>{course?.details}</p>
-            <p>Price: ${course?.price}</p>
-            {course?.duration && <p>{t('course.duration', 'Duration')}: {course?.duration} hours</p>}
-          </div>
-        </section>
-
-        {enrollment && (
-          <>
-            <section className="mb-8">
-              <h2 className="text-xl font-semibold mb-4">{t('course.subscriptions', 'Your Subscriptions')}</h2>
-              {enrollment.subscriptions && enrollment.subscriptions.length > 0 ? (
-                <div className="bg-white rounded-lg shadow overflow-hidden mb-6">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>{t('subscription.begin_date', 'Start Date')}</TableHead>
-                        <TableHead>{t('subscription.end_date', 'End Date')}</TableHead>
-                        <TableHead>{t('subscription.status', 'Status')}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {enrollment.subscriptions.map((subscription) => {
-                        const active = isSubscriptionActive(subscription);
-                        return (
-                          <TableRow key={subscription.id}>
-                            <TableCell>{formatDate(subscription.begin_date)}</TableCell>
-                            <TableCell>
-                              {subscription.end_date ? formatDate(subscription.end_date) : t('subscription.unlimited', 'Unlimited')}
-                            </TableCell>
-                            <TableCell>
-                              <span className={`px-2 py-1 rounded-full text-xs font-semibold ${active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                {active ? t('subscription.active', 'Active') : t('subscription.expired', 'Expired')}
-                              </span>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
+        <div className="grid md:grid-cols-3 gap-8">
+          <div className="md:col-span-2 space-y-8">
+            <section className="bg-white rounded-2xl shadow-sm p-8">
+              <h2 className="text-2xl font-semibold mb-6">{t('course.details', 'Course Details')}</h2>
+              <div className="prose prose-sm md:prose-base lg:prose-lg max-w-none">
+                <p className="text-gray-600">{course?.details}</p>
+                <div className="flex flex-wrap gap-4 mt-6">
+                  <div className="bg-blue-50 rounded-lg px-4 py-2">
+                    <span className="text-blue-600 font-medium">${course?.price}</span>
+                  </div>
+                  {course?.duration && (
+                    <div className="bg-purple-50 rounded-lg px-4 py-2">
+                      <span className="text-purple-600 font-medium">
+                        {course?.duration} {t('course.hours', 'hours')}
+                      </span>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <p className="text-gray-500">{t('subscription.none', 'You have not subscribed to this course yet.')}</p>
-              )}
+              </div>
             </section>
 
+            {enrollment && (
+              <section className="bg-white rounded-2xl shadow-sm p-8">
+                <h2 className="text-2xl font-semibold mb-6">{t('course.subscriptions', 'Your Subscriptions')}</h2>
+                {enrollment.subscriptions && enrollment.subscriptions.length > 0 ? (
+                  <div className="overflow-hidden mb-6">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>{t('subscription.begin_date', 'Start Date')}</TableHead>
+                          <TableHead>{t('subscription.end_date', 'End Date')}</TableHead>
+                          <TableHead>{t('subscription.status', 'Status')}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {enrollment.subscriptions.map((subscription) => {
+                          const active = isSubscriptionActive(subscription);
+                          return (
+                            <TableRow key={subscription.id}>
+                              <TableCell>{formatDate(subscription.begin_date)}</TableCell>
+                              <TableCell>
+                                {subscription.end_date ? formatDate(subscription.end_date) : t('subscription.unlimited', 'Unlimited')}
+                              </TableCell>
+                              <TableCell>
+                                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                  active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                }`}>
+                                  {active ? t('subscription.active', 'Active') : t('subscription.expired', 'Expired')}
+                                </span>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <p className="text-gray-500">{t('subscription.none', 'You have not subscribed to this course yet.')}</p>
+                )}
+              </section>
+            )}
+          </div>
+
+          <div className="md:col-span-1">
             {course.telegram_bot && (
-              <section className="mb-8">
-                <h2 className="text-xl font-semibold mb-4">{t('course.access', 'How to Access the Course')}</h2>
-                <div className="bg-white rounded-lg shadow p-6">
-                  <h3 className="font-medium text-lg mb-2">{t('course.telegram_instructions', 'Telegram Bot Instructions')}</h3>
-                  <ol className="list-decimal pl-5 mb-4 space-y-2">
-                    <li>{t('course.telegram_step1', 'Go to Telegram and search for the bot:')} <strong>@{course.telegram_bot}</strong></li>
-                    <li>{t('course.telegram_step2', 'Start a conversation with the bot by clicking the Start button')}</li>
-                    <li>{t('course.telegram_step3', 'The bot will verify your subscription status automatically')}</li>
-                    <li>{t('course.telegram_step4', 'Follow the instructions from the bot to access course materials')}</li>
-                  </ol>
-                  <p className="text-sm text-gray-500">
-                    {t('course.telegram_note', 'Note: Make sure your Telegram username is added to your profile for verification purposes.')}
-                  </p>
+              <section className="bg-white rounded-2xl shadow-sm p-6 sticky top-6">
+                <h2 className="text-xl font-semibold mb-4">{t('course.access', 'How to Access')}</h2>
+                <div className="space-y-4">
+                  <div className="bg-blue-50 rounded-xl p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <MessageSquare className="w-5 h-5 text-blue-600" />
+                      <h3 className="font-medium text-blue-900">
+                        {t('course.telegram_instructions', 'Telegram Bot')}
+                      </h3>
+                    </div>
+                    <a 
+                      href={`https://t.me/${course.telegram_bot}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-700 font-medium block mb-4"
+                    >
+                      @{course.telegram_bot}
+                    </a>
+                    <ol className="list-decimal pl-5 space-y-2 text-sm text-gray-600">
+                      <li>{t('course.telegram_step1', 'Search for the bot on Telegram')}</li>
+                      <li>{t('course.telegram_step2', 'Click Start to begin')}</li>
+                      <li>{t('course.telegram_step3', 'Your subscription will be verified automatically')}</li>
+                      <li>{t('course.telegram_step4', 'Follow the bot instructions')}</li>
+                    </ol>
+                  </div>
+
+                  {!hasActiveSubscription && (
+                    <Button
+                      onClick={handleRenewSubscription}
+                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 py-6 rounded-xl shadow-lg"
+                    >
+                      {enrollment?.subscriptions?.length > 0
+                        ? t('course.renew_subscription', 'Renew Subscription')
+                        : t('course.enroll', 'Enroll Now')}
+                    </Button>
+                  )}
                 </div>
               </section>
             )}
-          </>
-        )}
-
-        <div className="mt-8 flex justify-center">
-          {!hasActiveSubscription && (
-            <Button
-              onClick={handleRenewSubscription}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg shadow-lg"
-            >
-              {enrollment?.subscriptions?.length > 0
-                ? t('course.renew_subscription', 'Renew Subscription')
-                : t('course.enroll', 'Enroll Now')}
-            </Button>
-          )}
+          </div>
         </div>
       </main>
 

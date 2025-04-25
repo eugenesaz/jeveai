@@ -7,6 +7,8 @@ import { ProjectLanguageSelector } from '@/components/landing/ProjectLanguageSel
 import { cn } from '@/lib/utils';
 import { LogOut } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
+import { useState } from 'react';
+import { AuthDialogs } from '@/components/auth/AuthDialogs';
 
 interface ProjectHeaderProps {
   projectName: string;
@@ -18,6 +20,8 @@ export function ProjectHeader({ projectName, colorScheme, projectUrlName }: Proj
   const { t } = useTranslation();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isSignUpOpen, setIsSignUpOpen] = useState(false);
 
   const getHeaderColorClass = (colorScheme: string | null) => {
     switch (colorScheme) {
@@ -42,7 +46,6 @@ export function ProjectHeader({ projectName, colorScheme, projectUrlName }: Proj
     try {
       await signOut();
       toast.success(t('navigation.logout_success', 'Successfully logged out!'));
-      navigate('/');
     } catch (error) {
       toast.error(t('navigation.logout_error', 'Logout failed!'));
       console.error('Logout error:', error);
@@ -50,57 +53,66 @@ export function ProjectHeader({ projectName, colorScheme, projectUrlName }: Proj
   };
 
   return (
-    <header className={cn(getHeaderColorClass(colorScheme), "shadow-lg")}>
-      <div className="container mx-auto py-3 px-6">
-        <div className="flex items-center justify-between">
-          <h1 className={cn("text-xl font-bold", getTextColorClass())}>
-            {projectName}
-          </h1>
-          <div className="flex items-center gap-4">
-            <ProjectLanguageSelector />
-            {user ? (
-              <div className="flex items-center gap-3">
-                <Button
-                  onClick={() => navigate('/enrolled-courses')}
-                  variant="outline"
-                  className="text-white border-white/30 bg-white/20 hover:bg-white/30 hover:text-white"
-                  size="sm"
-                >
-                  {t('navigation.my_courses', 'My Courses')}
-                </Button>
-                <Button
-                  onClick={handleLogout}
-                  variant="outline"
-                  className="text-white border-white/30 bg-white/20 hover:bg-white/30 hover:text-white"
-                  size="sm"
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  {t('navigation.logout', 'Logout')}
-                </Button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-3">
-                <Button
-                  onClick={() => navigate('/')}
-                  variant="outline"
-                  className="text-white border-white/30 bg-white/20 hover:bg-white/30 hover:text-white"
-                  size="sm"
-                >
-                  {t('navigation.login', 'Login')}
-                </Button>
-                <Button
-                  onClick={() => navigate('/')}
-                  variant="outline"
-                  className="text-white border-white/30 bg-white/20 hover:bg-white/30 hover:text-white"
-                  size="sm"
-                >
-                  {t('navigation.signup', 'Sign Up')}
-                </Button>
-              </div>
-            )}
+    <>
+      <header className={cn(getHeaderColorClass(colorScheme), "shadow-lg")}>
+        <div className="container mx-auto py-3 px-6">
+          <div className="flex items-center justify-between">
+            <h1 className={cn("text-xl font-bold", getTextColorClass())}>
+              {projectName}
+            </h1>
+            <div className="flex items-center gap-4">
+              <ProjectLanguageSelector />
+              {user ? (
+                <div className="flex items-center gap-3">
+                  <Button
+                    onClick={() => navigate('/enrolled-courses')}
+                    variant="outline"
+                    className="text-white border-white/30 bg-white/20 hover:bg-white/30 hover:text-white"
+                    size="sm"
+                  >
+                    {t('navigation.my_courses', 'My Courses')}
+                  </Button>
+                  <Button
+                    onClick={handleLogout}
+                    variant="outline"
+                    className="text-white border-white/30 bg-white/20 hover:bg-white/30 hover:text-white"
+                    size="sm"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    {t('navigation.logout', 'Logout')}
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <Button
+                    onClick={() => setIsLoginOpen(true)}
+                    variant="outline"
+                    className="text-white border-white/30 bg-white/20 hover:bg-white/30 hover:text-white"
+                    size="sm"
+                  >
+                    {t('navigation.login', 'Login')}
+                  </Button>
+                  <Button
+                    onClick={() => setIsSignUpOpen(true)}
+                    variant="outline"
+                    className="text-white border-white/30 bg-white/20 hover:bg-white/30 hover:text-white"
+                    size="sm"
+                  >
+                    {t('navigation.signup', 'Sign Up')}
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      <AuthDialogs
+        isLoginOpen={isLoginOpen}
+        setIsLoginOpen={setIsLoginOpen}
+        isSignUpOpen={isSignUpOpen}
+        setIsSignUpOpen={setIsSignUpOpen}
+      />
+    </>
   );
 }
