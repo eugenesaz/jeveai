@@ -202,7 +202,7 @@ const ViewCourse = () => {
         <header className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md">
           <div className="container mx-auto p-6 flex justify-between items-center">
             <h1 className="text-2xl md:text-3xl font-bold">{course?.name}</h1>
-            <Button variant="outline" className="text-white border-white/30 bg-white/10 hover:bg-white/20 hover:text-white" onClick={handleGoBack}>
+            <Button variant="outline" className="text-white border-white/30 bg-white/20 hover:bg-white/30 hover:text-white" onClick={handleGoBack}>
               {t('go.back', 'Back')}
             </Button>
           </div>
@@ -279,7 +279,7 @@ const ViewCourse = () => {
                         {!hasActiveSubscription && (
                           <div className="mt-6">
                             <Button 
-                              onClick={handleEnroll} 
+                              onClick={() => setIsPaymentOpen(true)} 
                               className="bg-blue-600 hover:bg-blue-700 text-white"
                             >
                               {t('customer.courses.renew', 'Renew Subscription')}

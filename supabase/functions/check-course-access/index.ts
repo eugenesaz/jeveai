@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.31.0";
 
@@ -18,7 +19,13 @@ serve(async (req) => {
     
     if (!supabaseUrl || !supabaseServiceRoleKey) {
       return new Response(
-        JSON.stringify({ status: "Error", error: "Server configuration error" }),
+        JSON.stringify({ 
+          status: "Error", 
+          error: "Server configuration error",
+          subscription_begin: null,
+          subscription_end: null,
+          course_info_link: null
+        }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -42,7 +49,13 @@ serve(async (req) => {
     
     if (!telegramUsername || !courseId) {
       return new Response(
-        JSON.stringify({ status: "Not enrolled", error: "Both telegramUsername and courseId are required" }),
+        JSON.stringify({ 
+          status: "Not enrolled", 
+          error: "Both telegramUsername and courseId are required",
+          subscription_begin: null,
+          subscription_end: null,
+          course_info_link: courseId ? `https://jeve.ai/course/${courseId}` : null
+        }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -177,7 +190,7 @@ serve(async (req) => {
         error: "Internal Server Error",
         subscription_begin: null,
         subscription_end: null,
-        course_info_link: `https://jeve.ai/course/${courseId}`
+        course_info_link: courseId ? `https://jeve.ai/course/${courseId}` : null
       }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
