@@ -2,10 +2,7 @@
 -- Create a function to handle enrollment creation with conflict handling
 CREATE OR REPLACE FUNCTION create_enrollment(
   p_user_id UUID, 
-  p_course_id UUID, 
-  p_is_paid BOOLEAN, 
-  p_begin_date TIMESTAMP WITH TIME ZONE, 
-  p_end_date TIMESTAMP WITH TIME ZONE
+  p_course_id UUID
 )
 RETURNS UUID
 LANGUAGE plpgsql
@@ -14,8 +11,8 @@ DECLARE
   v_enrollment_id UUID;
 BEGIN
   -- Insert the new enrollment
-  INSERT INTO enrollments (user_id, course_id, is_paid, begin_date, end_date)
-  VALUES (p_user_id, p_course_id, p_is_paid, p_begin_date, p_end_date)
+  INSERT INTO enrollments (user_id, course_id)
+  VALUES (p_user_id, p_course_id)
   RETURNING id INTO v_enrollment_id;
   
   RETURN v_enrollment_id;
