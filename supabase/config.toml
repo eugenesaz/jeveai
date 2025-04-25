@@ -2,12 +2,20 @@
 project_id = "lxiqvvourradjjhocxrd"
 
 [api]
+enabled = false
+
+[db]
+enabled = false
+
+[realtime]
+enabled = false
+
+[storage]
+enabled = false
+
+[edge_functions]
 enabled = true
-port = 54321
-schemas = ["public", "storage", "graphql_public"]
 
-[functions.get-user-by-telegram]
-verify_jwt = false
-
-[functions.course-ai-instructions]
+[[edge_functions.function]]
+name = "check-course-access"
 verify_jwt = false

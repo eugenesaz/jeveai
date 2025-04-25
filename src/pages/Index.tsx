@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -64,7 +65,7 @@ const Index = () => {
           <div className="flex flex-col lg:flex-row items-center gap-12">
             <div className="lg:w-1/2 text-white">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-                {"EchoMind"}
+                {"Jeve.ai"}
               </h1>
               <p className="text-xl md:text-2xl mb-8 text-purple-100">
                 {t('landing.hero.subtitle', 'Create hyper-personalized programs that adapt to your customers\' individual needs')}

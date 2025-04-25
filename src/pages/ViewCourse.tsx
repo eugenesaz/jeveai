@@ -28,6 +28,14 @@ interface EnrollmentInfo {
   end_date?: string;
 }
 
+interface SubscriptionHistory {
+  id: string;
+  begin_date: string;
+  end_date: string | null;
+  is_paid: boolean;
+  is_active: boolean;
+}
+
 const ViewCourse = () => {
   const { id } = useParams<{ id: string }>();
   const { t } = useTranslation();
@@ -42,6 +50,8 @@ const ViewCourse = () => {
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [userTelegram, setUserTelegram] = useState<string | null>(null);
   const [projectUrlName, setProjectUrlName] = useState<string | null>(null);
+  const [subscriptionHistory, setSubscriptionHistory] = useState<SubscriptionHistory[]>([]);
+  const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
 
   const isFromProjectLanding = location.state?.fromProjectLanding || false;
 
@@ -84,20 +94,45 @@ const ViewCourse = () => {
         setCourse(courseWithProjectUrl);
         
         if (user) {
-          const { data: enrollmentData, error: enrollmentError } = await supabase
+          // Fetch all enrollments for this course to track subscription history
+          const { data: enrollmentsData, error: enrollmentsError } = await supabase
             .from('enrollments')
             .select('*')
             .eq('user_id', user.id)
             .eq('course_id', id)
-            .eq('is_paid', true)
-            .single();
+            .order('begin_date', { ascending: false });
             
-          if (!enrollmentError && enrollmentData) {
-            setEnrollmentInfo({
-              is_enrolled: true,
-              begin_date: enrollmentData.begin_date,
-              end_date: enrollmentData.end_date
+          if (!enrollmentsError && enrollmentsData) {
+            const now = new Date();
+            const history: SubscriptionHistory[] = enrollmentsData.map(enrollment => {
+              const beginDate = enrollment.begin_date ? new Date(enrollment.begin_date) : null;
+              const endDate = enrollment.end_date ? new Date(enrollment.end_date) : null;
+              const isActive = enrollment.is_paid && 
+                beginDate !== null && 
+                (endDate === null || now <= endDate);
+                
+              return {
+                id: enrollment.id,
+                begin_date: enrollment.begin_date || '',
+                end_date: enrollment.end_date,
+                is_paid: !!enrollment.is_paid,
+                is_active: isActive
+              };
             });
+            
+            setSubscriptionHistory(history);
+            
+            // Check if there's any active subscription
+            const activeSubscription = history.find(sub => sub.is_active);
+            setHasActiveSubscription(!!activeSubscription);
+            
+            if (activeSubscription) {
+              setEnrollmentInfo({
+                is_enrolled: true,
+                begin_date: activeSubscription.begin_date,
+                end_date: activeSubscription.end_date || undefined
+              });
+            }
           }
 
           const { data: profileData } = await supabase
@@ -240,6 +275,62 @@ const ViewCourse = () => {
                       </div>
                     </div>
                     
+                    {/* Subscription history section */}
+                    <div className="mb-10">
+                      <h3 className="text-xl font-semibold mb-4 text-gray-900">Your Subscription History</h3>
+                      <div className="bg-gray-50 p-6 rounded-lg">
+                        {subscriptionHistory.length > 0 ? (
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm text-left">
+                              <thead className="text-xs text-gray-700 uppercase bg-gray-100">
+                                <tr>
+                                  <th className="px-6 py-3">Begin Date</th>
+                                  <th className="px-6 py-3">End Date</th>
+                                  <th className="px-6 py-3">Status</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {subscriptionHistory.map((sub) => (
+                                  <tr key={sub.id} className="bg-white border-b">
+                                    <td className="px-6 py-4">
+                                      {sub.begin_date ? new Date(sub.begin_date).toLocaleDateString() : '-'}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                      {sub.end_date ? new Date(sub.end_date).toLocaleDateString() : 'Unlimited'}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                      {sub.is_active ? (
+                                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
+                                          Active
+                                        </span>
+                                      ) : (
+                                        <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-semibold">
+                                          Expired
+                                        </span>
+                                      )}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        ) : (
+                          <p className="text-gray-600">No subscription history found.</p>
+                        )}
+                        
+                        {!hasActiveSubscription && (
+                          <div className="mt-6">
+                            <Button 
+                              onClick={handleEnroll} 
+                              className="bg-blue-600 hover:bg-blue-700 text-white"
+                            >
+                              Subscribe
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
                     {course?.description && (
                       <div className="mb-10">
                         <h3 className="text-xl font-semibold mb-4 text-gray-900">Description</h3>
@@ -338,7 +429,7 @@ const ViewCourse = () => {
                 onClick={handleEnroll}
                 className="bg-white text-blue-700 hover:bg-blue-50 px-8 py-6 text-lg font-semibold rounded-lg shadow-lg"
               >
-                {user ? t('customer.courses.pay_and_enroll', 'Pay & Enroll') : t('customer.courses.enroll', 'Enroll')}
+                {user ? t('customer.courses.subscribe', 'Subscribe') : t('customer.courses.enroll', 'Enroll')}
                 <span className="ml-2 font-bold">${course.price.toFixed(2)}</span>
               </Button>
             </div>
@@ -347,6 +438,50 @@ const ViewCourse = () => {
 
         <main className="container mx-auto py-16 px-4">
           <div className="max-w-4xl mx-auto">
+            {/* Subscription History for existing users */}
+            {user && subscriptionHistory.length > 0 && (
+              <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-12">
+                <div className="p-8 md:p-10">
+                  <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-900">Your Subscription History</h2>
+                  
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                      <thead className="text-xs text-gray-700 uppercase bg-gray-100">
+                        <tr>
+                          <th className="px-6 py-3">Begin Date</th>
+                          <th className="px-6 py-3">End Date</th>
+                          <th className="px-6 py-3">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {subscriptionHistory.map((sub) => (
+                          <tr key={sub.id} className="bg-white border-b">
+                            <td className="px-6 py-4">
+                              {sub.begin_date ? new Date(sub.begin_date).toLocaleDateString() : '-'}
+                            </td>
+                            <td className="px-6 py-4">
+                              {sub.end_date ? new Date(sub.end_date).toLocaleDateString() : 'Unlimited'}
+                            </td>
+                            <td className="px-6 py-4">
+                              {sub.is_active ? (
+                                <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
+                                  Active
+                                </span>
+                              ) : (
+                                <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-semibold">
+                                  Expired
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             {/* What You'll Learn */}
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-12">
               <div className="p-8 md:p-10">
@@ -447,7 +582,7 @@ const ViewCourse = () => {
                 onClick={handleEnroll}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4"
               >
-                {user ? t('customer.courses.pay_and_enroll', 'Pay & Enroll') : t('customer.courses.enroll', 'Enroll')}
+                {user ? t('customer.courses.subscribe', 'Subscribe') : t('customer.courses.enroll', 'Enroll')}
                 <span className="ml-2 font-bold">${course.price.toFixed(2)}</span>
               </Button>
             </div>
