@@ -92,8 +92,7 @@ export function FakePaymentDialog({
         .select('*')
         .eq('enrollment_id', enrollmentId)
         .eq('is_paid', true)
-        .is('end_date', null)
-        .or(`end_date.gt.${now2.toISOString()}`);
+        .or(`end_date.gt.${now2.toISOString()},end_date.is.null`);
 
       if (subCheckError) {
         throw new Error('Failed to check subscription status');
