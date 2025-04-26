@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useTranslation } from 'react-i18next';
 import { Mail, Lock } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { isGoogleUser } from '@/lib/AuthUtils';
 
 interface AuthDialogsProps {
   isLoginOpen: boolean;
@@ -106,6 +107,7 @@ export const AuthDialogs = ({
   const handleGoogleAuth = async () => {
     try {
       setLoading(true);
+      console.log('Initiating Google sign in from AuthDialogs with redirectTo:', window.location.origin);
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -113,6 +115,7 @@ export const AuthDialogs = ({
             access_type: 'offline',
             prompt: 'consent',
           },
+          redirectTo: window.location.origin
         },
       });
       if (error) throw error;
@@ -123,9 +126,10 @@ export const AuthDialogs = ({
           ? error.message
           : t('auth.errors.google', 'Failed to sign in with Google. Please try again.')
       );
-    } finally {
       setLoading(false);
     }
+    // Note: We don't set loading to false in the finally block because 
+    // the page will redirect to Google's auth page
   };
 
   const toggleDialogs = () => {

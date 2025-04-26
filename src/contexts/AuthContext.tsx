@@ -4,6 +4,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { UserRole, Profile } from '@/types/supabase';
 import { toast } from '@/components/ui/use-toast';
+import { isGoogleUser } from '@/lib/AuthUtils';
 
 type AuthContextType = {
   session: Session | null;
@@ -205,6 +206,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           data: {
             role,
           },
+          redirectTo: window.location.origin,
         },
       });
 
@@ -279,7 +281,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const signInWithGoogle = async () => {
-    console.log('Attempting Google sign in');
+    console.log('Attempting Google sign in from AuthContext with redirectTo:', window.location.origin);
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {

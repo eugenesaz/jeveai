@@ -35,3 +35,32 @@ export const adminLogin = async (username: string, password: string) => {
 export const isGoogleUser = (user: any): boolean => {
   return user?.app_metadata?.provider === 'google';
 };
+
+// Helper function to check if there are authentication errors in the URL
+export const checkAuthUrlErrors = (): { hasError: boolean, errorMessage: string | null } => {
+  if (typeof window === 'undefined') return { hasError: false, errorMessage: null };
+  
+  const urlParams = new URLSearchParams(window.location.search);
+  const errorParam = urlParams.get('error');
+  const errorDescription = urlParams.get('error_description');
+  
+  if (errorParam || errorDescription) {
+    console.error('Auth error detected:', errorParam, errorDescription);
+    return { 
+      hasError: true, 
+      errorMessage: errorDescription || errorParam || 'Authentication error' 
+    };
+  }
+  
+  return { hasError: false, errorMessage: null };
+};
+
+// Helper function to clear URL parameters after checking for errors
+export const clearAuthUrlParams = () => {
+  if (typeof window === 'undefined') return;
+  
+  const url = new URL(window.location.href);
+  if (url.search) {
+    window.history.replaceState({}, document.title, url.pathname);
+  }
+};

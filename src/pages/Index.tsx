@@ -38,6 +38,20 @@ const Index = () => {
     }
   }, [isLoading, user, navigate]);
 
+  // Clear any stale auth tokens on initial load that might be causing issues
+  useEffect(() => {
+    // This helps clear any problematic states that might have happened
+    const urlParams = new URLSearchParams(window.location.search);
+    const errorParam = urlParams.get('error');
+    const errorDescription = urlParams.get('error_description');
+    
+    if (errorParam || errorDescription) {
+      console.error('Auth error detected:', errorParam, errorDescription);
+      localStorage.removeItem('supabase.auth.token');
+      sessionStorage.removeItem('supabase.auth.token');
+    }
+  }, []);
+
   if (isLoading || redirecting) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-purple-50 to-blue-50">
