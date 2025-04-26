@@ -31,3 +31,7 @@ export const adminLogin = async (username: string, password: string) => {
 
   return { data, error: null };
 };
+
+export const isGoogleUser = (user: any): boolean => {
+  return user?.app_metadata?.provider === 'google';
+};

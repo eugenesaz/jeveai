@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,7 +26,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const ensureProfileExists = async (userId: string, email: string | undefined) => {
+  const ensureProfileExists = async (userId: string, email: string | undefined, oauthData?: any) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -38,12 +39,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         const defaultRole: UserRole = 'influencer';
         
+        // Get additional data from OAuth if available
+        const telegramFromOAuth = oauthData?.telegram || null;
+        
         const { error: insertError } = await supabase
           .from('profiles')
           .insert({
             id: userId,
             email: email || '',
             role: defaultRole,
+            telegram: telegramFromOAuth,
           });
         
         if (insertError) {
@@ -63,7 +68,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, currentSession) => {
+      async (_event, currentSession) => {
         console.log('Auth state changed:', _event, currentSession?.user?.id);
         
         setSession(currentSession);
@@ -85,9 +90,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               } else {
                 console.log('Could not fetch role, error:', error);
                 
+                // For OAuth logins, get data from user's metadata
+                const oauthData = currentSession.user.user_metadata || {};
+                
                 const role = await ensureProfileExists(
                   currentSession.user.id, 
-                  currentSession.user.email
+                  currentSession.user.email,
+                  oauthData
                 );
                 
                 if (role) {
@@ -133,9 +142,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           } else {
             console.log('Could not fetch initial role, error:', error);
             
+            // For OAuth logins, get data from user's metadata
+            const oauthData = data.session.user.user_metadata || {};
+            
             const role = await ensureProfileExists(
               data.session.user.id, 
-              data.session.user.email
+              data.session.user.email,
+              oauthData
             );
             
             if (role) {
@@ -269,6 +282,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     console.log('Attempting Google sign in');
     await supabase.auth.signInWithOAuth({
       provider: 'google',
+      options: {
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent'
+        },
+        redirectTo: window.location.origin
+      },
     });
   };
 
