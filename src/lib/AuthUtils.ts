@@ -40,15 +40,24 @@ export const isGoogleUser = (user: any): boolean => {
 export const checkAuthUrlErrors = (): { hasError: boolean, errorMessage: string | null } => {
   if (typeof window === 'undefined') return { hasError: false, errorMessage: null };
   
+  // Check query parameters for errors
   const urlParams = new URLSearchParams(window.location.search);
   const errorParam = urlParams.get('error');
   const errorDescription = urlParams.get('error_description');
   
-  if (errorParam || errorDescription) {
-    console.error('Auth error detected:', errorParam, errorDescription);
+  // Check hash fragment for errors (some OAuth providers use hash)
+  const hashParams = new URLSearchParams(window.location.hash.replace('#', '?'));
+  const errorHash = hashParams.get('error');
+  const errorDescriptionHash = hashParams.get('error_description');
+  
+  const finalError = errorParam || errorHash;
+  const finalErrorDescription = errorDescription || errorDescriptionHash;
+  
+  if (finalError || finalErrorDescription) {
+    console.error('Auth error detected:', finalError, finalErrorDescription);
     return { 
       hasError: true, 
-      errorMessage: errorDescription || errorParam || 'Authentication error' 
+      errorMessage: finalErrorDescription || finalError || 'Authentication error' 
     };
   }
   
@@ -59,8 +68,30 @@ export const checkAuthUrlErrors = (): { hasError: boolean, errorMessage: string 
 export const clearAuthUrlParams = () => {
   if (typeof window === 'undefined') return;
   
+  // Clear query parameters and hash
   const url = new URL(window.location.href);
-  if (url.search) {
+  if (url.search || url.hash) {
     window.history.replaceState({}, document.title, url.pathname);
   }
+};
+
+// Handle authentication responses with tokens in the URL hash
+export const handleAuthResponse = () => {
+  if (typeof window === 'undefined') return false;
+  
+  const hash = window.location.hash;
+  if (hash && hash.includes('access_token')) {
+    try {
+      // The supabase client will automatically handle this
+      // We just need to clear the URL after it's processed
+      setTimeout(() => {
+        clearAuthUrlParams();
+      }, 100);
+      return true;
+    } catch (error) {
+      console.error('Error handling auth response:', error);
+      return false;
+    }
+  }
+  return false;
 };

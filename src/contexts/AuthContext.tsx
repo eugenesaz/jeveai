@@ -281,7 +281,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const signInWithGoogle = async () => {
-    console.log('Attempting Google sign in from AuthContext with redirectTo:', window.location.origin);
+    console.log('Attempting Google sign in from AuthContext');
+    
+    // Get the current origin for redirect - works in both dev and production
+    const redirectUrl = window.location.origin;
+    console.log('Using redirect URL for Google auth:', redirectUrl);
+    
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -289,7 +294,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           access_type: 'offline',
           prompt: 'consent'
         },
-        redirectTo: window.location.origin
+        redirectTo: redirectUrl
       },
     });
   };

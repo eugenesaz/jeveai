@@ -8,8 +8,8 @@
     <meta name="description" content="Jeve - Share your expertise with the world" />
     <meta name="author" content="Lovable" />
 
-    <!-- Ensure no CSP blocking -->
-    <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval'; connect-src * 'unsafe-inline'; img-src * data: blob: 'unsafe-inline'; frame-src * accounts.google.com; script-src * 'unsafe-inline' 'unsafe-eval';">
+    <!-- Updated CSP to ensure OAuth flows work correctly -->
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval'; connect-src * 'unsafe-inline'; img-src * data: blob: 'unsafe-inline'; frame-src * accounts.google.com *.supabase.co; script-src * 'unsafe-inline' 'unsafe-eval'; form-action *;">
 
     <meta property="og:title" content="Jeve" />
     <meta property="og:description" content="Share your expertise with the world" />

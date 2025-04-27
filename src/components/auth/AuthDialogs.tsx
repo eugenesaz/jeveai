@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useTranslation } from 'react-i18next';
 import { Mail, Lock } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { isGoogleUser } from '@/lib/AuthUtils';
+import { isGoogleUser, checkAuthUrlErrors, clearAuthUrlParams } from '@/lib/AuthUtils';
 
 interface AuthDialogsProps {
   isLoginOpen: boolean;
@@ -29,6 +29,15 @@ export const AuthDialogs = ({
   const [password, setPassword] = useState('');
   const [telegram, setTelegram] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Check for auth errors in URL params when component mounts
+  useState(() => {
+    const { hasError, errorMessage } = checkAuthUrlErrors();
+    if (hasError && errorMessage) {
+      toast.error(errorMessage);
+      clearAuthUrlParams();
+    }
+  });
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,7 +116,12 @@ export const AuthDialogs = ({
   const handleGoogleAuth = async () => {
     try {
       setLoading(true);
-      console.log('Initiating Google sign in from AuthDialogs with redirectTo:', window.location.origin);
+      console.log('Initiating Google sign in from AuthDialogs');
+      
+      // Get the current origin for redirect - works in both dev and production
+      const redirectUrl = window.location.origin;
+      console.log('Using redirect URL:', redirectUrl);
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -115,9 +129,10 @@ export const AuthDialogs = ({
             access_type: 'offline',
             prompt: 'consent',
           },
-          redirectTo: window.location.origin
+          redirectTo: redirectUrl
         },
       });
+      
       if (error) throw error;
     } catch (error) {
       console.error('Google auth error:', error);

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +8,9 @@ import { Benefits } from '@/components/landing/Benefits';
 import { AuthDialogs } from '@/components/auth/AuthDialogs';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
+import { checkAuthUrlErrors, clearAuthUrlParams } from '@/lib/AuthUtils';
 import { ArrowRight, MessageSquare, Users, Star } from 'lucide-react';
+import { toast } from '@/components/ui/sonner';
 
 const Index = () => {
   const { t } = useTranslation();
@@ -19,6 +20,18 @@ const Index = () => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isSignUpOpen, setIsSignUpOpen] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
+
+  useEffect(() => {
+    const { hasError, errorMessage } = checkAuthUrlErrors();
+    if (hasError) {
+      toast.error(errorMessage || 'Authentication error occurred');
+      clearAuthUrlParams();
+    }
+
+    if (window.location.hash && window.location.hash.includes('access_token')) {
+      console.log('Detected auth tokens in URL hash, handling authentication...');
+    }
+  }, []);
 
   useEffect(() => {
     if (!isLoading && user?.id && !user.email) {
@@ -38,9 +51,7 @@ const Index = () => {
     }
   }, [isLoading, user, navigate]);
 
-  // Clear any stale auth tokens on initial load that might be causing issues
   useEffect(() => {
-    // This helps clear any problematic states that might have happened
     const urlParams = new URLSearchParams(window.location.search);
     const errorParam = urlParams.get('error');
     const errorDescription = urlParams.get('error_description');
@@ -49,6 +60,7 @@ const Index = () => {
       console.error('Auth error detected:', errorParam, errorDescription);
       localStorage.removeItem('supabase.auth.token');
       sessionStorage.removeItem('supabase.auth.token');
+      toast.error(errorDescription || 'Authentication error');
     }
   }, []);
 
