@@ -1,4 +1,3 @@
-
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -9,6 +8,7 @@ import { LogOut } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 import { useState } from 'react';
 import { AuthDialogs } from '@/components/auth/AuthDialogs';
+import { saveAuthRedirectPath } from '@/lib/AuthUtils';
 
 interface ProjectHeaderProps {
   projectName: string;
@@ -52,6 +52,16 @@ export function ProjectHeader({ projectName, colorScheme, projectUrlName }: Proj
     }
   };
 
+  const handleOpenLogin = () => {
+    saveAuthRedirectPath();
+    setIsLoginOpen(true);
+  };
+
+  const handleOpenSignUp = () => {
+    saveAuthRedirectPath();
+    setIsSignUpOpen(true);
+  };
+
   return (
     <>
       <header className={cn(getHeaderColorClass(colorScheme), "shadow-lg")}>
@@ -85,7 +95,7 @@ export function ProjectHeader({ projectName, colorScheme, projectUrlName }: Proj
               ) : (
                 <div className="flex items-center gap-3">
                   <Button
-                    onClick={() => setIsLoginOpen(true)}
+                    onClick={handleOpenLogin}
                     variant="outline"
                     className="text-white border-white/30 bg-white/20 hover:bg-white/30 hover:text-white"
                     size="sm"
@@ -93,7 +103,7 @@ export function ProjectHeader({ projectName, colorScheme, projectUrlName }: Proj
                     {t('navigation.login', 'Login')}
                   </Button>
                   <Button
-                    onClick={() => setIsSignUpOpen(true)}
+                    onClick={handleOpenSignUp}
                     variant="outline"
                     className="text-white border-white/30 bg-white/20 hover:bg-white/30 hover:text-white"
                     size="sm"

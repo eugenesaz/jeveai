@@ -8,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useTranslation } from 'react-i18next';
 import { Mail, Lock } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { isGoogleUser, checkAuthUrlErrors, clearAuthUrlParams, getRedirectUrl } from '@/lib/AuthUtils';
+import { isGoogleUser, checkAuthUrlErrors, clearAuthUrlParams, getRedirectUrl, saveAuthRedirectPath } from '@/lib/AuthUtils';
 
 interface AuthDialogsProps {
   isLoginOpen: boolean;
@@ -111,6 +111,8 @@ export const AuthDialogs = ({
 
   const handleGoogleAuth = async () => {
     try {
+      saveAuthRedirectPath();
+      
       setLoading(true);
       console.log('Initiating Google sign in from AuthDialogs');
       
@@ -122,7 +124,7 @@ export const AuthDialogs = ({
         options: {
           queryParams: {
             access_type: 'offline',
-            prompt: 'consent',
+            prompt: 'consent'
           },
           redirectTo: redirectUrl
         },

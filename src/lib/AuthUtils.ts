@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export const adminLogin = async (username: string, password: string) => {
@@ -73,6 +72,28 @@ export const clearAuthUrlParams = () => {
   if (url.search || url.hash) {
     window.history.replaceState({}, document.title, url.pathname);
   }
+};
+
+// Save the current path before redirecting for authentication
+export const saveAuthRedirectPath = () => {
+  if (typeof window === 'undefined') return;
+  
+  // Save the current pathname (excluding the domain)
+  const currentPath = window.location.pathname;
+  if (currentPath && currentPath !== '/') {
+    localStorage.setItem('auth_redirect_path', currentPath);
+    console.log('Saved redirect path for after auth:', currentPath);
+  }
+};
+
+// Get the saved redirect path and clear it from storage
+export const getAndClearSavedRedirectPath = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  
+  const savedPath = localStorage.getItem('auth_redirect_path');
+  localStorage.removeItem('auth_redirect_path');
+  console.log('Retrieved saved redirect path:', savedPath || 'none saved');
+  return savedPath;
 };
 
 // Handle authentication responses with tokens in the URL hash

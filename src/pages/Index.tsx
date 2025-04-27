@@ -9,7 +9,7 @@ import { Benefits } from '@/components/landing/Benefits';
 import { AuthDialogs } from '@/components/auth/AuthDialogs';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
-import { checkAuthUrlErrors, clearAuthUrlParams, handleAuthResponse, checkAndFixSupabaseConfig } from '@/lib/AuthUtils';
+import { checkAuthUrlErrors, clearAuthUrlParams, handleAuthResponse, checkAndFixSupabaseConfig, getAndClearSavedRedirectPath } from '@/lib/AuthUtils';
 import { ArrowRight, MessageSquare, Users, Star } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 
@@ -76,12 +76,21 @@ const Index = () => {
 
   useEffect(() => {
     if (!isLoading && !processingAuth && user) {
-      console.log('User authenticated, redirecting to dashboard...');
+      console.log('User authenticated, checking for redirect path...');
       setRedirecting(true);
+      
+      // Check if there was a saved redirect path from before authentication
+      const savedPath = getAndClearSavedRedirectPath();
       
       // Add a small delay before redirecting to ensure everything is loaded
       const timer = setTimeout(() => {
-        navigate('/dashboard');
+        if (savedPath) {
+          console.log('Redirecting to saved path:', savedPath);
+          navigate(savedPath);
+        } else {
+          console.log('No saved path found, redirecting to dashboard...');
+          navigate('/dashboard');
+        }
       }, 500);
       
       return () => clearTimeout(timer);
