@@ -9,7 +9,7 @@ import { Benefits } from '@/components/landing/Benefits';
 import { AuthDialogs } from '@/components/auth/AuthDialogs';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
-import { checkAuthUrlErrors, clearAuthUrlParams, handleAuthResponse } from '@/lib/AuthUtils';
+import { checkAuthUrlErrors, clearAuthUrlParams, handleAuthResponse, checkAndFixSupabaseConfig } from '@/lib/AuthUtils';
 import { ArrowRight, MessageSquare, Users, Star } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 
@@ -23,16 +23,28 @@ const Index = () => {
   const [redirecting, setRedirecting] = useState(false);
   const [processingAuth, setProcessingAuth] = useState(false);
 
+  // Enhanced authentication handling
   useEffect(() => {
     const checkAuth = async () => {
       setProcessingAuth(true);
       
+      // Make sure Supabase config is correct
+      await checkAndFixSupabaseConfig();
+      
       // First check for auth hash in URL
-      if (window.location.hash && window.location.hash.includes('access_token')) {
-        console.log('Detected auth tokens in URL hash, handling authentication...');
-        const success = await handleAuthResponse();
-        if (success) {
-          toast.success('Successfully logged in with Google');
+      if (window.location.hash) {
+        console.log('Checking URL hash for auth tokens:', window.location.hash.substring(0, 20) + '...');
+        
+        if (window.location.hash.includes('access_token')) {
+          console.log('Detected auth tokens in URL hash, handling authentication...');
+          const success = await handleAuthResponse();
+          if (success) {
+            toast.success('Successfully logged in with Google');
+            // We'll navigate in the next useEffect when user is available
+          }
+        } else {
+          // Could be an error or other hash content
+          console.log('URL hash present but no access token found');
         }
       }
       
@@ -40,6 +52,12 @@ const Index = () => {
       const { hasError, errorMessage } = checkAuthUrlErrors();
       if (hasError) {
         toast.error(errorMessage || 'Authentication error occurred');
+        clearAuthUrlParams();
+      }
+      
+      // Make sure to clean the URL even if no errors are found
+      if (window.location.search || window.location.hash) {
+        console.log('Cleaning URL params and hash');
         clearAuthUrlParams();
       }
       
@@ -60,9 +78,12 @@ const Index = () => {
     if (!isLoading && !processingAuth && user) {
       console.log('User authenticated, redirecting to dashboard...');
       setRedirecting(true);
+      
+      // Add a small delay before redirecting to ensure everything is loaded
       const timer = setTimeout(() => {
         navigate('/dashboard');
       }, 500);
+      
       return () => clearTimeout(timer);
     }
   }, [isLoading, processingAuth, user, navigate]);

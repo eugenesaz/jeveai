@@ -3,7 +3,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { UserRole, Profile } from '@/types/supabase';
 import { toast } from '@/components/ui/use-toast';
-import { isGoogleUser, getRedirectUrl } from '@/lib/AuthUtils';
+import { isGoogleUser, getRedirectUrl, checkAndFixSupabaseConfig } from '@/lib/AuthUtils';
 
 type AuthContextType = {
   session: Session | null;
@@ -66,6 +66,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   useEffect(() => {
+    checkAndFixSupabaseConfig();
+    
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, currentSession) => {
         console.log('Auth state changed:', _event, currentSession?.user?.id);
@@ -282,16 +284,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const redirectUrl = getRedirectUrl();
     console.log('Using redirect URL for Google auth:', redirectUrl);
     
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        queryParams: {
-          access_type: 'offline',
-          prompt: 'consent'
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent'
+          },
+          redirectTo: redirectUrl
         },
-        redirectTo: redirectUrl
-      },
-    });
+      });
+      
+      if (error) throw error;
+    } catch (error) {
+      console.error('Google auth error in AuthContext:', error);
+      toast({
+        title: "Authentication Error",
+        description: error instanceof Error ? error.message : "Failed to sign in with Google",
+        variant: "destructive",
+      });
+    }
   };
 
   const signOut = async () => {

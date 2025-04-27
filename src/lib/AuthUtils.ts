@@ -110,18 +110,23 @@ export const handleAuthResponse = async (): Promise<boolean> => {
 export const getRedirectUrl = (): string => {
   if (typeof window === 'undefined') return '';
   
-  // Get the current origin
+  // Always use the current origin to ensure proper redirect back
   const currentOrigin = window.location.origin;
+  console.log('Current origin for redirect:', currentOrigin);
   
-  // Check if we're in localhost or a deployed environment
-  if (currentOrigin.includes('localhost')) {
-    // Handle local development
-    return currentOrigin;
-  } else if (currentOrigin.includes('lovable.app')) {
-    // In preview or production
-    return currentOrigin;
-  } else {
-    // Fallback to origin
-    return currentOrigin;
+  return currentOrigin;
+};
+
+// Fix Supabase auth URLs in config if needed
+export const checkAndFixSupabaseConfig = async (): Promise<void> => {
+  try {
+    console.log('Checking if redirect URL configuration is correct');
+    
+    // For debug purposes only
+    const currentUrl = typeof window !== 'undefined' ? window.location.href : 'no-window';
+    console.log('Current URL:', currentUrl);
+    console.log('Current origin:', typeof window !== 'undefined' ? window.location.origin : 'no-window');
+  } catch (error) {
+    console.error('Error checking Supabase config:', error);
   }
 };

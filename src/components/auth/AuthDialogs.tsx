@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -30,7 +29,6 @@ export const AuthDialogs = ({
   const [telegram, setTelegram] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Check for auth errors in URL params when component mounts
   useEffect(() => {
     const { hasError, errorMessage } = checkAuthUrlErrors();
     if (hasError && errorMessage) {
@@ -74,7 +72,6 @@ export const AuthDialogs = ({
     }
     setLoading(true);
     try {
-      // Create auth user
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -86,7 +83,6 @@ export const AuthDialogs = ({
       });
       if (signUpError) throw signUpError;
 
-      // Create profile
       if (authData.user) {
         const { error: profileError } = await supabase
           .from('profiles')
@@ -118,7 +114,6 @@ export const AuthDialogs = ({
       setLoading(true);
       console.log('Initiating Google sign in from AuthDialogs');
       
-      // Get the proper redirect URL for this environment
       const redirectUrl = getRedirectUrl();
       console.log('Using redirect URL for Google auth:', redirectUrl);
       
@@ -135,7 +130,7 @@ export const AuthDialogs = ({
       
       if (error) throw error;
     } catch (error) {
-      console.error('Google auth error:', error);
+      console.error('Google auth error in AuthDialogs:', error);
       toast.error(
         error instanceof Error
           ? error.message
@@ -143,8 +138,6 @@ export const AuthDialogs = ({
       );
       setLoading(false);
     }
-    // Note: We don't set loading to false in the finally block because 
-    // the page will redirect to Google's auth page
   };
 
   const toggleDialogs = () => {
