@@ -1,10 +1,9 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { UserRole, Profile } from '@/types/supabase';
 import { toast } from '@/components/ui/use-toast';
-import { isGoogleUser } from '@/lib/AuthUtils';
+import { isGoogleUser, getRedirectUrl } from '@/lib/AuthUtils';
 
 type AuthContextType = {
   session: Session | null;
@@ -40,7 +39,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         const defaultRole: UserRole = 'influencer';
         
-        // Get additional data from OAuth if available
         const telegramFromOAuth = oauthData?.telegram || null;
         
         const { error: insertError } = await supabase
@@ -91,7 +89,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               } else {
                 console.log('Could not fetch role, error:', error);
                 
-                // For OAuth logins, get data from user's metadata
                 const oauthData = currentSession.user.user_metadata || {};
                 
                 const role = await ensureProfileExists(
@@ -143,7 +140,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           } else {
             console.log('Could not fetch initial role, error:', error);
             
-            // For OAuth logins, get data from user's metadata
             const oauthData = data.session.user.user_metadata || {};
             
             const role = await ensureProfileExists(
@@ -206,7 +202,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           data: {
             role,
           },
-          emailRedirectTo: window.location.origin,
+          emailRedirectTo: getRedirectUrl(),
         },
       });
 
@@ -283,8 +279,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const signInWithGoogle = async () => {
     console.log('Attempting Google sign in from AuthContext');
     
-    // Get the current origin for redirect - works in both dev and production
-    const redirectUrl = window.location.origin;
+    const redirectUrl = getRedirectUrl();
     console.log('Using redirect URL for Google auth:', redirectUrl);
     
     await supabase.auth.signInWithOAuth({

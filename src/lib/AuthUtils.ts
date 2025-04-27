@@ -76,22 +76,52 @@ export const clearAuthUrlParams = () => {
 };
 
 // Handle authentication responses with tokens in the URL hash
-export const handleAuthResponse = () => {
+export const handleAuthResponse = async (): Promise<boolean> => {
   if (typeof window === 'undefined') return false;
   
   const hash = window.location.hash;
-  if (hash && hash.includes('access_token')) {
+  if (hash && (hash.includes('access_token') || hash.includes('error'))) {
+    console.log('Detected auth response in URL hash, processing...');
     try {
-      // The supabase client will automatically handle this
-      // We just need to clear the URL after it's processed
-      setTimeout(() => {
-        clearAuthUrlParams();
-      }, 100);
-      return true;
+      // Extract the session from the URL
+      const { data, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('Error processing auth response:', error);
+        return false;
+      }
+      
+      if (data?.session) {
+        console.log('Successfully processed auth response, session established');
+        // Clear the URL after it's processed
+        setTimeout(() => {
+          clearAuthUrlParams();
+        }, 100);
+        return true;
+      }
     } catch (error) {
       console.error('Error handling auth response:', error);
-      return false;
     }
   }
   return false;
+};
+
+// Get the proper redirect URL based on environment
+export const getRedirectUrl = (): string => {
+  if (typeof window === 'undefined') return '';
+  
+  // Get the current origin
+  const currentOrigin = window.location.origin;
+  
+  // Check if we're in localhost or a deployed environment
+  if (currentOrigin.includes('localhost')) {
+    // Handle local development
+    return currentOrigin;
+  } else if (currentOrigin.includes('lovable.app')) {
+    // In preview or production
+    return currentOrigin;
+  } else {
+    // Fallback to origin
+    return currentOrigin;
+  }
 };

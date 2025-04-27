@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -8,7 +9,7 @@ import { Benefits } from '@/components/landing/Benefits';
 import { AuthDialogs } from '@/components/auth/AuthDialogs';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
-import { checkAuthUrlErrors, clearAuthUrlParams } from '@/lib/AuthUtils';
+import { checkAuthUrlErrors, clearAuthUrlParams, handleAuthResponse } from '@/lib/AuthUtils';
 import { ArrowRight, MessageSquare, Users, Star } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 
@@ -20,17 +21,32 @@ const Index = () => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isSignUpOpen, setIsSignUpOpen] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
+  const [processingAuth, setProcessingAuth] = useState(false);
 
   useEffect(() => {
-    const { hasError, errorMessage } = checkAuthUrlErrors();
-    if (hasError) {
-      toast.error(errorMessage || 'Authentication error occurred');
-      clearAuthUrlParams();
-    }
-
-    if (window.location.hash && window.location.hash.includes('access_token')) {
-      console.log('Detected auth tokens in URL hash, handling authentication...');
-    }
+    const checkAuth = async () => {
+      setProcessingAuth(true);
+      
+      // First check for auth hash in URL
+      if (window.location.hash && window.location.hash.includes('access_token')) {
+        console.log('Detected auth tokens in URL hash, handling authentication...');
+        const success = await handleAuthResponse();
+        if (success) {
+          toast.success('Successfully logged in with Google');
+        }
+      }
+      
+      // Then check for errors
+      const { hasError, errorMessage } = checkAuthUrlErrors();
+      if (hasError) {
+        toast.error(errorMessage || 'Authentication error occurred');
+        clearAuthUrlParams();
+      }
+      
+      setProcessingAuth(false);
+    };
+    
+    checkAuth();
   }, []);
 
   useEffect(() => {
@@ -41,7 +57,7 @@ const Index = () => {
   }, [isLoading, user, signOut]);
 
   useEffect(() => {
-    if (!isLoading && user) {
+    if (!isLoading && !processingAuth && user) {
       console.log('User authenticated, redirecting to dashboard...');
       setRedirecting(true);
       const timer = setTimeout(() => {
@@ -49,26 +65,21 @@ const Index = () => {
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [isLoading, user, navigate]);
+  }, [isLoading, processingAuth, user, navigate]);
 
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const errorParam = urlParams.get('error');
-    const errorDescription = urlParams.get('error_description');
-    
-    if (errorParam || errorDescription) {
-      console.error('Auth error detected:', errorParam, errorDescription);
-      localStorage.removeItem('supabase.auth.token');
-      sessionStorage.removeItem('supabase.auth.token');
-      toast.error(errorDescription || 'Authentication error');
-    }
-  }, []);
-
-  if (isLoading || redirecting) {
+  if (isLoading || processingAuth || redirecting) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-purple-50 to-blue-50">
         <Spinner className="h-10 w-10 mb-4" />
-        <p className="text-lg">{t(redirecting ? 'landing.redirecting' : 'landing.loading')}</p>
+        <p className="text-lg">
+          {t(
+            redirecting 
+              ? 'landing.redirecting' 
+              : processingAuth 
+                ? 'landing.processing_auth' 
+                : 'landing.loading'
+          )}
+        </p>
       </div>
     );
   }
