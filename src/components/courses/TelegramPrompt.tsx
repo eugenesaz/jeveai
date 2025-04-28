@@ -9,7 +9,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Telegram } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 
 const formSchema = z.object({
   telegram: z.string().min(1, "Telegram username is required"),
@@ -53,7 +53,7 @@ export const TelegramPrompt = ({ userId, onUpdate }: TelegramPromptProps) => {
 
   return (
     <Alert className="mb-6 border-blue-200 bg-blue-50">
-      <Telegram className="h-4 w-4 text-blue-600" />
+      <MessageSquare className="h-4 w-4 text-blue-600" />
       <AlertTitle className="text-blue-800">Telegram Username Required</AlertTitle>
       <AlertDescription className="mt-3">
         <p className="mb-4 text-sm text-blue-700">
