@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -104,11 +103,11 @@ const ManageKnowledge = () => {
         
         setProject(typedProject);
 
-        // Updated to fetch from project_knowledge_vector table
+        // Updated to fetch from project_knowledge_vector table and filter by metadata->projectId
         const { data: knowledgeData, error: knowledgeError } = await supabase
           .from('project_knowledge_vector')
           .select('id, content, created_at, metadata')
-          .eq('metadata->>project_id', id)
+          .filter('metadata->projectId', 'eq', id)
           .order('created_at', { ascending: false });
 
         if (knowledgeError) {
@@ -119,6 +118,8 @@ const ManageKnowledge = () => {
             variant: 'destructive',
           });
         } else if (knowledgeData) {
+          console.log('Knowledge data fetched:', knowledgeData);
+          
           // Convert to ProjectKnowledge array
           const typedKnowledgeData: ProjectKnowledge[] = knowledgeData.map(item => ({
             id: item.id,
@@ -197,9 +198,9 @@ const ManageKnowledge = () => {
         for (const doc of documents) {
           if (doc) {
             console.log(`Creating database entry for document: ${doc.fileName}`);
-            // Insert without document_url for now
+            // Insert with projectId in metadata
             const { error } = await supabase.from('project_knowledge_vector').insert({
-              metadata: { project_id: id },
+              metadata: { projectId: id },
               content: `Document: ${doc.fileName}`
             });
 
@@ -212,11 +213,11 @@ const ManageKnowledge = () => {
         }
       }
 
-      // Refresh the knowledge data
+      // Refresh the knowledge data with updated filtering
       const { data, error } = await supabase
         .from('project_knowledge_vector')
         .select('id, content, created_at, metadata')
-        .eq('metadata->>project_id', id)
+        .filter('metadata->projectId', 'eq', id)
         .order('created_at', { ascending: false });
 
       if (error) {

@@ -25,13 +25,22 @@ export interface Project {
   description: string | null; // Added description property
 }
 
-// Updated to match project_knowledge_vector table structure (without document_url)
+// Updated to match project_knowledge_vector table structure with metadata field
 export interface ProjectKnowledge {
   id: number;
   content: string;
   created_at: string;
-  metadata?: any;
-  // Removed document_url as it doesn't exist in the table yet
+  metadata?: {
+    projectId?: string;
+    loc?: {
+      lines?: {
+        to: number;
+        from: number;
+      };
+    };
+    source?: string;
+    blobType?: string;
+  };
 }
 
 export interface Course {
