@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -35,11 +34,8 @@ const Projects = () => {
       setError(null);
       console.log('Fetching projects for user ID:', user.id);
       
-      // Fetch owned projects
-      const { data: ownedData, error: ownedError } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('user_id', user.id);
+      // Use our improved fetchProjectsWithRetry helper
+      const { data: ownedData, error: ownedError } = await fetchProjectsWithRetry(user.id);
 
       if (ownedError) {
         console.error('Error fetching owned projects:', ownedError);

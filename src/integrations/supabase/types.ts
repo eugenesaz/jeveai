@@ -437,6 +437,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_project_shared_access: {
+        Args: { p_project_id: string; p_user_id: string }
+        Returns: boolean
+      }
       check_project_shared_with_user: {
         Args: { project_id: string; user_id: string }
         Returns: boolean

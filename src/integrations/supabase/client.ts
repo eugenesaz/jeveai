@@ -20,3 +20,38 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
 export const sanitizeUuid = (uuid: string): string => {
   return uuid.trim().replace(/[^\w-]/g, '');
 };
+
+// Helper function to log errors with standard format
+export const logSupabaseError = (operation: string, error: any): void => {
+  console.error(`Supabase ${operation} error:`, error);
+};
+
+// Fetch projects with retries for improved reliability
+export const fetchProjectsWithRetry = async (userId: string, maxRetries = 3) => {
+  let retries = 0;
+  
+  while (retries < maxRetries) {
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('user_id', userId);
+
+      if (error) throw error;
+      
+      return { data, error: null };
+    } catch (error) {
+      console.error(`Error fetching projects (attempt ${retries + 1}/${maxRetries}):`, error);
+      retries++;
+      
+      if (retries >= maxRetries) {
+        return { data: null, error };
+      }
+      
+      // Add exponential backoff
+      await new Promise(resolve => setTimeout(resolve, 500 * Math.pow(2, retries)));
+    }
+  }
+  
+  return { data: null, error: new Error('Max retries reached') };
+};
