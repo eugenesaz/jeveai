@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -32,10 +33,11 @@ const Dashboard = () => {
       try {
         console.log('Fetching projects for user ID:', user.id);
         
-        // Fetch owned projects directly, avoiding RLS recursion
+        // Fetch owned projects with explicit filter by user_id
         const { data: ownedData, error: ownedError } = await supabase
           .from('projects')
-          .select('*');
+          .select('*')
+          .eq('user_id', user.id);
 
         if (ownedError) {
           console.error('Error fetching owned projects:', ownedError);
@@ -108,6 +110,7 @@ const Dashboard = () => {
             })
         );
 
+        // Transform owned projects
         const typedOwnedProjects = ownedData?.map(project => {
           const projectData = project as any;
           return {

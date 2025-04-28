@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -33,11 +34,11 @@ const Projects = () => {
         setError(null);
         console.log('Fetching projects for user ID:', user.id);
         
-        // Fetch owned projects directly without explicitly filtering by user_id
-        // RLS will ensure we only get the projects owned by the current user
+        // Fetch owned projects with explicit filter by user_id
         const { data: ownedData, error: ownedError } = await supabase
           .from('projects')
-          .select('*');
+          .select('*')
+          .eq('user_id', user.id);
 
         if (ownedError) {
           console.error('Error fetching owned projects:', ownedError);

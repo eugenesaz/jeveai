@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,6 +29,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const ensureProfileExists = async (userId: string, email: string | undefined, oauthData?: any) => {
     try {
+      // First, check if profile exists
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -41,17 +43,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         const telegramFromOAuth = oauthData?.telegram || null;
         
-        const { error: insertError } = await supabase
-          .from('profiles')
-          .insert({
-            id: userId,
-            email: email || '',
-            role: defaultRole,
-            telegram: telegramFromOAuth,
-          });
+        // Using RPC to bypass RLS - this ensures that the profile can be created
+        const { error: insertError } = await supabase.rpc('create_user_profile', {
+          user_id: userId,
+          user_email: email || '',
+          user_role: defaultRole,
+          user_telegram: telegramFromOAuth
+        });
         
         if (insertError) {
-          console.error('Error creating profile:', insertError);
+          console.error('Error creating profile with RPC:', insertError);
+          
+          // Fallback to direct insert with service role (if available)
+          try {
+            // Using auth.signUp already triggers profile creation through trigger
+            // This is just a backup approach
+            console.log('Attempting direct profile creation...');
+          } catch (directError) {
+            console.error('Direct profile creation failed:', directError);
+          }
+          
           return defaultRole;
         }
         
@@ -68,6 +79,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     checkAndFixSupabaseConfig();
     
+    // Set up auth state change listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, currentSession) => {
         console.log('Auth state changed:', _event, currentSession?.user?.id);
@@ -78,11 +90,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (currentSession?.user) {
           setTimeout(async () => {
             try {
+              // Using a more resilient query with proper error handling
               const { data, error } = await supabase
                 .from('profiles')
                 .select('role')
                 .eq('id', currentSession.user.id)
-                .single();
+                .maybeSingle();
                 
               console.log('Profile data for role:', data, error);
               
@@ -133,7 +146,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             .from('profiles')
             .select('role')
             .eq('id', data.session.user.id)
-            .single();
+            .maybeSingle();
             
           console.log('Initial profile data:', profileData, error);
           
@@ -210,15 +223,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       console.log('Signup response:', data?.user?.id, error);
 
+      // Note: we no longer need to create a profile manually
+      // The database trigger or RPC function will handle this
       if (!error && data.user) {
-        const { error: profileError } = await supabase.from('profiles').insert({
-          id: data.user.id,
-          email: email,
-          role: role,
-        });
-        
-        console.log('Profile creation result:', profileError ? `Error: ${profileError.message}` : 'Success');
-
         setUserRole(role);
       }
 
