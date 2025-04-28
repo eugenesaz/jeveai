@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from '@/hooks/use-toast';
 import { addKnowledge } from '@/lib/KnowledgeUtils';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AddKnowledgeDialogProps {
   courseId: string;

@@ -13,6 +13,7 @@ import { ProjectKnowledge, Project } from '@/types/supabase';
 import { FileText, Trash2, Plus, Download, ExternalLink } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { ProfileButton } from '@/components/profile/ProfileButton';
+import { addKnowledge } from '@/lib/KnowledgeUtils';
 import { 
   initializeStorage,
   uploadKnowledgeDocument,
@@ -102,10 +103,11 @@ const ManageKnowledge = () => {
         
         setProject(typedProject);
 
+        // Updated to fetch from project_knowledge_vector table
         const { data: knowledgeData, error: knowledgeError } = await supabase
           .from('project_knowledge_vector')
-          .select('id, content, created_at')
-          .eq('metadata->project_id', id)
+          .select('id, content, created_at, document_url')
+          .eq('metadata->>project_id', id)
           .order('created_at', { ascending: false });
 
         if (knowledgeError) {
@@ -116,7 +118,14 @@ const ManageKnowledge = () => {
             variant: 'destructive',
           });
         } else if (knowledgeData) {
-          setKnowledge(knowledgeData);
+          // Convert to ProjectKnowledge array
+          const typedKnowledgeData: ProjectKnowledge[] = knowledgeData.map(item => ({
+            id: item.id,
+            content: item.content || '',
+            created_at: item.created_at,
+            document_url: item.document_url || null
+          }));
+          setKnowledge(typedKnowledgeData);
         }
       } catch (error) {
         console.error('Error loading project data:', error);
@@ -153,7 +162,7 @@ const ManageKnowledge = () => {
           const result = await uploadKnowledgeDocument(file, projectId);
           console.log(`Document ${index + 1} upload result:`, result);
           return result;
-        } catch (error) {
+        } catch (error: any) {
           console.error(`Exception uploading document ${file.name}:`, error);
           setUploadStatus(`Error uploading ${file.name}: ${error.message}`);
           return null;
@@ -188,7 +197,7 @@ const ManageKnowledge = () => {
           if (doc) {
             console.log(`Creating database entry for document: ${doc.fileName}`);
             const { error } = await supabase.from('project_knowledge_vector').insert({
-              project_id: id,
+              metadata: { project_id: id },
               content: `Document: ${doc.fileName}`,
               document_url: doc.url,
             });
@@ -202,16 +211,24 @@ const ManageKnowledge = () => {
         }
       }
 
+      // Refresh the knowledge data
       const { data, error } = await supabase
         .from('project_knowledge_vector')
-        .select('id, content, created_at')
-        .eq('metadata->project_id', id)
+        .select('id, content, created_at, document_url')
+        .eq('metadata->>project_id', id)
         .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching updated knowledge:', error);
       } else if (data) {
-        setKnowledge(data);
+        // Convert to ProjectKnowledge array
+        const typedKnowledgeData: ProjectKnowledge[] = data.map(item => ({
+          id: item.id,
+          content: item.content || '',
+          created_at: item.created_at,
+          document_url: item.document_url || null
+        }));
+        setKnowledge(typedKnowledgeData);
       }
 
       setNewKnowledgeContent('');
@@ -222,7 +239,7 @@ const ManageKnowledge = () => {
         title: 'Success',
         description: 'Knowledge added successfully',
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding knowledge:', error);
       const errorMessage = error instanceof Error && error.message.includes('too long') 
         ? error.message 
@@ -239,16 +256,16 @@ const ManageKnowledge = () => {
     }
   };
 
-  const handleDeleteKnowledge = async (knowledgeId: string) => {
+  const handleDeleteKnowledge = async (knowledgeId: number) => {
     if (!user || !id) return;
 
-    setDeleting(knowledgeId);
+    setDeleting(knowledgeId.toString());
     try {
+      // Updated to delete from project_knowledge_vector
       const { error } = await supabase
         .from('project_knowledge_vector')
         .delete()
-        .eq('id', knowledgeId)
-        .eq('metadata->project_id', id);
+        .eq('id', knowledgeId);
 
       if (error) {
         console.error('Error deleting knowledge:', error);
@@ -380,10 +397,10 @@ const ManageKnowledge = () => {
                           size="sm"
                           className="text-red-500 hover:text-red-700"
                           onClick={() => handleDeleteKnowledge(item.id)}
-                          disabled={deleting === item.id}
+                          disabled={deleting === item.id.toString()}
                           aria-label={t('delete', { defaultValue: 'Delete' })}
                         >
-                          {deleting === item.id ? (
+                          {deleting === item.id.toString() ? (
                             <Spinner className="h-4 w-4" />
                           ) : (
                             <Trash2 className="h-4 w-4" />
