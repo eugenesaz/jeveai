@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -18,7 +18,8 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { formatDate, isSubscriptionActive } from '@/utils/subscriptionUtils';
-import { MessageSquare, ArrowLeft } from 'lucide-react';
+import { MessageSquare, ArrowLeft, Eye } from 'lucide-react';
+import { canAccessConversations } from '@/utils/permissionUtils';
 
 export default function ViewCourse() {
   const { id } = useParams<{ id: string }>();
@@ -26,6 +27,7 @@ export default function ViewCourse() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const [canViewConversations, setCanViewConversations] = useState(false);
 
   const { data: course, isLoading: courseLoading } = useQuery({
     queryKey: ['course', id],
@@ -58,6 +60,15 @@ export default function ViewCourse() {
       return data;
     }
   });
+
+  // Check permissions for conversations
+  useEffect(() => {
+    if (id) {
+      canAccessConversations(id).then(canAccess => {
+        setCanViewConversations(canAccess);
+      });
+    }
+  }, [id]);
 
   // Check if there's an active subscription
   const hasActiveSubscription = enrollment?.subscriptions?.some(sub => 
@@ -212,6 +223,18 @@ export default function ViewCourse() {
                       <li>{t('course.telegram_step4', 'Follow the bot instructions')}</li>
                     </ol>
                   </div>
+                )}
+
+                {/* Conversations button based on permissions */}
+                {canViewConversations && (
+                  <Button
+                    onClick={() => navigate(`/conversations/${course.id}`)}
+                    className="w-full mb-4 bg-indigo-100 text-indigo-700 hover:bg-indigo-200"
+                    variant="outline"
+                  >
+                    <Eye className="w-4 h-4 mr-2" />
+                    {t('view.conversations', 'View Conversations')}
+                  </Button>
                 )}
 
                 {shouldShowSubscriptionButton && (

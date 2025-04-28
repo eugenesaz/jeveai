@@ -1,12 +1,17 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { UsersList } from '@/components/conversations/UsersList';
 import { MessageList } from '@/components/conversations/MessageList';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, RefreshCcw, Folder } from 'lucide-react';
+import { ArrowLeft, RefreshCcw, Folder, AlertCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { AddKnowledgeDialog } from '@/components/conversations/AddKnowledgeDialog';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/components/ui/sonner';
+import { canAccessConversations, canEditCourses } from '@/utils/permissionUtils';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface User {
   id: string;
@@ -27,15 +32,60 @@ const ViewConversations = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [highlightFilter, setHighlightFilter] = useState<string>("all");
+  const [hasAccess, setHasAccess] = useState<boolean>(false);
+  const [canEdit, setCanEdit] = useState<boolean>(false);
+  const [courseName, setCourseName] = useState<string>('');
+
+  useEffect(() => {
+    // Check permissions as soon as component loads
+    const checkPermissions = async () => {
+      if (!courseId || !user) {
+        setHasAccess(false);
+        return;
+      }
+
+      try {
+        // Check access permissions
+        const canAccess = await canAccessConversations(courseId);
+        setHasAccess(canAccess);
+
+        if (!canAccess) {
+          toast.error(t('errors.no_access', 'You do not have permission to access these conversations'));
+          navigate('/courses');
+          return;
+        }
+
+        // Fetch course name for display
+        const { data: courseData } = await supabase
+          .from('courses')
+          .select('name, project_id')
+          .eq('id', courseId)
+          .single();
+
+        if (courseData) {
+          setCourseName(courseData.name);
+          
+          // Check edit permissions
+          const canEditPermission = await canEditCourses(courseData.project_id);
+          setCanEdit(canEditPermission);
+        }
+      } catch (error) {
+        console.error('Error checking permissions:', error);
+      }
+    };
+
+    checkPermissions();
+  }, [courseId, user, navigate, t]);
 
   const fetchData = async () => {
-    if (!courseId) return;
+    if (!courseId || !hasAccess) return;
     setRefreshing(true);
 
     try {
@@ -80,7 +130,7 @@ const ViewConversations = () => {
   };
 
   const fetchMessagesForUser = async (userId: string) => {
-    if (!courseId) return;
+    if (!courseId || !hasAccess) return;
 
     const { data, error } = await supabase
       .from('conversations')
@@ -98,14 +148,16 @@ const ViewConversations = () => {
   };
 
   useEffect(() => {
-    fetchData();
-  }, [courseId]);
+    if (hasAccess) {
+      fetchData();
+    }
+  }, [courseId, hasAccess]);
 
   useEffect(() => {
-    if (selectedUserId) {
+    if (selectedUserId && hasAccess) {
       fetchMessagesForUser(selectedUserId);
     }
-  }, [selectedUserId]);
+  }, [selectedUserId, hasAccess]);
 
   const handleGoBack = () => {
     navigate(-1);
@@ -127,6 +179,28 @@ const ViewConversations = () => {
       return false;
     });
   };
+
+  if (!hasAccess) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
+        <Alert variant="destructive" className="max-w-md">
+          <AlertCircle className="h-5 w-5" />
+          <AlertTitle>{t('access.denied', 'Access Denied')}</AlertTitle>
+          <AlertDescription>
+            {t('access.denied.description', 'You do not have permission to view these conversations.')}
+          </AlertDescription>
+        </Alert>
+        <Button 
+          variant="default" 
+          onClick={() => navigate('/courses')}
+          className="mt-4"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          {t('back.to.courses', 'Back to Courses')}
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -170,9 +244,16 @@ const ViewConversations = () => {
               <option value="medium">{t('filter.medium', 'Medium Knowledge (50-80%)')}</option>
               <option value="low">{t('filter.low', 'Low Knowledge (<50%)')}</option>
             </select>
-            <AddKnowledgeDialog courseId={courseId || ''} onKnowledgeAdded={fetchData} />
+            {canEdit && courseId && (
+              <AddKnowledgeDialog courseId={courseId} onKnowledgeAdded={fetchData} />
+            )}
           </div>
         </div>
+        {courseName && (
+          <div className="container mx-auto px-4 pb-2 text-gray-600">
+            {t('viewing.conversations.for', 'Viewing conversations for:')} <span className="font-semibold">{courseName}</span>
+          </div>
+        )}
       </header>
 
       <main className="container mx-auto px-4 py-8 flex-grow">
