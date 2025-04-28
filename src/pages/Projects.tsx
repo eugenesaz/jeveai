@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Search, Home, LogOut } from 'lucide-react';
+import { Plus, Search, Home, LogOut, Share2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/types/supabase';
@@ -11,34 +12,71 @@ import { toast } from '@/components/ui/sonner';
 import { ProjectsHeader } from '@/components/projects/ProjectsHeader';
 import { ProjectTile } from '@/components/projects/ProjectTile';
 import { ProfileButton } from '@/components/profile/ProfileButton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Projects = () => {
   const { t } = useTranslation();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [ownedProjects, setOwnedProjects] = useState<Project[]>([]);
+  const [sharedProjects, setSharedProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState('all'); // 'all', 'owned', 'shared'
 
   useEffect(() => {
     const fetchProjects = async () => {
       if (!user) return;
 
       try {
+        setLoading(true);
         console.log('Fetching projects for user ID:', user.id);
         
-        const { data, error } = await supabase
+        // Fetch owned projects
+        const { data: ownedData, error: ownedError } = await supabase
           .from('projects')
           .select('*')
           .eq('user_id', user.id);
 
-        if (error) {
-          throw error;
+        if (ownedError) {
+          throw ownedError;
         }
 
-        console.log('Projects data:', data);
+        console.log('Owned projects data:', ownedData);
         
-        const typedProjects = data?.map(project => {
+        // Fetch shared projects
+        const { data: sharedData, error: sharedError } = await supabase
+          .from('project_shares')
+          .select(`
+            id,
+            role,
+            status,
+            projects (
+              id,
+              name,
+              url_name,
+              status,
+              landing_image,
+              user_id,
+              created_at,
+              color_scheme,
+              telegram_bot
+            ),
+            profiles:projects.user_id (
+              email
+            )
+          `)
+          .eq('user_id', user.id)
+          .eq('status', 'accepted');
+        
+        if (sharedError) {
+          throw sharedError;
+        }
+
+        console.log('Shared projects data:', sharedData);
+        
+        // Transform owned projects
+        const typedOwnedProjects = ownedData?.map(project => {
           const projectData = project as any;
           
           return {
@@ -52,15 +90,53 @@ const Projects = () => {
             color_scheme: (project.color_scheme === 'blue' || 
                           project.color_scheme === 'red' || 
                           project.color_scheme === 'orange' || 
-                          project.color_scheme === 'green') 
-                          ? project.color_scheme as 'blue' | 'red' | 'orange' | 'green'
+                          project.color_scheme === 'green' ||
+                          project.color_scheme === 'purple' ||
+                          project.color_scheme === 'indigo' ||
+                          project.color_scheme === 'pink' ||
+                          project.color_scheme === 'teal') 
+                          ? project.color_scheme as 'blue' | 'red' | 'orange' | 'green' | 'purple' | 'indigo' | 'pink' | 'teal'
                           : null,
             telegram_bot: project.telegram_bot || null,
             description: projectData.description || null,
+            isShared: false
           } as Project;
         }) || [];
         
-        setProjects(typedProjects);
+        // Transform shared projects
+        const typedSharedProjects = sharedData?.map(share => {
+          const project = share.projects as any;
+          
+          if (!project) return null;
+          
+          return {
+            id: project.id,
+            name: project.name,
+            url_name: project.url_name,
+            status: project.status,
+            landing_image: project.landing_image,
+            user_id: project.user_id,
+            created_at: project.created_at,
+            color_scheme: (project.color_scheme === 'blue' || 
+                          project.color_scheme === 'red' || 
+                          project.color_scheme === 'orange' || 
+                          project.color_scheme === 'green' ||
+                          project.color_scheme === 'purple' ||
+                          project.color_scheme === 'indigo' ||
+                          project.color_scheme === 'pink' ||
+                          project.color_scheme === 'teal') 
+                          ? project.color_scheme as 'blue' | 'red' | 'orange' | 'green' | 'purple' | 'indigo' | 'pink' | 'teal'
+                          : null,
+            telegram_bot: project.telegram_bot || null,
+            description: project.description || null,
+            isShared: true,
+            ownerEmail: share.profiles?.email || null,
+            shareRole: share.role
+          } as Project & { shareRole: string };
+        }).filter(Boolean) || [];
+        
+        setOwnedProjects(typedOwnedProjects);
+        setSharedProjects(typedSharedProjects);
       } catch (error) {
         console.error('Error fetching projects:', error);
         toast.error('Failed to load projects');
@@ -78,12 +154,20 @@ const Projects = () => {
     toast.success('Project URL has been copied to clipboard');
   };
 
+  // All projects (filtering happens in the UI)
+  const allProjects = [...ownedProjects, ...sharedProjects];
+  
+  // Filter projects based on search query and active tab
   const filteredProjects = searchQuery 
-    ? projects.filter(project => 
+    ? allProjects.filter(project => 
         project.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
         (project.description && project.description.toLowerCase().includes(searchQuery.toLowerCase()))
       )
-    : projects;
+    : activeTab === 'owned'
+      ? ownedProjects
+      : activeTab === 'shared'
+        ? sharedProjects
+        : allProjects;
 
   if (!user) {
     return (
@@ -148,6 +232,23 @@ const Projects = () => {
             </Button>
           </div>
           
+          <div className="mb-6">
+            <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="mb-4">
+                <TabsTrigger value="all">
+                  {t('All Projects')} ({allProjects.length})
+                </TabsTrigger>
+                <TabsTrigger value="owned">
+                  {t('My Projects')} ({ownedProjects.length})
+                </TabsTrigger>
+                <TabsTrigger value="shared">
+                  <Share2 className="h-4 w-4 mr-2" />
+                  {t('Shared With Me')} ({sharedProjects.length})
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+
           <div className="relative w-full md:max-w-sm mb-8 animate-fade-in">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
             <input
@@ -170,16 +271,23 @@ const Projects = () => {
                   <h3 className="text-xl font-semibold mb-4">{t('no.search.results', 'No projects match your search')}</h3>
                   <p className="text-gray-600 mb-4">{t('try.different.search', 'Try different search terms or create a new project')}</p>
                 </>
+              ) : activeTab === 'shared' ? (
+                <>
+                  <h3 className="text-xl font-semibold mb-4">{t('No shared projects')}</h3>
+                  <p className="text-gray-600 mb-4">{t('No projects have been shared with you yet')}</p>
+                </>
               ) : (
                 <>
                   <h3 className="text-xl font-semibold mb-4">{t('no.projects')}</h3>
                   <p className="text-gray-600 mb-4">{t('create.first.project', 'Create your first project to get started')}</p>
                 </>
               )}
-              <Button onClick={() => navigate('/create-project')} className="gap-2">
-                <Plus className="h-4 w-4" />
-                {t('project.createNew', 'Create New Project')}
-              </Button>
+              {activeTab !== 'shared' && (
+                <Button onClick={() => navigate('/create-project')} className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  {t('project.createNew', 'Create New Project')}
+                </Button>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

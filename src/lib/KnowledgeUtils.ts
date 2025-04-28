@@ -1,4 +1,7 @@
+
 import { supabase } from '@/integrations/supabase/client';
+import { canUserPerformAction } from './ProjectSharingUtils';
+import { toast } from '@/components/ui/sonner';
 
 export const addKnowledge = async (projectId: string, content: string) => {
   const webhookUrl = `https://paradiseapp.app.n8n.cloud/webhook/2039fb97-5c55-4f3c-bd6b-37f5ac18a0d9/project-knowledge/${projectId}`;
@@ -8,6 +11,24 @@ export const addKnowledge = async (projectId: string, content: string) => {
   console.log(`[KnowledgeUtils] Content length: ${content.length} characters`);
   
   try {
+    // Check if user has permission to add knowledge
+    const user = supabase.auth.getUser();
+    const userInfo = (await user).data.user;
+    
+    if (!userInfo?.id) {
+      throw new Error('User not authenticated');
+    }
+    
+    const canAddKnowledge = await canUserPerformAction(
+      userInfo.id,
+      projectId,
+      ['owner', 'contributor', 'knowledge_manager']
+    );
+    
+    if (!canAddKnowledge) {
+      throw new Error('You do not have permission to add knowledge to this project');
+    }
+    
     console.log(`[KnowledgeUtils] Sending POST request to webhook...`);
     
     const requestBody = JSON.stringify({ content: content });

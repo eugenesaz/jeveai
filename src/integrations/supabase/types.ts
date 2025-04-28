@@ -257,6 +257,50 @@ export type Database = {
           },
         ]
       }
+      project_shares: {
+        Row: {
+          created_at: string
+          id: string
+          invited_email: string | null
+          inviter_id: string | null
+          project_id: string
+          role: Database["public"]["Enums"]["project_role"]
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invited_email?: string | null
+          inviter_id?: string | null
+          project_id: string
+          role?: Database["public"]["Enums"]["project_role"]
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invited_email?: string | null
+          inviter_id?: string | null
+          project_id?: string
+          role?: Database["public"]["Enums"]["project_role"]
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_shares_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           color_scheme: string | null
@@ -377,6 +421,14 @@ export type Database = {
         Args: { "": string } | { "": unknown }
         Returns: unknown
       }
+      check_project_role: {
+        Args: {
+          user_uuid: string
+          project_uuid: string
+          required_roles: Database["public"]["Enums"]["project_role"][]
+        }
+        Returns: boolean
+      }
       get_user_id_by_telegram: {
         Args: { telegram_name: string }
         Returns: string
@@ -493,7 +545,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      project_role: "owner" | "contributor" | "knowledge_manager" | "read_only"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -608,6 +660,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      project_role: ["owner", "contributor", "knowledge_manager", "read_only"],
+    },
   },
 } as const

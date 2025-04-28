@@ -1,3 +1,4 @@
+
 // Define types for our Supabase tables
 export type UserRole = 'influencer' | 'customer' | 'admin';
 
@@ -21,7 +22,10 @@ export interface Project {
   user_id: string;
   created_at: string | null;
   telegram_bot: string | null;
-  description: string | null; // Added description property
+  description: string | null;
+  // New properties for shared projects
+  isShared?: boolean;
+  ownerEmail?: string;
 }
 
 // Updated to match project_knowledge_vector table structure with metadata field
@@ -83,4 +87,20 @@ export interface ProjectSecret {
   gemini_api_key: string | null;
   created_at: string | null;
   updated_at: string | null;
+}
+
+// New type for project roles
+export type ProjectRole = 'owner' | 'contributor' | 'knowledge_manager' | 'read_only';
+
+// New interface for project shares
+export interface ProjectShare {
+  id: string;
+  project_id: string;
+  user_id: string;
+  inviter_id: string | null;
+  role: ProjectRole;
+  invited_email: string | null;
+  status: 'pending' | 'accepted';
+  created_at: string;
+  updated_at: string;
 }
