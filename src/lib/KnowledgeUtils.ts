@@ -31,7 +31,7 @@ export const fetchProjectKnowledge = async (projectId: string) => {
   console.log(`Fetching knowledge for project ID: ${projectId}`);
   
   try {
-    // We're using the project_knowledge_vector table where projectId is in the metadata
+    // Using the project_knowledge_vector table with projectId in metadata
     const { data, error } = await supabase
       .from('project_knowledge_vector')
       .select('id, content, created_at, metadata')

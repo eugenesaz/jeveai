@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -5,20 +6,14 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
 import { Spinner } from '@/components/ui/spinner';
 import { ProjectKnowledge, Project } from '@/types/supabase';
-import { FileText, Trash2, Plus, Download, ExternalLink } from 'lucide-react';
+import { Trash2, Plus } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { ProfileButton } from '@/components/profile/ProfileButton';
 import { addKnowledge, fetchProjectKnowledge } from '@/lib/KnowledgeUtils';
-import { 
-  initializeStorage,
-  uploadKnowledgeDocument,
-  testBucketAccess
-} from '@/lib/StorageUtils';
+import { Textarea } from '@/components/ui/textarea';
 
 const ManageKnowledge = () => {
   const { t } = useTranslation();
@@ -29,27 +24,16 @@ const ManageKnowledge = () => {
   const [project, setProject] = useState<Project | null>(null);
   const [knowledge, setKnowledge] = useState<ProjectKnowledge[]>([]);
   const [loading, setLoading] = useState(true);
-  const [knowledgeDocuments, setKnowledgeDocuments] = useState<File[]>([]);
   const [isAddingKnowledge, setIsAddingKnowledge] = useState(false);
   const [newKnowledgeContent, setNewKnowledgeContent] = useState('');
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
-  const [bucketStatus, setBucketStatus] = useState<string>('');
-  const [uploadStatus, setUploadStatus] = useState<string>('');
 
   useEffect(() => {
     const fetchData = async () => {
       if (!user || !id) return;
 
       try {
-        console.log('Initializing storage...');
-        await initializeStorage();
-        console.log('Storage initialized');
-        
-        // Check bucket access
-        const hasAccess = await testBucketAccess('project-knowledge');
-        setBucketStatus(hasAccess ? 'accessible' : 'inaccessible');
-        
         const { data: projectData, error: projectError } = await supabase
           .from('projects')
           .select('*')
@@ -141,71 +125,15 @@ const ManageKnowledge = () => {
     fetchData();
   }, [user, id, navigate, t]);
 
-  const handleKnowledgeDocumentsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newFiles = Array.from(e.target.files);
-      const limitedFiles = newFiles.slice(0, 5 - knowledgeDocuments.length);
-      setKnowledgeDocuments(prev => [...prev, ...limitedFiles]);
-    }
-  };
-
-  const removeKnowledgeDocument = (index: number) => {
-    setKnowledgeDocuments(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const uploadKnowledgeDocuments = async (projectId: string) => {
-    if (knowledgeDocuments.length === 0) return [];
-    
-    console.log(`Uploading ${knowledgeDocuments.length} knowledge documents for project ${projectId}`);
-    setUploadStatus(`Starting upload of ${knowledgeDocuments.length} documents...`);
-    
-    const uploadResults = await Promise.all(
-      knowledgeDocuments.map(async (file, index) => {
-        try {
-          setUploadStatus(`Uploading document ${index + 1}/${knowledgeDocuments.length}: ${file.name}...`);
-          const result = await uploadKnowledgeDocument(file, projectId);
-          console.log(`Document ${index + 1} upload result:`, result);
-          return result;
-        } catch (error: any) {
-          console.error(`Exception uploading document ${file.name}:`, error);
-          setUploadStatus(`Error uploading ${file.name}: ${error.message}`);
-          return null;
-        }
-      })
-    );
-    
-    const successfulUploads = uploadResults.filter(Boolean);
-    console.log(`Successfully uploaded ${successfulUploads.length} of ${knowledgeDocuments.length} documents`);
-    setUploadStatus(`Completed: ${successfulUploads.length}/${knowledgeDocuments.length} documents uploaded successfully.`);
-    
-    return successfulUploads;
-  };
-
   const handleAddKnowledge = async () => {
-    if (!user || !id || (!newKnowledgeContent.trim() && knowledgeDocuments.length === 0)) {
+    if (!user || !id || !newKnowledgeContent.trim()) {
       return;
     }
 
     setSaving(true);
     try {
-      if (newKnowledgeContent.trim()) {
-        // Only using webhook to add knowledge, never direct insertion
-        await addKnowledge(id, newKnowledgeContent.trim());
-      }
-
-      if (knowledgeDocuments.length > 0) {
-        console.log(`Processing ${knowledgeDocuments.length} knowledge documents`);
-        const documents = await uploadKnowledgeDocuments(id);
-        console.log(`Received ${documents.length} upload results`);
-        
-        for (const doc of documents) {
-          if (doc) {
-            console.log(`Creating knowledge entry for document: ${doc.fileName}`);
-            // Using webhook instead of direct insertion
-            await addKnowledge(id, `Document: ${doc.fileName}`);
-          }
-        }
-      }
+      // Only using webhook to add knowledge, never direct insertion
+      await addKnowledge(id, newKnowledgeContent.trim());
 
       // Refresh the knowledge data
       const knowledgeData = await fetchProjectKnowledge(id);
@@ -222,7 +150,6 @@ const ManageKnowledge = () => {
       }
 
       setNewKnowledgeContent('');
-      setKnowledgeDocuments([]);
       setIsAddingKnowledge(false);
 
       toast({
@@ -242,7 +169,6 @@ const ManageKnowledge = () => {
       });
     } finally {
       setSaving(false);
-      setUploadStatus('');
     }
   };
 
@@ -347,16 +273,7 @@ const ManageKnowledge = () => {
                     <CardContent className="p-4">
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
-                          {item.content.startsWith('Document: ') ? (
-                            <div className="flex items-center mb-2">
-                              <FileText className="h-5 w-5 mr-2 text-blue-500" />
-                              <span className="font-medium">
-                                {item.content.replace('Document: ', '')}
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="whitespace-pre-wrap">{item.content}</div>
-                          )}
+                          <div className="whitespace-pre-wrap">{item.content}</div>
                           <div className="text-xs text-gray-500 mt-2">
                             {new Date(item.created_at).toLocaleString()}
                           </div>
@@ -390,7 +307,7 @@ const ManageKnowledge = () => {
           <DialogHeader>
             <DialogTitle>{t('project.addKnowledge', { defaultValue: 'Add Knowledge' })}</DialogTitle>
             <DialogDescription>
-              Add text or document knowledge to your project. Storage bucket status: {bucketStatus}
+              Add text knowledge to your project.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -402,52 +319,12 @@ const ManageKnowledge = () => {
                 rows={5}
               />
             </div>
-            <div className="space-y-2">
-              <p className="text-sm font-medium">{t('project.orUploadDocuments', { defaultValue: 'Or upload documents' })}</p>
-              <Input
-                type="file"
-                accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
-                onChange={handleKnowledgeDocumentsChange}
-                className="cursor-pointer"
-                multiple
-                disabled={knowledgeDocuments.length >= 5}
-              />
-              <p className="text-xs text-gray-500">
-                {t('project.uploadLimit', { defaultValue: 'You can upload up to 5 documents.' })}
-              </p>
-              {uploadStatus && (
-                <p className="text-xs text-blue-600">
-                  Upload status: {uploadStatus}
-                </p>
-              )}
-              {knowledgeDocuments.length > 0 && (
-                <div className="mt-2 space-y-2">
-                  {knowledgeDocuments.map((file, index) => (
-                    <div
-                      key={index}
-                      className="flex justify-between items-center bg-gray-100 p-2 rounded"
-                    >
-                      <span>{file.name}</span>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => removeKnowledgeDocument(index)}
-                      >
-                        {t('cancel', { defaultValue: 'Cancel' })}
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
           <DialogFooter>
             <Button
               variant="outline"
               onClick={() => {
                 setNewKnowledgeContent('');
-                setKnowledgeDocuments([]);
                 setIsAddingKnowledge(false);
               }}
             >
@@ -455,7 +332,7 @@ const ManageKnowledge = () => {
             </Button>
             <Button
               onClick={handleAddKnowledge}
-              disabled={saving || (!newKnowledgeContent.trim() && knowledgeDocuments.length === 0)}
+              disabled={saving || !newKnowledgeContent.trim()}
             >
               {saving ? <Spinner className="mr-2 h-4 w-4" /> : null}
               {t('save', { defaultValue: 'Save' })}
