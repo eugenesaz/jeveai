@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Search, Home, LogOut, Share2 } from 'lucide-react';
+import { Plus, Search, Home, LogOut, Share2, Mail } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Project, ProjectShare } from '@/types/supabase';
@@ -34,6 +35,7 @@ const Projects = () => {
       setError(null);
       console.log('Fetching projects for user ID:', user.id);
       
+      // Fetch owned projects
       const { data: ownedData, error: ownedError } = await supabase
         .from('projects')
         .select('*')
@@ -44,6 +46,9 @@ const Projects = () => {
         throw ownedError;
       }
 
+      console.log('Owned projects fetched:', ownedData?.length || 0);
+
+      // Fetch shared projects
       const { data: sharedData, error: sharedError } = await supabase
         .from('project_shares')
         .select(`
@@ -70,6 +75,9 @@ const Projects = () => {
         throw sharedError;
       }
 
+      console.log('Shared projects fetched:', sharedData?.length || 0);
+
+      // Fetch pending invitations
       const { data: pendingData, error: pendingError } = await supabase
         .from('project_shares')
         .select(`
@@ -97,6 +105,8 @@ const Projects = () => {
         console.error('Error fetching pending invitations:', pendingError);
         throw pendingError;
       }
+
+      console.log('Pending invitations fetched:', pendingData?.length || 0);
       
       const fetchOwnerEmails = async (items: any[]) => {
         return Promise.all(

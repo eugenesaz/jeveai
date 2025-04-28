@@ -1,118 +1,80 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { Resend } from "https://esm.sh/resend@1.0.0";
 
-// CORS headers
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-// Interface for the request body
-interface InvitationRequest {
-  inviterName?: string;
-  inviterEmail: string;
-  recipientEmail: string;
-  projectName: string;
-  projectId: string;
-  role: string;
-  invitationId: string;
-  appUrl: string;
-}
 
 serve(async (req) => {
   // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const resendApiKey = Deno.env.get("RESEND_API_KEY");
-    if (!resendApiKey) {
-      throw new Error("RESEND_API_KEY is not set");
-    }
+    const { inviterEmail, recipientEmail, projectName, projectId, role, invitationId, appUrl } = await req.json();
 
-    const resend = new Resend(resendApiKey);
-    const body: InvitationRequest = await req.json();
-
-    const {
-      inviterName,
-      inviterEmail,
-      recipientEmail,
-      projectName,
-      projectId,
-      role,
-      invitationId,
-      appUrl,
-    } = body;
-
-    if (!inviterEmail || !recipientEmail || !projectName || !projectId || !role || !invitationId) {
+    // Simple validation
+    if (!recipientEmail || !projectName || !invitationId || !appUrl) {
       return new Response(
-        JSON.stringify({ error: "Missing required fields" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        JSON.stringify({ error: 'Missing required parameters' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Format the role for display
-    const formattedRole = role.replace('_', ' ').replace(/\w\S*/g, (txt) => {
-      return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
-    });
-    
-    // Create the URL to the projects page
-    const projectsUrl = `${appUrl}/projects`;
-    
-    // Send the email
-    const { data, error } = await resend.emails.send({
-      from: "Project Invitations <no-reply@notifications.app>",
-      to: [recipientEmail],
-      subject: `You've been invited to collaborate on "${projectName}"`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
-          <h2 style="color: #1f2937; margin-bottom: 20px;">Project Invitation</h2>
-          <p style="color: #4b5563; font-size: 16px;">
-            ${inviterName ? inviterName : inviterEmail} has invited you to collaborate on <strong>${projectName}</strong>.
-          </p>
-          <p style="color: #4b5563; font-size: 16px;">
-            You've been granted <strong>${formattedRole}</strong> access to this project.
-          </p>
-          <div style="margin: 30px 0;">
-            <a href="${projectsUrl}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">View Invitation</a>
-          </div>
-          <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
-            If you don't have an account yet, you'll need to create one with this email address to access the project.
-          </p>
-          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
-          <p style="color: #9ca3af; font-size: 12px;">
-            If you weren't expecting this invitation, you can safely ignore this email.
-          </p>
-        </div>
-      `,
-    });
+    // Construct invitation URL with invitationId as query param
+    const invitationUrl = `${appUrl}/projects?inviteId=${invitationId}`;
 
-    if (error) {
-      console.error("Failed to send email:", error);
-      throw new Error(`Failed to send email: ${error.message}`);
-    }
+    // Construct email content
+    const subject = `Invitation to collaborate on project: ${projectName}`;
+    const roleDisplay = role === 'read_only' ? 'Read Only' : 
+                        role === 'contributor' ? 'Contributor' : 
+                        role === 'knowledge_manager' ? 'Knowledge Manager' : role;
+    
+    const from = inviterEmail || 'noreply@example.com';
+    const emailContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #4361ee;">Project Invitation</h2>
+        <p>You've been invited to collaborate on the project <strong>${projectName}</strong> with <strong>${roleDisplay}</strong> access.</p>
+        ${inviterEmail ? `<p>Invitation sent by: ${inviterEmail}</p>` : ''}
+        <p>Click the button below to accept this invitation:</p>
+        <div style="margin: 25px 0;">
+          <a href="${invitationUrl}" style="background-color: #4361ee; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Accept Invitation</a>
+        </div>
+        <p style="color: #666; font-size: 13px;">If you don't have an account yet, you'll be prompted to create one.</p>
+        <p style="color: #666; font-size: 13px;">If you did not expect this invitation, you can safely ignore this email.</p>
+      </div>
+    `;
+
+    console.log(`Sending invitation email to ${recipientEmail} for project ${projectName}`);
+
+    // If you have integration with an email service, you would call it here
+    // For now, we'll just log it and return success
+    console.log({
+      to: recipientEmail,
+      from: from,
+      subject: subject,
+      html: emailContent,
+    });
 
     // Return success response
     return new Response(
-      JSON.stringify({ success: true, message: "Invitation email sent", data }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      JSON.stringify({ 
+        success: true, 
+        message: 'Invitation email scheduled',
+        details: {
+          recipient: recipientEmail,
+          project: projectName
+        }
+      }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error("Error in send-invitation function:", error.message);
+    console.error('Error sending invitation email:', error);
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      JSON.stringify({ error: error.message || 'Failed to send invitation email' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

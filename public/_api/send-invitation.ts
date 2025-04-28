@@ -16,11 +16,25 @@ export default async function handler(req: Request) {
   
   try {
     console.log("Proxying request to edge function:", url);
+    
+    // Debug logging
+    if (req.method === 'POST') {
+      try {
+        const clonedReq = req.clone();
+        const bodyText = await clonedReq.text();
+        console.log('Request body:', bodyText);
+      } catch (e) {
+        console.error('Could not log request body:', e);
+      }
+    }
+    
     const response = await fetch(url, {
       method: req.method,
       headers,
       body: req.body,
     });
+    
+    console.log('Edge function response status:', response.status);
     
     // Return the response from the edge function
     return response;

@@ -65,6 +65,7 @@ export const ShareProjectModal = ({
         return;
       }
       
+      console.log('Project shares fetched:', data?.length || 0);
       setShares(data as ProjectShare[]);
     } catch (error) {
       console.error('Exception fetching project shares:', error);
@@ -222,7 +223,7 @@ export const ShareProjectModal = ({
       const inviterEmail = inviterProfile?.email || user?.email || '';
 
       // Get the current access token
-      const { data, error } = await supabase.auth.getSession();
+      const { data } = await supabase.auth.getSession();
       const accessToken = data?.session?.access_token || '';
 
       const response = await fetch(`${window.location.origin}/api/send-invitation`, {
@@ -268,7 +269,7 @@ export const ShareProjectModal = ({
       });
       
       await fetchShares();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error revoking access:', error);
       toast.error(t('Failed to revoke access'), {
         description: error.message || t('An unknown error occurred')
@@ -295,7 +296,7 @@ export const ShareProjectModal = ({
       });
       
       await fetchShares();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating role:', error);
       toast.error(t('Failed to update role'), {
         description: error.message || t('An unknown error occurred')
