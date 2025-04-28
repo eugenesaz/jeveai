@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -35,7 +34,6 @@ const Projects = () => {
       setError(null);
       console.log('Fetching projects for user ID:', user.id);
       
-      // Fetch owned projects with explicit filter by user_id
       const { data: ownedData, error: ownedError } = await supabase
         .from('projects')
         .select('*')
@@ -46,7 +44,6 @@ const Projects = () => {
         throw ownedError;
       }
 
-      // Fetch shared projects with status='accepted'
       const { data: sharedData, error: sharedError } = await supabase
         .from('project_shares')
         .select(`
@@ -73,7 +70,6 @@ const Projects = () => {
         throw sharedError;
       }
 
-      // Fetch pending invitations where invited_email matches user's email
       const { data: pendingData, error: pendingError } = await supabase
         .from('project_shares')
         .select(`
@@ -102,7 +98,6 @@ const Projects = () => {
         throw pendingError;
       }
       
-      // For each shared project and pending invitation, fetch the owner's email
       const fetchOwnerEmails = async (items: any[]) => {
         return Promise.all(
           items
@@ -112,7 +107,6 @@ const Projects = () => {
               let ownerEmail = null;
               
               try {
-                // Fetch owner's email directly using the project's user_id
                 if (project && project.user_id) {
                   const { data: ownerData, error: ownerError } = await supabase
                     .from('profiles')
@@ -127,7 +121,6 @@ const Projects = () => {
                   }
                 }
 
-                // For pending invitations, also fetch the inviter's email
                 let inviterEmail = null;
                 if (item.inviter_id) {
                   const { data: inviterData, error: inviterError } = await supabase
@@ -159,7 +152,6 @@ const Projects = () => {
       const sharedProjectsWithOwners = await fetchOwnerEmails(sharedData || []);
       const pendingInvitationsWithEmails = await fetchOwnerEmails(pendingData || []);
       
-      // Transform owned projects
       const typedOwnedProjects = ownedData?.map(project => {
         const projectData = project as any;
         
@@ -187,7 +179,6 @@ const Projects = () => {
         } as Project;
       }) || [];
       
-      // Transform shared projects
       const typedSharedProjects = sharedProjectsWithOwners.map((item) => {
         if (!item.project) return null;
         
@@ -217,7 +208,6 @@ const Projects = () => {
         } as Project & { shareRole: string };
       }).filter(Boolean) as (Project & { shareRole: string })[];
 
-      // Set the state for pending invitations
       setPendingInvitations(pendingInvitationsWithEmails || []);
       
       setOwnedProjects(typedOwnedProjects);
@@ -244,23 +234,19 @@ const Projects = () => {
     toast.success('Project URL has been copied to clipboard');
   };
 
-  // Combine projects based on active tab and search query
   const getFilteredProjects = () => {
     let projectsToFilter: any[] = [];
     
-    // First select projects based on active tab
     if (activeTab === 'owned') {
       projectsToFilter = ownedProjects;
     } else if (activeTab === 'shared') {
       projectsToFilter = sharedProjects;
     } else if (activeTab === 'pending') {
-      // Return no projects for pending tab - we'll display pendingInvitations separately
       return [];
     } else { // 'all'
       projectsToFilter = [...ownedProjects, ...sharedProjects];
     }
     
-    // Then filter by search query if present
     if (searchQuery) {
       return projectsToFilter.filter(project => 
         project.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -271,7 +257,6 @@ const Projects = () => {
     }
   };
 
-  // Get filtered pending invitations
   const getFilteredInvitations = () => {
     if (activeTab !== 'all' && activeTab !== 'pending') {
       return [];
@@ -287,7 +272,6 @@ const Projects = () => {
   };
 
   const handleInvitationAction = () => {
-    // Refresh the projects and invitations after an accept/decline action
     fetchProjects();
   };
 
@@ -410,7 +394,6 @@ const Projects = () => {
             </div>
           ) : (
             <>
-              {/* Display pending invitations at the top if activeTab is 'all' or 'pending' */}
               {filteredInvitations.length > 0 && (activeTab === 'all' || activeTab === 'pending') && (
                 <div className="mb-8">
                   {activeTab === 'all' && (
@@ -439,8 +422,7 @@ const Projects = () => {
                 </div>
               )}
 
-              {/* Display projects */}
-              {(activeTab !== 'pending' || filteredProjects.length > 0) ? (
+              {activeTab !== 'pending' || filteredProjects.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredProjects.map((project, index) => (
                     <div 
@@ -456,7 +438,6 @@ const Projects = () => {
                   ))}
                 </div>
               ) : (
-                // For pending tab with no invitations or all tabs with no projects
                 (activeTab === 'pending' && filteredInvitations.length === 0) || 
                 (filteredProjects.length === 0 && filteredInvitations.length === 0) ? (
                   <div className="text-center bg-gray-50 rounded-xl p-10 animate-fade-in">

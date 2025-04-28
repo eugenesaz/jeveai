@@ -164,7 +164,7 @@ export const ShareProjectModal = ({
       
       const insertData = {
         project_id: projectId,
-        user_id: userId || user.id, // Temporarily use current user's ID as placeholder if no user exists
+        user_id: userId || null, // Use null instead of current user's ID as placeholder if no user exists
         role,
         inviter_id: user.id,
         invited_email: email.toLowerCase(),
@@ -221,11 +221,15 @@ export const ShareProjectModal = ({
 
       const inviterEmail = inviterProfile?.email || user?.email || '';
 
+      // Get the current access token
+      const { data: { session } } = await supabase.auth.getSession();
+      const accessToken = session?.access_token || '';
+
       const response = await fetch(`${appUrl}/api/send-invitation`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabase.auth.session()?.access_token || ''}`,
+          'Authorization': `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
           inviterEmail,
