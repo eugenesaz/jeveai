@@ -20,6 +20,7 @@ import {
 import { formatDate, isSubscriptionActive } from '@/utils/subscriptionUtils';
 import { MessageSquare, ArrowLeft, Eye } from 'lucide-react';
 import { canAccessConversations } from '@/utils/permissionUtils';
+import { TelegramPrompt } from '@/components/courses/TelegramPrompt';
 
 export default function ViewCourse() {
   const { id } = useParams<{ id: string }>();
@@ -28,6 +29,8 @@ export default function ViewCourse() {
   const { user } = useAuth();
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [canViewConversations, setCanViewConversations] = useState(false);
+  const [userTelegram, setUserTelegram] = useState<string | null>(null);
+  const [isLoadingTelegram, setIsLoadingTelegram] = useState(true);
 
   const { data: course, isLoading: courseLoading } = useQuery({
     queryKey: ['course', id],
@@ -61,6 +64,33 @@ export default function ViewCourse() {
     }
   });
 
+  // Fetch user's telegram handle if they're logged in
+  useEffect(() => {
+    const fetchUserTelegram = async () => {
+      if (!user) {
+        setIsLoadingTelegram(false);
+        return;
+      }
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('telegram')
+          .eq('id', user.id)
+          .single();
+          
+        if (error) throw error;
+        setUserTelegram(data?.telegram || null);
+      } catch (error) {
+        console.error('Error fetching user telegram:', error);
+      } finally {
+        setIsLoadingTelegram(false);
+      }
+    };
+    
+    fetchUserTelegram();
+  }, [user]);
+
   // Check permissions for conversations
   useEffect(() => {
     if (id) {
@@ -75,11 +105,25 @@ export default function ViewCourse() {
     isSubscriptionActive(sub)
   );
 
-  // Debug logs to help diagnose the issue
-  console.log("User:", user?.id);
-  console.log("Enrollment:", enrollment);
-  console.log("Has active subscription:", hasActiveSubscription);
-  console.log("Subscriptions:", enrollment?.subscriptions);
+  const handleRefreshTelegram = async () => {
+    if (!user) return;
+    
+    setIsLoadingTelegram(true);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('telegram')
+        .eq('id', user.id)
+        .single();
+        
+      if (error) throw error;
+      setUserTelegram(data?.telegram || null);
+    } catch (error) {
+      console.error('Error refreshing user telegram:', error);
+    } finally {
+      setIsLoadingTelegram(false);
+    }
+  };
 
   const handleRenewSubscription = () => {
     if (!user) {
@@ -93,7 +137,7 @@ export default function ViewCourse() {
     navigate(-1);
   };
 
-  if (courseLoading || enrollmentLoading) {
+  if (courseLoading || enrollmentLoading || isLoadingTelegram) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <span className="loading loading-dots loading-lg"></span>
@@ -114,6 +158,11 @@ export default function ViewCourse() {
 
   // Determine if we should show the enrollment/subscription button
   const shouldShowSubscriptionButton = !hasActiveSubscription;
+
+  // Determine if telegram instructions should be shown
+  // Only show if course has telegram bot AND user has a telegram username set
+  const shouldShowTelegramInstructions = course.telegram_bot && userTelegram;
+  const needsTelegramUsername = course.telegram_bot && !userTelegram && user;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -200,7 +249,14 @@ export default function ViewCourse() {
             <section className="bg-white rounded-2xl shadow-sm p-6 sticky top-6">
               <h2 className="text-xl font-semibold mb-4">{t('course.access', 'How to Access')}</h2>
               <div className="space-y-4">
-                {course.telegram_bot && (
+                {needsTelegramUsername && (
+                  <TelegramPrompt
+                    userId={user.id}
+                    onUpdate={handleRefreshTelegram}
+                  />
+                )}
+
+                {shouldShowTelegramInstructions && (
                   <div className="bg-blue-50 rounded-xl p-4">
                     <div className="flex items-center gap-3 mb-3">
                       <MessageSquare className="w-5 h-5 text-blue-600" />
