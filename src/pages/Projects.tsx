@@ -7,10 +7,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Plus, Search, Home, LogOut, Share2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Project } from '@/types/supabase';
+import { Project, ProjectShare } from '@/types/supabase';
 import { toast } from '@/components/ui/sonner';
 import { ProjectsHeader } from '@/components/projects/ProjectsHeader';
 import { ProjectTile } from '@/components/projects/ProjectTile';
+import { PendingInvitationTile } from '@/components/projects/PendingInvitationTile';
 import { ProfileButton } from '@/components/profile/ProfileButton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -20,68 +21,94 @@ const Projects = () => {
   const navigate = useNavigate();
   const [ownedProjects, setOwnedProjects] = useState<Project[]>([]);
   const [sharedProjects, setSharedProjects] = useState<Project[]>([]);
+  const [pendingInvitations, setPendingInvitations] = useState<(ProjectShare & { project: any; inviterEmail?: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('all'); // 'all', 'owned', 'shared'
+  const [activeTab, setActiveTab] = useState('all'); // 'all', 'owned', 'shared', 'pending'
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchProjects = async () => {
-      if (!user) return;
+  const fetchProjects = async () => {
+    if (!user) return;
 
-      try {
-        setLoading(true);
-        setError(null);
-        console.log('Fetching projects for user ID:', user.id);
-        
-        // Fetch owned projects with explicit filter by user_id
-        const { data: ownedData, error: ownedError } = await supabase
-          .from('projects')
-          .select('*')
-          .eq('user_id', user.id);
+    try {
+      setLoading(true);
+      setError(null);
+      console.log('Fetching projects for user ID:', user.id);
+      
+      // Fetch owned projects with explicit filter by user_id
+      const { data: ownedData, error: ownedError } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('user_id', user.id);
 
-        if (ownedError) {
-          console.error('Error fetching owned projects:', ownedError);
-          throw ownedError;
-        }
+      if (ownedError) {
+        console.error('Error fetching owned projects:', ownedError);
+        throw ownedError;
+      }
 
-        console.log('Owned projects data:', ownedData);
-        
-        // Fetch shared projects with corrected query
-        const { data: sharedData, error: sharedError } = await supabase
-          .from('project_shares')
-          .select(`
+      // Fetch shared projects with status='accepted'
+      const { data: sharedData, error: sharedError } = await supabase
+        .from('project_shares')
+        .select(`
+          id,
+          role,
+          status,
+          project:project_id (
             id,
-            role,
+            name,
+            url_name,
             status,
-            project:project_id (
-              id,
-              name,
-              url_name,
-              status,
-              landing_image,
-              user_id,
-              created_at,
-              color_scheme,
-              telegram_bot
-            )
-          `)
-          .eq('user_id', user.id)
-          .eq('status', 'accepted');
-        
-        if (sharedError) {
-          console.error('Error fetching shared projects:', sharedError);
-          throw sharedError;
-        }
+            landing_image,
+            user_id,
+            created_at,
+            color_scheme,
+            telegram_bot
+          )
+        `)
+        .eq('user_id', user.id)
+        .eq('status', 'accepted');
+      
+      if (sharedError) {
+        console.error('Error fetching shared projects:', sharedError);
+        throw sharedError;
+      }
 
-        console.log('Shared projects data:', sharedData);
-        
-        // For each shared project, fetch the owner's email separately
-        const sharedProjectsWithOwners = await Promise.all(
-          sharedData
-            .filter(share => share.project) // Filter out any null projects
-            .map(async (share) => {
-              const project = share.project;
+      // Fetch pending invitations where invited_email matches user's email
+      const { data: pendingData, error: pendingError } = await supabase
+        .from('project_shares')
+        .select(`
+          id,
+          role,
+          status,
+          invited_email,
+          project:project_id (
+            id,
+            name,
+            url_name,
+            status,
+            landing_image,
+            user_id,
+            created_at,
+            color_scheme,
+            telegram_bot
+          ),
+          inviter_id
+        `)
+        .eq('invited_email', user.email)
+        .eq('status', 'pending');
+
+      if (pendingError) {
+        console.error('Error fetching pending invitations:', pendingError);
+        throw pendingError;
+      }
+      
+      // For each shared project and pending invitation, fetch the owner's email
+      const fetchOwnerEmails = async (items: any[]) => {
+        return Promise.all(
+          items
+            .filter(item => item.project) // Filter out any null projects
+            .map(async (item) => {
+              const project = item.project;
               let ownerEmail = null;
               
               try {
@@ -99,90 +126,115 @@ const Projects = () => {
                     ownerEmail = ownerData.email;
                   }
                 }
+
+                // For pending invitations, also fetch the inviter's email
+                let inviterEmail = null;
+                if (item.inviter_id) {
+                  const { data: inviterData, error: inviterError } = await supabase
+                    .from('profiles')
+                    .select('email')
+                    .eq('id', item.inviter_id)
+                    .maybeSingle();
+                  
+                  if (inviterError) {
+                    console.error('Error fetching inviter email:', inviterError);
+                  } else if (inviterData) {
+                    inviterEmail = inviterData.email;
+                  }
+                }
+                
+                return {
+                  ...item,
+                  ownerEmail,
+                  inviterEmail
+                };
               } catch (e) {
-                console.error('Error fetching owner email:', e);
+                console.error('Error fetching emails:', e);
+                return item;
               }
-              
-              return {
-                project,
-                shareRole: share.role,
-                ownerEmail
-              };
             })
         );
-        
-        // Transform owned projects
-        const typedOwnedProjects = ownedData?.map(project => {
-          const projectData = project as any;
-          
-          return {
-            id: project.id,
-            name: project.name,
-            url_name: project.url_name,
-            status: project.status,
-            landing_image: project.landing_image,
-            user_id: project.user_id,
-            created_at: project.created_at,
-            color_scheme: (project.color_scheme === 'blue' || 
-                          project.color_scheme === 'red' || 
-                          project.color_scheme === 'orange' || 
-                          project.color_scheme === 'green' ||
-                          project.color_scheme === 'purple' ||
-                          project.color_scheme === 'indigo' ||
-                          project.color_scheme === 'pink' ||
-                          project.color_scheme === 'teal') 
-                          ? project.color_scheme as 'blue' | 'red' | 'orange' | 'green' | 'purple' | 'indigo' | 'pink' | 'teal'
-                          : null,
-            telegram_bot: project.telegram_bot || null,
-            description: projectData.description || null,
-            isShared: false
-          } as Project;
-        }) || [];
-        
-        // Transform shared projects
-        const typedSharedProjects = sharedProjectsWithOwners.map(({ project, shareRole, ownerEmail }) => {
-          if (!project) return null;
-          
-          return {
-            id: project.id,
-            name: project.name,
-            url_name: project.url_name,
-            status: project.status,
-            landing_image: project.landing_image,
-            user_id: project.user_id,
-            created_at: project.created_at,
-            color_scheme: (project.color_scheme === 'blue' || 
-                          project.color_scheme === 'red' || 
-                          project.color_scheme === 'orange' || 
-                          project.color_scheme === 'green' ||
-                          project.color_scheme === 'purple' ||
-                          project.color_scheme === 'indigo' ||
-                          project.color_scheme === 'pink' ||
-                          project.color_scheme === 'teal') 
-                          ? project.color_scheme as 'blue' | 'red' | 'orange' | 'green' | 'purple' | 'indigo' | 'pink' | 'teal'
-                          : null,
-            telegram_bot: project.telegram_bot || null,
-            description: null,
-            isShared: true,
-            ownerEmail: ownerEmail,
-            shareRole: shareRole
-          } as Project & { shareRole: string };
-        }).filter(Boolean) as (Project & { shareRole: string })[];
-        
-        setOwnedProjects(typedOwnedProjects);
-        setSharedProjects(typedSharedProjects);
-        setError(null);
-      } catch (error: any) {
-        console.error('Error fetching projects:', error);
-        setError(error?.message || 'Failed to load projects');
-        toast.error('Error', {
-          description: 'Failed to load projects: ' + (error?.message || 'Unknown error'),
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
+      };
 
+      const sharedProjectsWithOwners = await fetchOwnerEmails(sharedData || []);
+      const pendingInvitationsWithEmails = await fetchOwnerEmails(pendingData || []);
+      
+      // Transform owned projects
+      const typedOwnedProjects = ownedData?.map(project => {
+        const projectData = project as any;
+        
+        return {
+          id: project.id,
+          name: project.name,
+          url_name: project.url_name,
+          status: project.status,
+          landing_image: project.landing_image,
+          user_id: project.user_id,
+          created_at: project.created_at,
+          color_scheme: (project.color_scheme === 'blue' || 
+                        project.color_scheme === 'red' || 
+                        project.color_scheme === 'orange' || 
+                        project.color_scheme === 'green' ||
+                        project.color_scheme === 'purple' ||
+                        project.color_scheme === 'indigo' ||
+                        project.color_scheme === 'pink' ||
+                        project.color_scheme === 'teal') 
+                        ? project.color_scheme as 'blue' | 'red' | 'orange' | 'green' | 'purple' | 'indigo' | 'pink' | 'teal'
+                        : null,
+          telegram_bot: project.telegram_bot || null,
+          description: projectData.description || null,
+          isShared: false
+        } as Project;
+      }) || [];
+      
+      // Transform shared projects
+      const typedSharedProjects = sharedProjectsWithOwners.map((item) => {
+        if (!item.project) return null;
+        
+        return {
+          id: item.project.id,
+          name: item.project.name,
+          url_name: item.project.url_name,
+          status: item.project.status,
+          landing_image: item.project.landing_image,
+          user_id: item.project.user_id,
+          created_at: item.project.created_at,
+          color_scheme: (item.project.color_scheme === 'blue' || 
+                        item.project.color_scheme === 'red' || 
+                        item.project.color_scheme === 'orange' || 
+                        item.project.color_scheme === 'green' ||
+                        item.project.color_scheme === 'purple' ||
+                        item.project.color_scheme === 'indigo' ||
+                        item.project.color_scheme === 'pink' ||
+                        item.project.color_scheme === 'teal') 
+                        ? item.project.color_scheme as 'blue' | 'red' | 'orange' | 'green' | 'purple' | 'indigo' | 'pink' | 'teal'
+                        : null,
+          telegram_bot: item.project.telegram_bot || null,
+          description: null,
+          isShared: true,
+          ownerEmail: item.ownerEmail,
+          shareRole: item.role
+        } as Project & { shareRole: string };
+      }).filter(Boolean) as (Project & { shareRole: string })[];
+
+      // Set the state for pending invitations
+      setPendingInvitations(pendingInvitationsWithEmails || []);
+      
+      setOwnedProjects(typedOwnedProjects);
+      setSharedProjects(typedSharedProjects);
+      setError(null);
+    } catch (error: any) {
+      console.error('Error fetching projects:', error);
+      setError(error?.message || 'Failed to load projects');
+      toast.error('Error', {
+        description: 'Failed to load projects: ' + (error?.message || 'Unknown error'),
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchProjects();
   }, [user]);
 
@@ -192,20 +244,55 @@ const Projects = () => {
     toast.success('Project URL has been copied to clipboard');
   };
 
-  // All projects (filtering happens in the UI)
-  const allProjects = [...ownedProjects, ...sharedProjects];
-  
-  // Filter projects based on search query and active tab
-  const filteredProjects = searchQuery 
-    ? allProjects.filter(project => 
+  // Combine projects based on active tab and search query
+  const getFilteredProjects = () => {
+    let projectsToFilter: any[] = [];
+    
+    // First select projects based on active tab
+    if (activeTab === 'owned') {
+      projectsToFilter = ownedProjects;
+    } else if (activeTab === 'shared') {
+      projectsToFilter = sharedProjects;
+    } else if (activeTab === 'pending') {
+      // Return no projects for pending tab - we'll display pendingInvitations separately
+      return [];
+    } else { // 'all'
+      projectsToFilter = [...ownedProjects, ...sharedProjects];
+    }
+    
+    // Then filter by search query if present
+    if (searchQuery) {
+      return projectsToFilter.filter(project => 
         project.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
         (project.description && project.description.toLowerCase().includes(searchQuery.toLowerCase()))
-      )
-    : activeTab === 'owned'
-      ? ownedProjects
-      : activeTab === 'shared'
-        ? sharedProjects
-        : allProjects;
+      );
+    } else {
+      return projectsToFilter;
+    }
+  };
+
+  // Get filtered pending invitations
+  const getFilteredInvitations = () => {
+    if (activeTab !== 'all' && activeTab !== 'pending') {
+      return [];
+    }
+    
+    if (searchQuery) {
+      return pendingInvitations.filter(invitation => 
+        invitation.project?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    } else {
+      return pendingInvitations;
+    }
+  };
+
+  const handleInvitationAction = () => {
+    // Refresh the projects and invitations after an accept/decline action
+    fetchProjects();
+  };
+
+  const filteredProjects = getFilteredProjects();
+  const filteredInvitations = getFilteredInvitations();
 
   if (!user) {
     return (
@@ -274,7 +361,7 @@ const Projects = () => {
             <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="mb-4">
                 <TabsTrigger value="all">
-                  {t('All Projects')} ({allProjects.length})
+                  {t('All')} ({ownedProjects.length + sharedProjects.length + pendingInvitations.length})
                 </TabsTrigger>
                 <TabsTrigger value="owned">
                   {t('My Projects')} ({ownedProjects.length})
@@ -283,6 +370,14 @@ const Projects = () => {
                   <Share2 className="h-4 w-4 mr-2" />
                   {t('Shared With Me')} ({sharedProjects.length})
                 </TabsTrigger>
+                {pendingInvitations.length > 0 && (
+                  <TabsTrigger value="pending" className="relative">
+                    {t('Invitations')} ({pendingInvitations.length})
+                    <span className="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
+                      {pendingInvitations.length}
+                    </span>
+                  </TabsTrigger>
+                )}
               </TabsList>
             </Tabs>
           </div>
@@ -313,50 +408,89 @@ const Projects = () => {
                 {t('Reload')}
               </Button>
             </div>
-          ) : filteredProjects.length === 0 ? (
-            <div className="text-center bg-gray-50 rounded-xl p-10 animate-fade-in">
-              {searchQuery ? (
-                <>
-                  <h3 className="text-xl font-semibold mb-4">{t('no.search.results', 'No projects match your search')}</h3>
-                  <p className="text-gray-600 mb-4">{t('try.different.search', 'Try different search terms or create a new project')}</p>
-                </>
-              ) : activeTab === 'shared' ? (
-                <>
-                  <h3 className="text-xl font-semibold mb-4">{t('No shared projects')}</h3>
-                  <p className="text-gray-600 mb-4">{t('No projects have been shared with you yet')}</p>
-                </>
-              ) : (
-                <>
-                  <h3 className="text-xl font-semibold mb-4">{t('no.projects')}</h3>
-                  <p className="text-gray-600 mb-4">{t('create.first.project', 'Create your first project to get started')}</p>
-                </>
-              )}
-              {activeTab !== 'shared' && (
-                <Button onClick={() => navigate('/create-project')} className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  {t('project.createNew', 'Create New Project')}
-                </Button>
-              )}
-            </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredProjects.map((project, index) => (
-                <div 
-                  key={project.id}
-                  className="animate-fade-in"
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
-                  <ProjectTile
-                    project={project}
-                    onCopyUrl={(urlName) => {
-                      const url = `${window.location.origin}/${urlName}`;
-                      navigator.clipboard.writeText(url);
-                      toast.success('Project URL has been copied to clipboard');
-                    }}
-                  />
+            <>
+              {/* Display pending invitations at the top if activeTab is 'all' or 'pending' */}
+              {filteredInvitations.length > 0 && (activeTab === 'all' || activeTab === 'pending') && (
+                <div className="mb-8">
+                  {activeTab === 'all' && (
+                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-blue-600">
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                      {t('Pending Invitations')}
+                    </h3>
+                  )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                    {filteredInvitations.map((invitation, index) => (
+                      <div 
+                        key={invitation.id}
+                        className="animate-fade-in"
+                        style={{ animationDelay: `${index * 100}ms` }}
+                      >
+                        <PendingInvitationTile 
+                          invitation={invitation} 
+                          onAcceptReject={handleInvitationAction} 
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  {activeTab === 'all' && <div className="border-b border-gray-200 my-8" />}
                 </div>
-              ))}
-            </div>
+              )}
+
+              {/* Display projects */}
+              {(activeTab !== 'pending' || filteredProjects.length > 0) ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredProjects.map((project, index) => (
+                    <div 
+                      key={project.id}
+                      className="animate-fade-in"
+                      style={{ animationDelay: `${index * 100}ms` }}
+                    >
+                      <ProjectTile
+                        project={project}
+                        onCopyUrl={handleCopyUrl}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                // For pending tab with no invitations or all tabs with no projects
+                (activeTab === 'pending' && filteredInvitations.length === 0) || 
+                (filteredProjects.length === 0 && filteredInvitations.length === 0) ? (
+                  <div className="text-center bg-gray-50 rounded-xl p-10 animate-fade-in">
+                    {searchQuery ? (
+                      <>
+                        <h3 className="text-xl font-semibold mb-4">{t('no.search.results', 'No projects match your search')}</h3>
+                        <p className="text-gray-600 mb-4">{t('try.different.search', 'Try different search terms or create a new project')}</p>
+                      </>
+                    ) : activeTab === 'pending' ? (
+                      <>
+                        <h3 className="text-xl font-semibold mb-4">{t('No pending invitations')}</h3>
+                        <p className="text-gray-600 mb-4">{t('You have no pending project invitations')}</p>
+                      </>
+                    ) : activeTab === 'shared' ? (
+                      <>
+                        <h3 className="text-xl font-semibold mb-4">{t('No shared projects')}</h3>
+                        <p className="text-gray-600 mb-4">{t('No projects have been shared with you yet')}</p>
+                      </>
+                    ) : (
+                      <>
+                        <h3 className="text-xl font-semibold mb-4">{t('no.projects')}</h3>
+                        <p className="text-gray-600 mb-4">{t('create.first.project', 'Create your first project to get started')}</p>
+                      </>
+                    )}
+                    {activeTab !== 'shared' && activeTab !== 'pending' && (
+                      <Button onClick={() => navigate('/create-project')} className="gap-2">
+                        <Plus className="h-4 w-4" />
+                        {t('project.createNew', 'Create New Project')}
+                      </Button>
+                    )}
+                  </div>
+                ) : null
+              )}
+            </>
           )}
         </div>
       </main>

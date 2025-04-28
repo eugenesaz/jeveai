@@ -33,15 +33,12 @@ export async function canUserPerformAction(
     }
 
     // Check if user has any of the allowed roles
-    console.log(`Checking if project ${projectId} is shared with user ${userId}`);
-    
-    // Direct query for project shares
     const { data: shareData, error: shareError } = await supabase
       .from('project_shares')
       .select('role')
       .eq('project_id', projectId)
       .eq('user_id', userId)
-      .eq('status', 'accepted')
+      .eq('status', 'accepted') // Only check accepted shares
       .maybeSingle();
 
     if (shareError) {
@@ -59,5 +56,94 @@ export async function canUserPerformAction(
   } catch (error) {
     console.error('Error checking user project permissions:', error);
     return false;
+  }
+}
+
+// New function to get all pending invitations for a user by email
+export async function getPendingInvitations(userEmail: string) {
+  if (!userEmail) return [];
+
+  try {
+    const { data, error } = await supabase
+      .from('project_shares')
+      .select(`
+        id,
+        role,
+        status,
+        project:project_id (
+          id,
+          name,
+          url_name,
+          status,
+          landing_image,
+          user_id,
+          created_at,
+          color_scheme,
+          telegram_bot
+        )
+      `)
+      .eq('invited_email', userEmail.toLowerCase())
+      .eq('status', 'pending');
+
+    if (error) {
+      console.error('Error fetching pending invitations:', error);
+      return [];
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error('Error in getPendingInvitations:', error);
+    return [];
+  }
+}
+
+// Function to accept a pending invitation
+export async function acceptInvitation(invitationId: string, userId: string) {
+  if (!invitationId || !userId) return { success: false, error: 'Missing required parameters' };
+
+  try {
+    const { error } = await supabase
+      .from('project_shares')
+      .update({ 
+        status: 'accepted',
+        user_id: userId, // Ensure the correct user ID is set
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', invitationId);
+
+    if (error) {
+      console.error('Error accepting invitation:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error in acceptInvitation:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Function to decline a pending invitation
+export async function declineInvitation(invitationId: string) {
+  if (!invitationId) return { success: false, error: 'Missing invitation ID' };
+
+  try {
+    const { error } = await supabase
+      .from('project_shares')
+      .update({ 
+        status: 'declined',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', invitationId);
+
+    if (error) {
+      console.error('Error declining invitation:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error in declineInvitation:', error);
+    return { success: false, error: error.message };
   }
 }

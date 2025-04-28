@@ -146,6 +146,9 @@ export const ShareProjectModal = ({
             throw updateError;
           }
           
+          // Send invitation email for the updated share
+          await sendInvitationEmail(existingShares[0].id, email.toLowerCase(), role);
+          
           toast.success(t('Invitation updated'), {
             description: t('Share permissions have been updated')
           });
@@ -156,40 +159,33 @@ export const ShareProjectModal = ({
         }
       }
       
-      // For users that don't exist yet
-      if (!userId) {
-        // Use a placeholder for invited users that don't exist in the system yet
-        // Store their email, and we'll match them up when they register
-        const { error: insertError } = await supabase
-          .from('project_shares')
-          .insert({
-            project_id: projectId,
-            user_id: user.id, // Temporarily use current user's ID as placeholder
-            role,
-            inviter_id: user.id,
-            invited_email: email.toLowerCase(),
-            status: 'pending'
-          });
-        
-        if (insertError) {
-          throw insertError;
-        }
-      } else {
-        // For existing users
-        const { error: insertError } = await supabase
-          .from('project_shares')
-          .insert({
-            project_id: projectId,
-            user_id: userId,
-            role,
-            inviter_id: user.id,
-            invited_email: email.toLowerCase(),
-            status: 'pending'
-          });
-        
-        if (insertError) {
-          throw insertError;
-        }
+      // For users that don't exist yet or existing users without shares
+      let newShareId;
+      
+      const insertData = {
+        project_id: projectId,
+        user_id: userId || user.id, // Temporarily use current user's ID as placeholder if no user exists
+        role,
+        inviter_id: user.id,
+        invited_email: email.toLowerCase(),
+        status: 'pending'
+      };
+
+      const { data: newShare, error: insertError } = await supabase
+        .from('project_shares')
+        .insert(insertData)
+        .select('id')
+        .single();
+      
+      if (insertError) {
+        throw insertError;
+      }
+      
+      newShareId = newShare?.id;
+      
+      // Send invitation email
+      if (newShareId) {
+        await sendInvitationEmail(newShareId, email.toLowerCase(), role);
       }
       
       toast.success(t('Invitation sent'), {
@@ -205,6 +201,50 @@ export const ShareProjectModal = ({
       });
     } finally {
       setSendingInvite(false);
+    }
+  };
+
+  const sendInvitationEmail = async (invitationId: string, recipientEmail: string, role: string) => {
+    try {
+      const appUrl = window.location.origin;
+      
+      // Fetch the inviter's profile to get their email
+      const { data: inviterProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', user?.id)
+        .single();
+
+      if (profileError) {
+        console.error('Error fetching inviter profile:', profileError);
+      }
+
+      const inviterEmail = inviterProfile?.email || user?.email || '';
+
+      const response = await fetch(`${appUrl}/api/send-invitation`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabase.auth.session()?.access_token || ''}`,
+        },
+        body: JSON.stringify({
+          inviterEmail,
+          recipientEmail,
+          projectName,
+          projectId,
+          role,
+          invitationId,
+          appUrl
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to send email');
+      }
+    } catch (error: any) {
+      console.error('Error sending invitation email:', error);
+      // Don't show error toast here as it's not critical to the sharing process
     }
   };
 
