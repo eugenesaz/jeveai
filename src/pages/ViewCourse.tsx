@@ -93,12 +93,14 @@ export default function ViewCourse() {
 
   // Check permissions for conversations
   useEffect(() => {
-    if (id) {
+    if (id && user) {
       canAccessConversations(id).then(canAccess => {
         setCanViewConversations(canAccess);
       });
+    } else {
+      setCanViewConversations(false);
     }
-  }, [id]);
+  }, [id, user, enrollment]);
 
   // Check if there's an active subscription
   const hasActiveSubscription = enrollment?.subscriptions?.some(sub => 
@@ -160,9 +162,26 @@ export default function ViewCourse() {
   const shouldShowSubscriptionButton = !hasActiveSubscription;
 
   // Determine if telegram instructions should be shown
-  // Only show if course has telegram bot AND user has a telegram username set
-  const shouldShowTelegramInstructions = course.telegram_bot && userTelegram;
-  const needsTelegramUsername = course.telegram_bot && !userTelegram && user;
+  // Only show if:
+  // 1. Course has telegram bot AND
+  // 2. User has an active subscription AND
+  // 3. User has a telegram username set
+  const shouldShowTelegramInstructions = 
+    course.telegram_bot && 
+    hasActiveSubscription && 
+    userTelegram;
+
+  // Determine if the telegram username prompt should be shown
+  // Only show if:
+  // 1. Course has telegram bot AND
+  // 2. User has an active subscription AND
+  // 3. User does NOT have a telegram username set AND
+  // 4. User is logged in
+  const needsTelegramUsername = 
+    course.telegram_bot && 
+    hasActiveSubscription && 
+    !userTelegram && 
+    user;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -281,8 +300,8 @@ export default function ViewCourse() {
                   </div>
                 )}
 
-                {/* Conversations button based on permissions */}
-                {canViewConversations && (
+                {/* Only show conversations button to users with appropriate permissions */}
+                {canViewConversations && hasActiveSubscription && (
                   <Button
                     onClick={() => navigate(`/conversations/${course.id}`)}
                     className="w-full mb-4 bg-indigo-100 text-indigo-700 hover:bg-indigo-200"

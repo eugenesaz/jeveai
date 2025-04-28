@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ProjectRole } from '@/types/supabase';
 
@@ -65,9 +64,13 @@ export async function canViewCourses(projectId: string): Promise<boolean> {
 /**
  * Check if user can access conversations for a course
  * First determines the project ID from the course, then checks permissions
+ * Also verifies the user has an active subscription to the course
  */
 export async function canAccessConversations(courseId: string): Promise<boolean> {
   try {
+    const user = (await supabase.auth.getUser()).data.user;
+    if (!user) return false;
+    
     // Get the project ID from the course
     const { data: course, error } = await supabase
       .from('courses')
@@ -80,7 +83,40 @@ export async function canAccessConversations(courseId: string): Promise<boolean>
       return false;
     }
     
-    return checkProjectPermission(course.project_id, ['owner', 'contributor', 'read_only', 'knowledge_manager']);
+    // Check if the user has project permissions
+    const hasProjectPermission = await checkProjectPermission(
+      course.project_id, 
+      ['owner', 'contributor', 'read_only', 'knowledge_manager']
+    );
+    
+    // If they have project permissions, they can view conversations
+    if (hasProjectPermission) return true;
+    
+    // Otherwise, check if they have an active subscription to this course
+    const { data: enrollment, error: enrollmentError } = await supabase
+      .from('enrollments')
+      .select(`
+        id,
+        subscriptions(
+          id,
+          begin_date,
+          end_date,
+          is_paid
+        )
+      `)
+      .eq('user_id', user.id)
+      .eq('course_id', courseId)
+      .single();
+      
+    if (enrollmentError || !enrollment) return false;
+    
+    // Check if any subscription is active
+    const now = new Date();
+    const hasActiveSubscription = enrollment.subscriptions?.some(sub => {
+      return sub.is_paid && (!sub.end_date || new Date(sub.end_date) > now);
+    });
+    
+    return !!hasActiveSubscription;
   } catch (error) {
     console.error('Exception checking conversation access:', error);
     return false;
