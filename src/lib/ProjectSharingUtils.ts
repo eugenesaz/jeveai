@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ProjectRole } from '@/types/supabase';
 
@@ -14,45 +13,22 @@ export async function canUserPerformAction(
       return false;
     }
 
-    // Check if user is the project owner
-    const { data: projectData, error: projectError } = await supabase
-      .from('projects')
-      .select('user_id')
-      .eq('id', projectId)
-      .single();
+    // Use the database function to check project access with roles
+    const { data, error } = await supabase.rpc(
+      'check_project_access',
+      {
+        p_user_id: userId,
+        p_project_id: projectId,
+        p_roles: allowedRoles.map(role => role.toString())
+      }
+    );
 
-    if (projectError) {
-      console.error('Error checking project ownership:', projectError);
+    if (error) {
+      console.error('Error checking project permissions:', error);
       return false;
     }
 
-    // Project owners can do anything
-    if (projectData && projectData.user_id === userId) {
-      console.log('User is project owner, granting access');
-      return true;
-    }
-
-    // Check if user has any of the allowed roles
-    const { data: shareData, error: shareError } = await supabase
-      .from('project_shares')
-      .select('role')
-      .eq('project_id', projectId)
-      .eq('user_id', userId)
-      .eq('status', 'accepted') // Only check accepted shares
-      .maybeSingle();
-
-    if (shareError) {
-      console.error('Error checking share permissions:', shareError);
-      return false;
-    }
-
-    if (shareData && allowedRoles.includes(shareData.role as ProjectRole)) {
-      console.log(`User has role ${shareData.role}, which is included in allowed roles:`, allowedRoles);
-      return true;
-    }
-    
-    console.log(`User role ${shareData?.role} not in allowed roles or no share found`);
-    return false;
+    return data || false;
   } catch (error) {
     console.error('Error checking user project permissions:', error);
     return false;

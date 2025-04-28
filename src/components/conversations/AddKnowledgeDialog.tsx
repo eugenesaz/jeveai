@@ -6,34 +6,47 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from '@/hooks/use-toast';
 import { addKnowledge } from '@/lib/KnowledgeUtils';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AddKnowledgeDialogProps {
   courseId: string;
   onKnowledgeAdded?: () => void;
+  projectId?: string; // Optional project ID for direct knowledge addition
 }
 
-export function AddKnowledgeDialog({ courseId, onKnowledgeAdded }: AddKnowledgeDialogProps) {
+export function AddKnowledgeDialog({ courseId, projectId, onKnowledgeAdded }: AddKnowledgeDialogProps) {
   const [open, setOpen] = useState(false);
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!content.trim()) return;
+    if (!content.trim() || !user) return;
 
     setIsSubmitting(true);
     try {
-      const { data: courseData, error: courseError } = await supabase
-        .from('courses')
-        .select('project_id')
-        .eq('id', courseId)
-        .single();
+      // If projectId is provided directly, use it; otherwise get it from the course
+      let targetProjectId = projectId;
+      
+      if (!targetProjectId && courseId) {
+        const { data: courseData, error: courseError } = await supabase
+          .from('courses')
+          .select('project_id')
+          .eq('id', courseId)
+          .single();
 
-      if (courseError) throw courseError;
+        if (courseError) throw courseError;
+        targetProjectId = courseData.project_id;
+      }
+
+      if (!targetProjectId) {
+        throw new Error("Project ID not available");
+      }
 
       // Using webhook to add knowledge - never direct insertion
-      await addKnowledge(courseData.project_id, content.trim());
+      await addKnowledge(targetProjectId, content.trim());
 
       toast({
         title: "Knowledge added successfully",

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,12 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/components/ui/use-toast';
 import { Spinner } from '@/components/ui/spinner';
-import { ProjectKnowledge, Project } from '@/types/supabase';
+import { ProjectKnowledge, Project, ProjectRole } from '@/types/supabase';
 import { Trash2, Plus } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { ProfileButton } from '@/components/profile/ProfileButton';
 import { addKnowledge, fetchProjectKnowledge } from '@/lib/KnowledgeUtils';
 import { Textarea } from '@/components/ui/textarea';
+import { canUserPerformAction } from '@/lib/ProjectSharingUtils';
 
 const ManageKnowledge = () => {
   const { t } = useTranslation();
@@ -27,17 +29,18 @@ const ManageKnowledge = () => {
   const [newKnowledgeContent, setNewKnowledgeContent] = useState('');
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [userCanEdit, setUserCanEdit] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       if (!user || !id) return;
 
       try {
+        // Check if project exists and who can access it (owner OR shared)
         const { data: projectData, error: projectError } = await supabase
           .from('projects')
           .select('*')
           .eq('id', id)
-          .eq('user_id', user.id)
           .single();
 
         if (projectError) {
@@ -83,6 +86,16 @@ const ManageKnowledge = () => {
         };
         
         setProject(typedProject);
+
+        // Check if the current user can edit knowledge (owner, contributor, or knowledge_manager)
+        const canEdit = await canUserPerformAction(
+          user.id, 
+          id, 
+          ['owner', 'contributor', 'knowledge_manager'] as ProjectRole[]
+        );
+        
+        setUserCanEdit(canEdit);
+        console.log('User can edit knowledge:', canEdit);
 
         try {
           console.log(`Fetching knowledge data for project ${id}`);
@@ -153,7 +166,7 @@ const ManageKnowledge = () => {
   };
 
   const handleDeleteKnowledge = async (knowledgeId: number) => {
-    if (!user || !id) return;
+    if (!user || !id || !userCanEdit) return;
 
     setDeleting(knowledgeId.toString());
     try {
@@ -235,10 +248,12 @@ const ManageKnowledge = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>{t('project.knowledge', { defaultValue: 'Knowledge' })}</CardTitle>
-            <Button onClick={() => setIsAddingKnowledge(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              {t('project.addKnowledge', { defaultValue: 'Add Knowledge' })}
-            </Button>
+            {userCanEdit && (
+              <Button onClick={() => setIsAddingKnowledge(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                {t('project.addKnowledge', { defaultValue: 'Add Knowledge' })}
+              </Button>
+            )}
           </CardHeader>
           <CardContent>
             {knowledge.length === 0 ? (
@@ -257,20 +272,22 @@ const ManageKnowledge = () => {
                             {new Date(item.created_at).toLocaleString()}
                           </div>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-500 hover:text-red-700"
-                          onClick={() => handleDeleteKnowledge(item.id)}
-                          disabled={deleting === item.id.toString()}
-                          aria-label={t('delete', { defaultValue: 'Delete' })}
-                        >
-                          {deleting === item.id.toString() ? (
-                            <Spinner className="h-4 w-4" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
-                        </Button>
+                        {userCanEdit && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-500 hover:text-red-700"
+                            onClick={() => handleDeleteKnowledge(item.id)}
+                            disabled={deleting === item.id.toString()}
+                            aria-label={t('delete', { defaultValue: 'Delete' })}
+                          >
+                            {deleting === item.id.toString() ? (
+                              <Spinner className="h-4 w-4" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </Button>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -286,7 +303,7 @@ const ManageKnowledge = () => {
           <DialogHeader>
             <DialogTitle>{t('project.addKnowledge', { defaultValue: 'Add Knowledge' })}</DialogTitle>
             <DialogDescription>
-              Add text knowledge to your project.
+              Add new knowledge to help improve AI responses. Maximum length is supported.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">

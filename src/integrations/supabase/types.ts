@@ -425,6 +425,10 @@ export type Database = {
         Args: { email_to_check: string }
         Returns: boolean
       }
+      check_project_access: {
+        Args: { p_user_id: string; p_project_id: string; p_roles: string[] }
+        Returns: boolean
+      }
       check_project_role: {
         Args: {
           user_uuid: string
