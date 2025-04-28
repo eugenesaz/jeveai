@@ -56,7 +56,9 @@ const Dashboard = () => {
               color_scheme,
               telegram_bot
             ),
-            owner:projects!project_id(user_id(email:profiles!user_id(email)))
+            projects:project_id (
+              owner_email:profiles!projects_user_id_fkey(email)
+            )
           `)
           .eq('user_id', user.id)
           .eq('status', 'accepted');
@@ -99,8 +101,9 @@ const Dashboard = () => {
           // Get owner email from nested query result
           let ownerEmail = null;
           try {
-            if (share.owner && share.owner.user_id && share.owner.user_id.email) {
-              ownerEmail = share.owner.user_id.email;
+            // Safely access the owner email with error handling
+            if (share.projects && share.projects.owner_email) {
+              ownerEmail = share.projects.owner_email;
             }
           } catch (e) {
             console.error('Error parsing owner email:', e);
