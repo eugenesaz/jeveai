@@ -38,14 +38,14 @@ const Dashboard = () => {
         if (ownedError) throw ownedError;
         console.log('Owned projects data:', ownedData);
         
-        // Fetch shared projects
+        // Fetch shared projects with corrected query
         const { data: sharedData, error: sharedError } = await supabase
           .from('project_shares')
           .select(`
             id,
             role,
             status,
-            projects (
+            project:project_id (
               id,
               name,
               url_name,
@@ -56,9 +56,7 @@ const Dashboard = () => {
               color_scheme,
               telegram_bot
             ),
-            profiles:projects.user_id (
-              email
-            )
+            owner:projects!project_id(user_id(email:profiles!user_id(email)))
           `)
           .eq('user_id', user.id)
           .eq('status', 'accepted');
@@ -92,11 +90,21 @@ const Dashboard = () => {
           } as Project;
         }) || [];
         
-        // Transform shared projects
+        // Transform shared projects with adjusted object structure
         const typedSharedProjects = sharedData?.map(share => {
-          const project = share.projects as any;
+          const project = share.project;
           
           if (!project) return null;
+          
+          // Get owner email from nested query result
+          let ownerEmail = null;
+          try {
+            if (share.owner && share.owner.user_id && share.owner.user_id.email) {
+              ownerEmail = share.owner.user_id.email;
+            }
+          } catch (e) {
+            console.error('Error parsing owner email:', e);
+          }
           
           return {
             id: project.id,
@@ -117,9 +125,9 @@ const Dashboard = () => {
                           ? project.color_scheme as 'blue' | 'red' | 'orange' | 'green' | 'purple' | 'indigo' | 'pink' | 'teal'
                           : null,
             telegram_bot: project.telegram_bot || null,
-            description: project.description || null,
+            description: null,
             isShared: true,
-            ownerEmail: share.profiles?.email || null,
+            ownerEmail: ownerEmail,
             shareRole: share.role
           } as Project & { shareRole: string };
         }).filter(Boolean) || [];
