@@ -422,34 +422,28 @@ const Projects = () => {
                 </div>
               )}
 
-              {activeTab !== 'pending' || filteredProjects.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredProjects.map((project, index) => (
-                    <div 
-                      key={project.id}
-                      className="animate-fade-in"
-                      style={{ animationDelay: `${index * 100}ms` }}
-                    >
-                      <ProjectTile
-                        project={project}
-                        onCopyUrl={handleCopyUrl}
-                      />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                (activeTab === 'pending' && filteredInvitations.length === 0) || 
-                (filteredProjects.length === 0 && filteredInvitations.length === 0) ? (
+              {activeTab !== 'pending' ? (
+                filteredProjects.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredProjects.map((project, index) => (
+                      <div 
+                        key={project.id}
+                        className="animate-fade-in"
+                        style={{ animationDelay: `${index * 100}ms` }}
+                      >
+                        <ProjectTile
+                          project={project}
+                          onCopyUrl={handleCopyUrl}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
                   <div className="text-center bg-gray-50 rounded-xl p-10 animate-fade-in">
                     {searchQuery ? (
                       <>
                         <h3 className="text-xl font-semibold mb-4">{t('no.search.results', 'No projects match your search')}</h3>
                         <p className="text-gray-600 mb-4">{t('try.different.search', 'Try different search terms or create a new project')}</p>
-                      </>
-                    ) : activeTab === 'pending' ? (
-                      <>
-                        <h3 className="text-xl font-semibold mb-4">{t('No pending invitations')}</h3>
-                        <p className="text-gray-600 mb-4">{t('You have no pending project invitations')}</p>
                       </>
                     ) : activeTab === 'shared' ? (
                       <>
@@ -462,14 +456,21 @@ const Projects = () => {
                         <p className="text-gray-600 mb-4">{t('create.first.project', 'Create your first project to get started')}</p>
                       </>
                     )}
-                    {activeTab !== 'shared' && activeTab !== 'pending' && (
+                    {activeTab !== 'shared' && (
                       <Button onClick={() => navigate('/create-project')} className="gap-2">
                         <Plus className="h-4 w-4" />
                         {t('project.createNew', 'Create New Project')}
                       </Button>
                     )}
                   </div>
-                ) : null
+                )
+              ) : (
+                filteredInvitations.length === 0 && (
+                  <div className="text-center bg-gray-50 rounded-xl p-10 animate-fade-in">
+                    <h3 className="text-xl font-semibold mb-4">{t('No pending invitations')}</h3>
+                    <p className="text-gray-600 mb-4">{t('You have no pending project invitations')}</p>
+                  </div>
+                )
               )}
             </>
           )}
