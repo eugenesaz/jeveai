@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,16 +20,19 @@ const Dashboard = () => {
   const [sharedProjects, setSharedProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all'); // 'all', 'owned', 'shared'
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProjects = async () => {
       if (!user) return;
+      
+      setLoading(true);
+      setError(null);
+      
       try {
         console.log('Fetching projects for user ID:', user.id);
-        setLoading(true);
         
         // Fetch owned projects directly, avoiding RLS recursion
-        // We don't need to filter by user_id as RLS will do that
         const { data: ownedData, error: ownedError } = await supabase
           .from('projects')
           .select('*');
@@ -86,9 +88,11 @@ const Dashboard = () => {
                     .from('profiles')
                     .select('email')
                     .eq('id', project.user_id)
-                    .single();
+                    .maybeSingle();
                   
-                  if (!ownerError && ownerData) {
+                  if (ownerError) {
+                    console.error('Error fetching owner email:', ownerError);
+                  } else if (ownerData) {
                     ownerEmail = ownerData.email;
                   }
                 }
@@ -162,10 +166,12 @@ const Dashboard = () => {
 
         setOwnedProjects(typedOwnedProjects);
         setSharedProjects(typedSharedProjects);
-      } catch (error) {
+        setError(null);
+      } catch (error: any) {
         console.error('Error fetching projects:', error);
+        setError(error?.message || 'Failed to load projects');
         toast.error('Error', {
-          description: 'Failed to load projects',
+          description: 'Failed to load projects: ' + (error?.message || 'Unknown error'),
         });
       } finally {
         setLoading(false);
@@ -267,6 +273,17 @@ const Dashboard = () => {
             {loading ? (
               <div className="flex justify-center items-center h-40">
                 <p>{t('loading')}</p>
+              </div>
+            ) : error ? (
+              <div className="text-center bg-red-50 rounded-xl p-10 animate-fade-in">
+                <h3 className="text-xl font-semibold mb-4 text-red-600">{t('Error loading projects')}</h3>
+                <p className="text-gray-600 mb-4">{error}</p>
+                <Button onClick={() => window.location.reload()} className="gap-2">
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  {t('Reload')}
+                </Button>
               </div>
             ) : ownedProjects.length === 0 && sharedProjects.length === 0 ? (
               <Card className="border-dashed border-2 border-gray-300 bg-gray-50 animate-fade-in">
