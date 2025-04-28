@@ -18,8 +18,7 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { formatDate, isSubscriptionActive } from '@/utils/subscriptionUtils';
-import { MessageSquare, ArrowLeft, Eye } from 'lucide-react';
-import { canAccessConversations } from '@/utils/permissionUtils';
+import { MessageSquare, ArrowLeft } from 'lucide-react';
 import { TelegramPrompt } from '@/components/courses/TelegramPrompt';
 
 export default function ViewCourse() {
@@ -28,7 +27,6 @@ export default function ViewCourse() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
-  const [canViewConversations, setCanViewConversations] = useState(false);
   const [userTelegram, setUserTelegram] = useState<string | null>(null);
   const [isLoadingTelegram, setIsLoadingTelegram] = useState(true);
 
@@ -90,17 +88,6 @@ export default function ViewCourse() {
     
     fetchUserTelegram();
   }, [user]);
-
-  // Check permissions for conversations
-  useEffect(() => {
-    if (id && user) {
-      canAccessConversations(id).then(canAccess => {
-        setCanViewConversations(canAccess);
-      });
-    } else {
-      setCanViewConversations(false);
-    }
-  }, [id, user, enrollment]);
 
   // Check if there's an active subscription
   const hasActiveSubscription = enrollment?.subscriptions?.some(sub => 
@@ -298,18 +285,6 @@ export default function ViewCourse() {
                       <li>{t('course.telegram_step4', 'Follow the bot instructions')}</li>
                     </ol>
                   </div>
-                )}
-
-                {/* Only show conversations button to users with appropriate permissions */}
-                {canViewConversations && hasActiveSubscription && (
-                  <Button
-                    onClick={() => navigate(`/conversations/${course.id}`)}
-                    className="w-full mb-4 bg-indigo-100 text-indigo-700 hover:bg-indigo-200"
-                    variant="outline"
-                  >
-                    <Eye className="w-4 h-4 mr-2" />
-                    {t('view.conversations', 'View Conversations')}
-                  </Button>
                 )}
 
                 {shouldShowSubscriptionButton && (
