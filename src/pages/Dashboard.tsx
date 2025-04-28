@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -32,10 +31,13 @@ const Dashboard = () => {
         const { data: ownedData, error: ownedError } = await supabase
           .from('projects')
           .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
+          .eq('user_id', user.id);
 
-        if (ownedError) throw ownedError;
+        if (ownedError) {
+          console.error('Error fetching owned projects:', ownedError);
+          throw ownedError;
+        }
+        
         console.log('Owned projects data:', ownedData);
         
         // Fetch shared projects with corrected query
@@ -55,16 +57,50 @@ const Dashboard = () => {
               created_at,
               color_scheme,
               telegram_bot
-            ),
-            projects:project_id (
-              owner_email:profiles!projects_user_id_fkey(email)
             )
           `)
           .eq('user_id', user.id)
           .eq('status', 'accepted');
         
-        if (sharedError) throw sharedError;
+        if (sharedError) {
+          console.error('Error fetching shared projects:', sharedError);
+          throw sharedError;
+        }
+
         console.log('Shared projects data:', sharedData);
+
+        // For each shared project, fetch the owner's email separately
+        const sharedProjectsWithOwners = await Promise.all(
+          sharedData
+            .filter(share => share.project) // Filter out any null projects
+            .map(async (share) => {
+              const project = share.project;
+              let ownerEmail = null;
+              
+              try {
+                // Fetch owner's email directly using the project's user_id
+                if (project && project.user_id) {
+                  const { data: ownerData, error: ownerError } = await supabase
+                    .from('profiles')
+                    .select('email')
+                    .eq('id', project.user_id)
+                    .single();
+                  
+                  if (!ownerError && ownerData) {
+                    ownerEmail = ownerData.email;
+                  }
+                }
+              } catch (e) {
+                console.error('Error fetching owner email:', e);
+              }
+              
+              return {
+                project,
+                shareRole: share.role,
+                ownerEmail
+              };
+            })
+        );
 
         const typedOwnedProjects = ownedData?.map(project => {
           const projectData = project as any;
@@ -93,21 +129,8 @@ const Dashboard = () => {
         }) || [];
         
         // Transform shared projects with adjusted object structure
-        const typedSharedProjects = sharedData?.map(share => {
-          const project = share.project;
-          
+        const typedSharedProjects = sharedProjectsWithOwners.map(({ project, shareRole, ownerEmail }) => {
           if (!project) return null;
-          
-          // Get owner email from nested query result
-          let ownerEmail = null;
-          try {
-            // Safely access the owner email with error handling
-            if (share.projects && share.projects.owner_email) {
-              ownerEmail = share.projects.owner_email;
-            }
-          } catch (e) {
-            console.error('Error parsing owner email:', e);
-          }
           
           return {
             id: project.id,
@@ -118,22 +141,22 @@ const Dashboard = () => {
             user_id: project.user_id,
             created_at: project.created_at,
             color_scheme: (project.color_scheme === 'blue' || 
-                          project.color_scheme === 'red' || 
-                          project.color_scheme === 'orange' || 
-                          project.color_scheme === 'green' ||
-                          project.color_scheme === 'purple' ||
-                          project.color_scheme === 'indigo' ||
-                          project.color_scheme === 'pink' ||
-                          project.color_scheme === 'teal') 
-                          ? project.color_scheme as 'blue' | 'red' | 'orange' | 'green' | 'purple' | 'indigo' | 'pink' | 'teal'
-                          : null,
+                         project.color_scheme === 'red' || 
+                         project.color_scheme === 'orange' || 
+                         project.color_scheme === 'green' ||
+                         project.color_scheme === 'purple' ||
+                         project.color_scheme === 'indigo' ||
+                         project.color_scheme === 'pink' ||
+                         project.color_scheme === 'teal') 
+                         ? project.color_scheme as 'blue' | 'red' | 'orange' | 'green' | 'purple' | 'indigo' | 'pink' | 'teal'
+                         : null,
             telegram_bot: project.telegram_bot || null,
             description: null,
             isShared: true,
             ownerEmail: ownerEmail,
-            shareRole: share.role
+            shareRole: shareRole
           } as Project & { shareRole: string };
-        }).filter(Boolean) || [];
+        }).filter(Boolean) as (Project & { shareRole: string })[];
 
         setOwnedProjects(typedOwnedProjects);
         setSharedProjects(typedSharedProjects);
@@ -231,7 +254,7 @@ const Dashboard = () => {
             <div className="flex justify-between items-center mb-8 animate-fade-in">
               <h2 className="text-2xl font-bold">{t('influencer.dashboard.projects')}</h2>
               <Button 
-                onClick={handleCreateProject} 
+                onClick={() => navigate('/create-project')} 
                 className="group transition-all duration-300 bg-primary hover:bg-primary/90"
               >
                 <Plus className="h-4 w-4 mr-2 transition-transform group-hover:scale-110" />
@@ -250,7 +273,7 @@ const Dashboard = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                   </svg>
                   <p className="text-lg text-gray-600 mb-4">{t('no.projects')}</p>
-                  <Button onClick={handleCreateProject} className="gap-2">
+                  <Button onClick={() => navigate('/create-project')} className="gap-2">
                     <Plus className="h-4 w-4" />
                     {t('influencer.project.createNew')}
                   </Button>
@@ -284,7 +307,13 @@ const Dashboard = () => {
                     >
                       <ProjectTile
                         project={project}
-                        onCopyUrl={handleCopyUrl}
+                        onCopyUrl={(urlName) => {
+                          const url = `${window.location.origin}/${urlName}`;
+                          navigator.clipboard.writeText(url);
+                          toast.success('URL Copied', {
+                            description: 'Project URL has been copied to clipboard',
+                          });
+                        }}
                       />
                     </div>
                   ))}

@@ -39,6 +39,7 @@ const Projects = () => {
           .eq('user_id', user.id);
 
         if (ownedError) {
+          console.error('Error fetching owned projects:', ownedError);
           throw ownedError;
         }
 
@@ -61,19 +62,50 @@ const Projects = () => {
               created_at,
               color_scheme,
               telegram_bot
-            ),
-            projects:project_id (
-              owner_email:profiles!projects_user_id_fkey(email)
             )
           `)
           .eq('user_id', user.id)
           .eq('status', 'accepted');
         
         if (sharedError) {
+          console.error('Error fetching shared projects:', sharedError);
           throw sharedError;
         }
 
         console.log('Shared projects data:', sharedData);
+        
+        // For each shared project, fetch the owner's email separately
+        const sharedProjectsWithOwners = await Promise.all(
+          sharedData
+            .filter(share => share.project) // Filter out any null projects
+            .map(async (share) => {
+              const project = share.project;
+              let ownerEmail = null;
+              
+              try {
+                // Fetch owner's email directly using the project's user_id
+                if (project && project.user_id) {
+                  const { data: ownerData, error: ownerError } = await supabase
+                    .from('profiles')
+                    .select('email')
+                    .eq('id', project.user_id)
+                    .single();
+                  
+                  if (!ownerError && ownerData) {
+                    ownerEmail = ownerData.email;
+                  }
+                }
+              } catch (e) {
+                console.error('Error fetching owner email:', e);
+              }
+              
+              return {
+                project,
+                shareRole: share.role,
+                ownerEmail
+              };
+            })
+        );
         
         // Transform owned projects
         const typedOwnedProjects = ownedData?.map(project => {
@@ -104,21 +136,8 @@ const Projects = () => {
         }) || [];
         
         // Transform shared projects
-        const typedSharedProjects = sharedData?.map(share => {
-          const project = share.project;
-          
+        const typedSharedProjects = sharedProjectsWithOwners.map(({ project, shareRole, ownerEmail }) => {
           if (!project) return null;
-          
-          // Get owner email from nested query result
-          let ownerEmail = null;
-          try {
-            // Safely access the owner email with error handling
-            if (share.projects && share.projects.owner_email) {
-              ownerEmail = share.projects.owner_email;
-            }
-          } catch (e) {
-            console.error('Error parsing owner email:', e);
-          }
           
           return {
             id: project.id,
@@ -142,9 +161,9 @@ const Projects = () => {
             description: null,
             isShared: true,
             ownerEmail: ownerEmail,
-            shareRole: share.role
+            shareRole: shareRole
           } as Project & { shareRole: string };
-        }).filter(Boolean) || [];
+        }).filter(Boolean) as (Project & { shareRole: string })[];
         
         setOwnedProjects(typedOwnedProjects);
         setSharedProjects(typedSharedProjects);
@@ -310,7 +329,11 @@ const Projects = () => {
                 >
                   <ProjectTile
                     project={project}
-                    onCopyUrl={handleCopyUrl}
+                    onCopyUrl={(urlName) => {
+                      const url = `${window.location.origin}/${urlName}`;
+                      navigator.clipboard.writeText(url);
+                      toast.success('Project URL has been copied to clipboard');
+                    }}
                   />
                 </div>
               ))}
