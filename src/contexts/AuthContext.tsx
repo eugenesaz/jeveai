@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { UserRole, Profile } from '@/types/supabase';
 import { toast } from '@/components/ui/use-toast';
 import { isGoogleUser, getRedirectUrl, checkAndFixSupabaseConfig } from '@/lib/AuthUtils';
+import { createUserProfile } from '@/lib/ProfileUtils';
 
 type AuthContextType = {
   session: Session | null;
@@ -43,16 +44,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         const telegramFromOAuth = oauthData?.telegram || null;
         
-        // Using RPC to bypass RLS - this ensures that the profile can be created
-        const { error: insertError } = await supabase.rpc('create_user_profile', {
-          user_id: userId,
-          user_email: email || '',
-          user_role: defaultRole,
-          user_telegram: telegramFromOAuth
-        });
+        // Use createUserProfile instead of RPC
+        const success = await createUserProfile(
+          userId,
+          email || '',
+          defaultRole,
+          telegramFromOAuth
+        );
         
-        if (insertError) {
-          console.error('Error creating profile with RPC:', insertError);
+        if (!success) {
+          console.error('Error creating profile');
           
           // Fallback to direct insert with service role (if available)
           try {

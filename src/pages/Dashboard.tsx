@@ -138,34 +138,36 @@ const Dashboard = () => {
         }) || [];
         
         // Transform shared projects with adjusted object structure
-        const typedSharedProjects = sharedProjectsWithOwners.map(({ project, shareRole, ownerEmail }) => {
-          if (!project) return null;
-          
-          return {
-            id: project.id,
-            name: project.name,
-            url_name: project.url_name,
-            status: project.status,
-            landing_image: project.landing_image,
-            user_id: project.user_id,
-            created_at: project.created_at,
-            color_scheme: (project.color_scheme === 'blue' || 
-                         project.color_scheme === 'red' || 
-                         project.color_scheme === 'orange' || 
-                         project.color_scheme === 'green' ||
-                         project.color_scheme === 'purple' ||
-                         project.color_scheme === 'indigo' ||
-                         project.color_scheme === 'pink' ||
-                         project.color_scheme === 'teal') 
-                         ? project.color_scheme as 'blue' | 'red' | 'orange' | 'green' | 'purple' | 'indigo' | 'pink' | 'teal'
-                         : null,
-            telegram_bot: project.telegram_bot || null,
-            description: null,
-            isShared: true,
-            ownerEmail: ownerEmail,
-            shareRole: shareRole
-          } as Project & { shareRole: string };
-        }).filter(Boolean) as (Project & { shareRole: string })[];
+        const typedSharedProjects = sharedProjectsWithOwners
+          .filter(Boolean)
+          .map(({ project, shareRole, ownerEmail }) => {
+            if (!project) return null;
+            
+            return {
+              id: project.id,
+              name: project.name,
+              url_name: project.url_name,
+              status: project.status,
+              landing_image: project.landing_image,
+              user_id: project.user_id,
+              created_at: project.created_at,
+              color_scheme: (project.color_scheme === 'blue' || 
+                           project.color_scheme === 'red' || 
+                           project.color_scheme === 'orange' || 
+                           project.color_scheme === 'green' ||
+                           project.color_scheme === 'purple' ||
+                           project.color_scheme === 'indigo' ||
+                           project.color_scheme === 'pink' ||
+                           project.color_scheme === 'teal') 
+                           ? project.color_scheme as 'blue' | 'red' | 'orange' | 'green' | 'purple' | 'indigo' | 'pink' | 'teal'
+                           : null,
+              telegram_bot: project.telegram_bot || null,
+              description: null,
+              isShared: true,
+              ownerEmail: ownerEmail,
+              shareRole: shareRole
+            } as Project & { shareRole: string };
+          }).filter(Boolean) as (Project & { shareRole: string })[];
 
         setOwnedProjects(typedOwnedProjects);
         setSharedProjects(typedSharedProjects);

@@ -72,3 +72,9 @@ file = "20250421_add_project_knowledge_direct_function.sql"
 
 [[migrations]]
 file = "20250425_create_enrollment_function.sql"
+
+[[migrations]]
+file = "20250425_modify_enrollments_unique_key.sql"
+
+[[migrations]]
+file = "20250428_add_profile_creation_trigger.sql"

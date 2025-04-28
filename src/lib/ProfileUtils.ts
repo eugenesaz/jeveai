@@ -12,6 +12,11 @@ export const createUserProfile = async (
   telegramHandle: string | null = null
 ): Promise<boolean> => {
   try {
+    if (!userId) {
+      console.error('Cannot create profile without userId');
+      return false;
+    }
+
     // First check if profile already exists to avoid duplicates
     const { data: existingProfile, error: checkError } = await supabase
       .from('profiles')
@@ -30,7 +35,7 @@ export const createUserProfile = async (
       return true;
     }
 
-    // Try using direct insert (works if user is authenticated and RLS allows it)
+    // Try using direct insert with explicit values
     const { error: insertError } = await supabase
       .from('profiles')
       .insert({
@@ -38,17 +43,39 @@ export const createUserProfile = async (
         email: email || '',
         role: role,
         telegram: telegramHandle,
+        created_at: new Date().toISOString()
       });
       
     if (insertError) {
       console.error('Error creating profile through direct insert:', insertError);
       
-      // If the insert fails due to RLS, try using server-side solution
-      // In a real app, this would be a Supabase Edge Function or trigger
-      console.log('Direct insert failed, profile should be created through auth hooks');
-      return false;
+      // If explicit insert fails, try again with different approach
+      try {
+        console.log('Attempting alternative profile creation approach');
+        
+        // Use upsert which may have different RLS behavior
+        const { error: upsertError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: userId,
+            email: email || '',
+            role: role,
+            telegram: telegramHandle
+          }, { onConflict: 'id' });
+          
+        if (upsertError) {
+          console.error('Upsert approach also failed:', upsertError);
+          return false;
+        }
+        
+        return true;
+      } catch (fallbackError) {
+        console.error('All profile creation attempts failed:', fallbackError);
+        return false;
+      }
     }
     
+    console.log('Profile created successfully for user:', userId);
     return true;
   } catch (error) {
     console.error('Error in createUserProfile:', error);

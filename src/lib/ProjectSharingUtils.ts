@@ -9,6 +9,11 @@ export async function canUserPerformAction(
   allowedRoles: ProjectRole[]
 ): Promise<boolean> {
   try {
+    if (!userId || !projectId) {
+      console.log('Missing userId or projectId');
+      return false;
+    }
+
     // Check if user is the project owner
     const { data: projectData, error: projectError } = await supabase
       .from('projects')
@@ -18,7 +23,7 @@ export async function canUserPerformAction(
 
     if (projectError) {
       console.error('Error checking project ownership:', projectError);
-      throw projectError;
+      return false;
     }
 
     // Project owners can do anything
@@ -30,23 +35,18 @@ export async function canUserPerformAction(
     // Check if user has any of the allowed roles
     console.log(`Checking if project ${projectId} is shared with user ${userId}`);
     
-    // Use a direct query to check for shares instead of RPC function
+    // Direct query for project shares
     const { data: shareData, error: shareError } = await supabase
       .from('project_shares')
       .select('role')
       .eq('project_id', projectId)
       .eq('user_id', userId)
       .eq('status', 'accepted')
-      .single();
+      .maybeSingle();
 
     if (shareError) {
-      if (shareError.code === 'PGRST116') {
-        // No matching row found, user doesn't have access
-        console.log('No matching share found');
-        return false;
-      }
       console.error('Error checking share permissions:', shareError);
-      throw shareError;
+      return false;
     }
 
     if (shareData && allowedRoles.includes(shareData.role as ProjectRole)) {
@@ -54,7 +54,7 @@ export async function canUserPerformAction(
       return true;
     }
     
-    console.log(`User role ${shareData?.role} not in allowed roles:`, allowedRoles);
+    console.log(`User role ${shareData?.role} not in allowed roles or no share found`);
     return false;
   } catch (error) {
     console.error('Error checking user project permissions:', error);
