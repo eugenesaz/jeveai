@@ -35,6 +35,9 @@ export const createUserProfile = async (
       return true;
     }
 
+    // Clean telegram handle by removing any @ symbol
+    const cleanTelegramHandle = telegramHandle ? telegramHandle.replace('@', '').trim() : null;
+
     // Try using direct insert with explicit values
     const { error: insertError } = await supabase
       .from('profiles')
@@ -42,7 +45,7 @@ export const createUserProfile = async (
         id: userId,
         email: email || '',
         role: role,
-        telegram: telegramHandle ? telegramHandle.trim() : null, // Ensure telegram handle is trimmed
+        telegram: cleanTelegramHandle, // Ensure telegram handle is cleaned and trimmed
         created_at: new Date().toISOString()
       });
       
@@ -60,7 +63,7 @@ export const createUserProfile = async (
             id: userId,
             email: email || '',
             role: role,
-            telegram: telegramHandle ? telegramHandle.trim() : null // Ensure telegram handle is trimmed
+            telegram: cleanTelegramHandle // Ensure telegram handle is cleaned and trimmed
           }, { onConflict: 'id' });
           
         if (upsertError) {

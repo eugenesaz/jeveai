@@ -34,9 +34,12 @@ export const TelegramPrompt = ({ userId, onUpdate }: TelegramPromptProps) => {
     try {
       setIsSubmitting(true);
       
+      // Clean telegram handle by removing any @ symbol
+      const cleanTelegramHandle = values.telegram.replace('@', '').trim();
+      
       const { error } = await supabase
         .from('profiles')
-        .update({ telegram: values.telegram })
+        .update({ telegram: cleanTelegramHandle })
         .eq('id', userId);
 
       if (error) throw error;

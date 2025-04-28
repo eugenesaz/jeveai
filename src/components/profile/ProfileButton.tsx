@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -55,12 +56,15 @@ export const ProfileButton = () => {
 
     setSaving(true);
     try {
+      // Clean telegram handle by removing any @ symbol
+      const cleanTelegramHandle = telegramName ? telegramName.replace('@', '').trim() : null;
+      
       const { error: upsertError } = await supabase
         .from('profiles')
         .upsert({
           id: user.id,
           email: user.email,
-          telegram: telegramName || null
+          telegram: cleanTelegramHandle
         });
 
       if (upsertError) {

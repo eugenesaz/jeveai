@@ -57,13 +57,16 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Looking up user ID for telegram name: ${telegramName}`);
+    // Clean telegram handle by removing any @ symbol before lookup
+    const cleanTelegramName = telegramName.replace('@', '').trim();
+    
+    console.log(`Looking up user ID for telegram name: ${cleanTelegramName}`);
 
     // Use SQL to make the comparison case-insensitive with LOWER() function
     // This will convert both the stored telegram name and input to lowercase before comparing
     const { data: userId, error } = await supabaseClient.rpc(
       'get_user_id_by_telegram_case_insensitive',
-      { telegram_name: telegramName.trim() }
+      { telegram_name: cleanTelegramName }
     );
 
     if (error) {

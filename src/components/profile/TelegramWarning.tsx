@@ -29,9 +29,12 @@ export const TelegramWarning = ({ userId, onUpdate }: TelegramWarningProps) => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
+      // Clean telegram handle by removing any @ symbol
+      const cleanTelegramHandle = values.telegram.replace('@', '').trim();
+      
       const { error } = await supabase
         .from('profiles')
-        .update({ telegram: values.telegram })
+        .update({ telegram: cleanTelegramHandle })
         .eq('id', userId);
 
       if (error) throw error;
