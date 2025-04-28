@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -262,13 +262,30 @@ const Projects = () => {
     : activeTab === 'shared' 
       ? sharedProjects 
       : allProjects;
+
+  // Filter projects based on search query
+  const filteredProjects = useMemo(() => {
+    return projectsToDisplay.filter(project => 
+      project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      project.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      project.url_name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [projectsToDisplay, searchQuery]);
   
+  // Filter invitations based on search query
+  const filteredInvitations = useMemo(() => {
+    return pendingInvitations.filter(invitation => 
+      invitation.project?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      invitation.invited_email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      invitation.inviterEmail?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [pendingInvitations, searchQuery]);
+
   // Limit to 3 projects for dashboard display
-  const displayedProjects = projectsToDisplay.slice(0, 3);
+  const displayedProjects = filteredProjects.slice(0, 3);
   
   // Get pending invitations if on 'all' tab
-  // Fix the comparison between 'pending' and activeTab
-  const displayedInvitations = (activeTab === 'all' || activeTab === 'pending') ? pendingInvitations.slice(0, 2) : [];
+  const displayedInvitations = (activeTab === 'all' || activeTab === 'pending') ? filteredInvitations.slice(0, 2) : [];
 
   if (!user) {
     return (
