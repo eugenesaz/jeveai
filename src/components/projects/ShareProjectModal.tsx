@@ -156,20 +156,40 @@ export const ShareProjectModal = ({
         }
       }
       
-      // Create new share
-      const { error: insertError } = await supabase
-        .from('project_shares')
-        .insert({
-          project_id: projectId,
-          user_id: userId || '00000000-0000-0000-0000-000000000000', // Placeholder for non-existent users
-          role,
-          inviter_id: user.id,
-          invited_email: email.toLowerCase(),
-          status: 'pending'
-        });
-      
-      if (insertError) {
-        throw insertError;
+      // For users that don't exist yet
+      if (!userId) {
+        // Use a placeholder for invited users that don't exist in the system yet
+        // Store their email, and we'll match them up when they register
+        const { error: insertError } = await supabase
+          .from('project_shares')
+          .insert({
+            project_id: projectId,
+            user_id: user.id, // Temporarily use current user's ID as placeholder
+            role,
+            inviter_id: user.id,
+            invited_email: email.toLowerCase(),
+            status: 'pending'
+          });
+        
+        if (insertError) {
+          throw insertError;
+        }
+      } else {
+        // For existing users
+        const { error: insertError } = await supabase
+          .from('project_shares')
+          .insert({
+            project_id: projectId,
+            user_id: userId,
+            role,
+            inviter_id: user.id,
+            invited_email: email.toLowerCase(),
+            status: 'pending'
+          });
+        
+        if (insertError) {
+          throw insertError;
+        }
       }
       
       toast.success(t('Invitation sent'), {
@@ -178,7 +198,7 @@ export const ShareProjectModal = ({
       
       await fetchShares();
       setEmail('');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending invitation:', error);
       toast.error(t('Failed to send invitation'), {
         description: error.message || t('An unknown error occurred')
