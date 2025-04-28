@@ -1,4 +1,6 @@
 
+import { supabase } from '@/integrations/supabase/client';
+
 const MAX_WEBHOOK_LENGTH = 4000; // Typical max length for webhook URLs
 
 export const addKnowledge = async (projectId: string, content: string) => {
@@ -48,4 +50,3 @@ export const fetchProjectKnowledge = async (projectId: string) => {
     throw error;
   }
 };
-
