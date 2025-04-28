@@ -222,10 +222,10 @@ export const ShareProjectModal = ({
       const inviterEmail = inviterProfile?.email || user?.email || '';
 
       // Get the current access token
-      const { data: { session } } = await supabase.auth.getSession();
-      const accessToken = session?.access_token || '';
+      const { data, error } = await supabase.auth.getSession();
+      const accessToken = data?.session?.access_token || '';
 
-      const response = await fetch(`${appUrl}/api/send-invitation`, {
+      const response = await fetch(`${window.location.origin}/api/send-invitation`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -59,17 +59,19 @@ export async function canUserPerformAction(
   }
 }
 
-// New function to get all pending invitations for a user by email
+// Function to get all pending invitations for a user by email
 export async function getPendingInvitations(userEmail: string) {
   if (!userEmail) return [];
 
   try {
+    console.log("Fetching pending invitations for email:", userEmail);
     const { data, error } = await supabase
       .from('project_shares')
       .select(`
         id,
         role,
         status,
+        invited_email,
         project:project_id (
           id,
           name,
@@ -80,7 +82,8 @@ export async function getPendingInvitations(userEmail: string) {
           created_at,
           color_scheme,
           telegram_bot
-        )
+        ),
+        inviter_id
       `)
       .eq('invited_email', userEmail.toLowerCase())
       .eq('status', 'pending');
@@ -90,6 +93,7 @@ export async function getPendingInvitations(userEmail: string) {
       return [];
     }
 
+    console.log("Fetched pending invitations:", data?.length || 0);
     return data || [];
   } catch (error) {
     console.error('Error in getPendingInvitations:', error);

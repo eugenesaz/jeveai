@@ -15,6 +15,7 @@ export default async function handler(req: Request) {
   const headers = new Headers(req.headers);
   
   try {
+    console.log("Proxying request to edge function:", url);
     const response = await fetch(url, {
       method: req.method,
       headers,
