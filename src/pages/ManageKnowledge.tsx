@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -120,12 +121,12 @@ const ManageKnowledge = () => {
         } else if (knowledgeData) {
           console.log('Knowledge data fetched:', knowledgeData);
           
-          // Convert to ProjectKnowledge array
+          // Convert to ProjectKnowledge array with proper type casting
           const typedKnowledgeData: ProjectKnowledge[] = knowledgeData.map(item => ({
             id: item.id,
             content: item.content || '',
             created_at: item.created_at,
-            metadata: item.metadata
+            metadata: item.metadata as ProjectKnowledge['metadata']
           }));
           setKnowledge(typedKnowledgeData);
         }
@@ -223,12 +224,12 @@ const ManageKnowledge = () => {
       if (error) {
         console.error('Error fetching updated knowledge:', error);
       } else if (data) {
-        // Convert to ProjectKnowledge array
+        // Convert to ProjectKnowledge array with proper type casting
         const typedKnowledgeData: ProjectKnowledge[] = data.map(item => ({
           id: item.id,
           content: item.content || '',
           created_at: item.created_at,
-          metadata: item.metadata
+          metadata: item.metadata as ProjectKnowledge['metadata']
         }));
         setKnowledge(typedKnowledgeData);
       }
