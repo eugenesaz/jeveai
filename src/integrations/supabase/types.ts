@@ -421,6 +421,10 @@ export type Database = {
         Args: { "": string } | { "": unknown }
         Returns: unknown
       }
+      check_email_exists_in_profiles: {
+        Args: { email_to_check: string }
+        Returns: boolean
+      }
       check_project_role: {
         Args: {
           user_uuid: string
@@ -432,6 +436,10 @@ export type Database = {
       check_project_shared_with_user: {
         Args: { project_id: string; user_id: string }
         Returns: boolean
+      }
+      get_user_id_by_email: {
+        Args: { email_to_find: string }
+        Returns: string
       }
       get_user_id_by_telegram: {
         Args: { telegram_name: string }
