@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export const addKnowledge = async (projectId: string, content: string) => {
@@ -17,8 +16,7 @@ export const addKnowledge = async (projectId: string, content: string) => {
     const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'api_key': 'EsH3PvxtdDqeR4G'
+        'Content-Type': 'application/json'
       },
       body: requestBody
     });
