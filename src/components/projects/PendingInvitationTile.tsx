@@ -43,12 +43,17 @@ export const PendingInvitationTile = ({ invitation, onAcceptReject }: PendingInv
 
     setLoading('accept');
     try {
-      // Update the invitation status and set user_id if not already set
+      console.log('Accepting invitation with ID:', invitation.id);
+      console.log('Current user ID:', user.id);
+      
+      // Update the invitation status and set user_id to the current user's ID
       const updateData = { 
         status: 'accepted',
-        user_id: user.id,
+        user_id: user.id, // Set to the current user's ID (the invitee)
         updated_at: new Date().toISOString()
       };
+      
+      console.log('Update data:', updateData);
       
       const { error } = await supabase
         .from('project_shares')
@@ -56,6 +61,7 @@ export const PendingInvitationTile = ({ invitation, onAcceptReject }: PendingInv
         .eq('id', invitation.id);
 
       if (error) {
+        console.error('Error details:', error);
         throw error;
       }
 
@@ -78,6 +84,8 @@ export const PendingInvitationTile = ({ invitation, onAcceptReject }: PendingInv
   const handleRejectInvitation = async () => {
     setLoading('reject');
     try {
+      console.log('Rejecting invitation with ID:', invitation.id);
+      
       // Update the invitation status
       const { error } = await supabase
         .from('project_shares')
@@ -88,6 +96,7 @@ export const PendingInvitationTile = ({ invitation, onAcceptReject }: PendingInv
         .eq('id', invitation.id);
 
       if (error) {
+        console.error('Error details:', error);
         throw error;
       }
 

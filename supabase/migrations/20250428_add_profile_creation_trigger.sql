@@ -40,11 +40,20 @@ USING (
   )
 );
 
+-- Drop the old policy if it exists (to avoid conflicts)
+DROP POLICY IF EXISTS "Users can update invitations addressed to their email" ON public.project_shares;
+
 -- Add explicit RLS to allow invitees to update their own shares
+DROP POLICY IF EXISTS "Invitees can update their shares" ON public.project_shares;
 CREATE POLICY "Invitees can update their shares" 
 ON public.project_shares
 FOR UPDATE
 USING (
   lower(auth.email()) = lower(invited_email) OR 
-  auth.uid() = user_id
+  auth.uid() = user_id OR
+  auth.uid() IN (
+    SELECT user_id 
+    FROM public.projects 
+    WHERE id = project_shares.project_id
+  )
 );

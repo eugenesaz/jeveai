@@ -129,6 +129,7 @@ export async function acceptInvitation(invitationId: string, userId: string) {
   if (!invitationId || !userId) return { success: false, error: 'Missing required parameters' };
 
   try {
+    console.log(`Accepting invitation ${invitationId} for user ${userId}`);
     const { error } = await supabase
       .from('project_shares')
       .update({ 
@@ -155,6 +156,7 @@ export async function declineInvitation(invitationId: string) {
   if (!invitationId) return { success: false, error: 'Missing invitation ID' };
 
   try {
+    console.log(`Declining invitation ${invitationId}`);
     const { error } = await supabase
       .from('project_shares')
       .update({ 
