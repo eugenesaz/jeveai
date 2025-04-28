@@ -32,6 +32,7 @@ export function AddKnowledgeDialog({ courseId, onKnowledgeAdded }: AddKnowledgeD
 
       if (courseError) throw courseError;
 
+      // Using webhook to add knowledge - never direct insertion
       await addKnowledge(courseData.project_id, content.trim());
 
       toast({

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,7 +13,7 @@ import { ProjectKnowledge, Project } from '@/types/supabase';
 import { FileText, Trash2, Plus, Download, ExternalLink } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { ProfileButton } from '@/components/profile/ProfileButton';
-import { addKnowledge } from '@/lib/KnowledgeUtils';
+import { addKnowledge, fetchProjectKnowledge } from '@/lib/KnowledgeUtils';
 import { 
   initializeStorage,
   uploadKnowledgeDocument,
@@ -104,31 +103,33 @@ const ManageKnowledge = () => {
         
         setProject(typedProject);
 
-        // Updated to fetch from project_knowledge_vector table and filter by metadata->projectId
-        const { data: knowledgeData, error: knowledgeError } = await supabase
-          .from('project_knowledge_vector')
-          .select('id, content, created_at, metadata')
-          .filter('metadata->projectId', 'eq', id)
-          .order('created_at', { ascending: false });
-
-        if (knowledgeError) {
+        // Fetch knowledge data
+        try {
+          console.log(`Fetching knowledge data for project ${id}`);
+          const knowledgeData = await fetchProjectKnowledge(id);
+          console.log('Knowledge data fetched:', knowledgeData);
+          
+          if (knowledgeData && knowledgeData.length > 0) {
+            // Convert to ProjectKnowledge array with proper type casting
+            const typedKnowledgeData: ProjectKnowledge[] = knowledgeData.map(item => ({
+              id: item.id,
+              content: item.content || '',
+              created_at: item.created_at,
+              metadata: item.metadata as ProjectKnowledge['metadata']
+            }));
+            setKnowledge(typedKnowledgeData);
+            console.log('Knowledge data processed:', typedKnowledgeData);
+          } else {
+            console.log('No knowledge data found for this project');
+            setKnowledge([]);
+          }
+        } catch (knowledgeError) {
           console.error('Error fetching knowledge:', knowledgeError);
           toast({
             title: 'Error',
             description: 'Failed to load project knowledge',
             variant: 'destructive',
           });
-        } else if (knowledgeData) {
-          console.log('Knowledge data fetched:', knowledgeData);
-          
-          // Convert to ProjectKnowledge array with proper type casting
-          const typedKnowledgeData: ProjectKnowledge[] = knowledgeData.map(item => ({
-            id: item.id,
-            content: item.content || '',
-            created_at: item.created_at,
-            metadata: item.metadata as ProjectKnowledge['metadata']
-          }));
-          setKnowledge(typedKnowledgeData);
         }
       } catch (error) {
         console.error('Error loading project data:', error);
@@ -188,6 +189,7 @@ const ManageKnowledge = () => {
     setSaving(true);
     try {
       if (newKnowledgeContent.trim()) {
+        // Only using webhook to add knowledge, never direct insertion
         await addKnowledge(id, newKnowledgeContent.trim());
       }
 
@@ -198,34 +200,19 @@ const ManageKnowledge = () => {
         
         for (const doc of documents) {
           if (doc) {
-            console.log(`Creating database entry for document: ${doc.fileName}`);
-            // Insert with projectId in metadata
-            const { error } = await supabase.from('project_knowledge_vector').insert({
-              metadata: { projectId: id },
-              content: `Document: ${doc.fileName}`
-            });
-
-            if (error) {
-              console.error('Error creating document knowledge entry:', error);
-            } else {
-              console.log(`Successfully created knowledge entry for document: ${doc.fileName}`);
-            }
+            console.log(`Creating knowledge entry for document: ${doc.fileName}`);
+            // Using webhook instead of direct insertion
+            await addKnowledge(id, `Document: ${doc.fileName}`);
           }
         }
       }
 
-      // Refresh the knowledge data with updated filtering
-      const { data, error } = await supabase
-        .from('project_knowledge_vector')
-        .select('id, content, created_at, metadata')
-        .filter('metadata->projectId', 'eq', id)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching updated knowledge:', error);
-      } else if (data) {
-        // Convert to ProjectKnowledge array with proper type casting
-        const typedKnowledgeData: ProjectKnowledge[] = data.map(item => ({
+      // Refresh the knowledge data
+      const knowledgeData = await fetchProjectKnowledge(id);
+      
+      // Convert to ProjectKnowledge array with proper type casting
+      if (knowledgeData) {
+        const typedKnowledgeData: ProjectKnowledge[] = knowledgeData.map(item => ({
           id: item.id,
           content: item.content || '',
           created_at: item.created_at,

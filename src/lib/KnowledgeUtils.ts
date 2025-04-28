@@ -8,6 +8,8 @@ export const addKnowledge = async (projectId: string, content: string) => {
     throw new Error("Content is too long. Please use the Telegram bot or split your message into smaller parts.");
   }
 
+  console.log(`Sending knowledge to webhook: ${projectId}`);
+
   const response = await fetch(webhookUrl, {
     method: 'POST',
     headers: {
@@ -22,3 +24,28 @@ export const addKnowledge = async (projectId: string, content: string) => {
 
   return response;
 };
+
+export const fetchProjectKnowledge = async (projectId: string) => {
+  console.log(`Fetching knowledge for project ID: ${projectId}`);
+  
+  try {
+    // We're using the project_knowledge_vector table where projectId is in the metadata
+    const { data, error } = await supabase
+      .from('project_knowledge_vector')
+      .select('id, content, created_at, metadata')
+      .filter('metadata->projectId', 'eq', projectId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching project knowledge:', error);
+      throw error;
+    }
+
+    console.log(`Retrieved ${data?.length || 0} knowledge entries`);
+    return data || [];
+  } catch (error) {
+    console.error('Exception fetching project knowledge:', error);
+    throw error;
+  }
+};
+
