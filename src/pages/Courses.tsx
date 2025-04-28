@@ -64,6 +64,7 @@ const Courses = () => {
           }
           
           // Fetch courses for the project using our access policy
+          // Only fetch courses where we have accepted access
           const { data: coursesData, error: coursesError } = await supabase
             .from('courses')
             .select(`
@@ -96,6 +97,7 @@ const Courses = () => {
           }
         } else {
           // No project specified, fetch all courses user has access to
+          // The RLS policies will ensure we only get courses we have access to
           const { data: coursesData, error: coursesError } = await supabase
             .from('courses')
             .select(`

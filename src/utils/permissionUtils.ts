@@ -26,6 +26,7 @@ export async function checkProjectPermission(
     }
 
     // If not owner, check using the DB function we created
+    // Explicitly include the "accepted" status check in the function call
     const { data, error } = await supabase.rpc(
       'check_project_access',
       { 

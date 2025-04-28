@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -39,20 +38,20 @@ const ViewConversations = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [highlightFilter, setHighlightFilter] = useState<string>("all");
-  const [hasAccess, setHasAccess] = useState<boolean>(false);
+  const [hasAccess, setHasAccess] = useState<boolean | null>(null);
   const [canEdit, setCanEdit] = useState<boolean>(false);
   const [courseName, setCourseName] = useState<string>('');
+  const [accessCheckComplete, setAccessCheckComplete] = useState<boolean>(false);
 
   useEffect(() => {
-    // Check permissions as soon as component loads
     const checkPermissions = async () => {
       if (!courseId || !user) {
         setHasAccess(false);
+        setAccessCheckComplete(true);
         return;
       }
 
       try {
-        // Check access permissions
         const canAccess = await canAccessConversations(courseId);
         setHasAccess(canAccess);
 
@@ -62,7 +61,6 @@ const ViewConversations = () => {
           return;
         }
 
-        // Fetch course name for display
         const { data: courseData } = await supabase
           .from('courses')
           .select('name, project_id')
@@ -72,12 +70,13 @@ const ViewConversations = () => {
         if (courseData) {
           setCourseName(courseData.name);
           
-          // Check edit permissions
           const canEditPermission = await canEditCourses(courseData.project_id);
           setCanEdit(canEditPermission);
         }
       } catch (error) {
         console.error('Error checking permissions:', error);
+      } finally {
+        setAccessCheckComplete(true);
       }
     };
 
@@ -148,13 +147,13 @@ const ViewConversations = () => {
   };
 
   useEffect(() => {
-    if (hasAccess) {
+    if (hasAccess === true) {
       fetchData();
     }
   }, [courseId, hasAccess]);
 
   useEffect(() => {
-    if (selectedUserId && hasAccess) {
+    if (selectedUserId && hasAccess === true) {
       fetchMessagesForUser(selectedUserId);
     }
   }, [selectedUserId, hasAccess]);
@@ -180,7 +179,15 @@ const ViewConversations = () => {
     });
   };
 
-  if (!hasAccess) {
+  if (!accessCheckComplete) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
+        <p>{t('loading')}</p>
+      </div>
+    );
+  }
+
+  if (hasAccess === false) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
         <Alert variant="destructive" className="max-w-md">
