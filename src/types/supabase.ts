@@ -1,4 +1,3 @@
-
 // Define types for our Supabase tables
 export type UserRole = 'influencer' | 'customer' | 'admin';
 

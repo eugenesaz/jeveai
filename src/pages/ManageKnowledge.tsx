@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -68,10 +67,8 @@ const ManageKnowledge = () => {
                                ? projectData.color_scheme as 'blue' | 'red' | 'orange' | 'green'
                                : 'blue';
                                
-        // Type assertion to access description
         const projectDataWithDesc = projectData as any;
 
-        // Create a properly typed Project object with all required properties
         const typedProject: Project = {
           id: projectData.id,
           name: projectData.name,
@@ -87,22 +84,14 @@ const ManageKnowledge = () => {
         
         setProject(typedProject);
 
-        // Fetch knowledge data
         try {
           console.log(`Fetching knowledge data for project ${id}`);
           const knowledgeData = await fetchProjectKnowledge(id);
           console.log('Knowledge data fetched:', knowledgeData);
           
           if (knowledgeData && knowledgeData.length > 0) {
-            // Convert to ProjectKnowledge array with proper type casting
-            const typedKnowledgeData: ProjectKnowledge[] = knowledgeData.map(item => ({
-              id: item.id,
-              content: item.content || '',
-              created_at: item.created_at,
-              metadata: item.metadata as ProjectKnowledge['metadata']
-            }));
-            setKnowledge(typedKnowledgeData);
-            console.log('Knowledge data processed:', typedKnowledgeData);
+            setKnowledge(knowledgeData as ProjectKnowledge[]);
+            console.log('Knowledge data processed:', knowledgeData);
           } else {
             console.log('No knowledge data found for this project');
             setKnowledge([]);
@@ -132,21 +121,12 @@ const ManageKnowledge = () => {
 
     setSaving(true);
     try {
-      // Only using webhook to add knowledge, never direct insertion
       await addKnowledge(id, newKnowledgeContent.trim());
 
-      // Refresh the knowledge data
       const knowledgeData = await fetchProjectKnowledge(id);
       
-      // Convert to ProjectKnowledge array with proper type casting
       if (knowledgeData) {
-        const typedKnowledgeData: ProjectKnowledge[] = knowledgeData.map(item => ({
-          id: item.id,
-          content: item.content || '',
-          created_at: item.created_at,
-          metadata: item.metadata as ProjectKnowledge['metadata']
-        }));
-        setKnowledge(typedKnowledgeData);
+        setKnowledge(knowledgeData as ProjectKnowledge[]);
       }
 
       setNewKnowledgeContent('');
@@ -177,7 +157,6 @@ const ManageKnowledge = () => {
 
     setDeleting(knowledgeId.toString());
     try {
-      // Updated to delete from project_knowledge_vector
       const { error } = await supabase
         .from('project_knowledge_vector')
         .delete()
