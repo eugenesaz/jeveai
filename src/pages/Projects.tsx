@@ -244,49 +244,31 @@ const Projects = () => {
     toast.success('Project URL has been copied to clipboard');
   };
 
-  const getFilteredProjects = () => {
-    let projectsToFilter: any[] = [];
-    
-    if (activeTab === 'owned') {
-      projectsToFilter = ownedProjects;
-    } else if (activeTab === 'shared') {
-      projectsToFilter = sharedProjects;
-    } else if (activeTab === 'pending') {
-      return [];
-    } else { // 'all'
-      projectsToFilter = [...ownedProjects, ...sharedProjects];
-    }
-    
-    if (searchQuery) {
-      return projectsToFilter.filter(project => 
-        project.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        (project.description && project.description.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
-    } else {
-      return projectsToFilter;
-    }
-  };
-
-  const getFilteredInvitations = () => {
-    if (activeTab !== 'all' && activeTab !== 'pending') {
-      return [];
-    }
-    
-    if (searchQuery) {
-      return pendingInvitations.filter(invitation => 
-        invitation.project?.name?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    } else {
-      return pendingInvitations;
-    }
+  const handleCreateProject = () => {
+    navigate('/create-project');
   };
 
   const handleInvitationAction = () => {
+    // Refresh the projects and invitations after an accept/decline action
     fetchProjects();
   };
 
-  const filteredProjects = getFilteredProjects();
-  const filteredInvitations = getFilteredInvitations();
+  // All projects combined
+  const allProjects = [...ownedProjects, ...sharedProjects];
+  
+  // Get projects to display based on active tab
+  const projectsToDisplay = activeTab === 'owned' 
+    ? ownedProjects 
+    : activeTab === 'shared' 
+      ? sharedProjects 
+      : allProjects;
+  
+  // Limit to 3 projects for dashboard display
+  const displayedProjects = projectsToDisplay.slice(0, 3);
+  
+  // Get pending invitations if on 'all' tab
+  // Fix the comparison between 'pending' and activeTab
+  const displayedInvitations = (activeTab === 'all' || activeTab === 'pending') ? pendingInvitations.slice(0, 2) : [];
 
   if (!user) {
     return (

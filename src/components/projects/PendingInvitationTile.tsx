@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Check, X } from 'lucide-react';
@@ -19,6 +20,7 @@ interface PendingInvitationTileProps {
 
 export const PendingInvitationTile = ({ invitation, onAcceptReject }: PendingInvitationTileProps) => {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [loading, setLoading] = useState<'accept' | 'reject' | null>(null);
 
   const getRoleLabel = (role: string) => {
@@ -32,15 +34,25 @@ export const PendingInvitationTile = ({ invitation, onAcceptReject }: PendingInv
   };
 
   const handleAcceptInvitation = async () => {
+    if (!user) {
+      toast.error(t('Authentication required'), {
+        description: t('You must be logged in to accept invitations')
+      });
+      return;
+    }
+
     setLoading('accept');
     try {
-      // Update the invitation status
+      // Update the invitation status and set user_id if not already set
+      const updateData = { 
+        status: 'accepted',
+        user_id: user.id,
+        updated_at: new Date().toISOString()
+      };
+      
       const { error } = await supabase
         .from('project_shares')
-        .update({ 
-          status: 'accepted',
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', invitation.id);
 
       if (error) {

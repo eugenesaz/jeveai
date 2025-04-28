@@ -28,6 +28,27 @@ export default async function handler(req: Request) {
       }
     }
     
+    // Ensure method is allowed
+    if (req.method !== 'POST' && req.method !== 'OPTIONS') {
+      return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+        status: 405,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Handle CORS preflight
+    if (req.method === 'OPTIONS') {
+      return new Response(null, {
+        status: 204,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          'Access-Control-Max-Age': '86400',
+        },
+      });
+    }
+    
     const response = await fetch(url, {
       method: req.method,
       headers,

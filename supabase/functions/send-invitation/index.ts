@@ -4,21 +4,34 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 };
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders, status: 204 });
   }
 
   try {
-    const { inviterEmail, recipientEmail, projectName, projectId, role, invitationId, appUrl } = await req.json();
+    // Parse the request body
+    let requestBody;
+    try {
+      requestBody = await req.json();
+    } catch (e) {
+      console.error("Error parsing request body:", e);
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON in request body' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    // Simple validation
+    const { inviterEmail, recipientEmail, projectName, projectId, role, invitationId, appUrl } = requestBody;
+
+    // Basic validation
     if (!recipientEmail || !projectName || !invitationId || !appUrl) {
       return new Response(
-        JSON.stringify({ error: 'Missing required parameters' }),
+        JSON.stringify({ error: 'Missing required parameters', details: { recipientEmail, projectName, invitationId, appUrl } }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -49,8 +62,8 @@ serve(async (req) => {
 
     console.log(`Sending invitation email to ${recipientEmail} for project ${projectName}`);
 
-    // If you have integration with an email service, you would call it here
-    // For now, we'll just log it and return success
+    // In a production environment, you would integrate with a real email service here
+    // For now, we'll just log the email details and pretend we sent it
     console.log({
       to: recipientEmail,
       from: from,
@@ -65,7 +78,8 @@ serve(async (req) => {
         message: 'Invitation email scheduled',
         details: {
           recipient: recipientEmail,
-          project: projectName
+          project: projectName,
+          url: invitationUrl
         }
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -73,7 +87,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error sending invitation email:', error);
     return new Response(
-      JSON.stringify({ error: error.message || 'Failed to send invitation email' }),
+      JSON.stringify({ error: error.message || 'Failed to send invitation email', stack: error.stack }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
