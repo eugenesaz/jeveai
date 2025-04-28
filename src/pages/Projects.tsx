@@ -32,11 +32,11 @@ const Projects = () => {
         setLoading(true);
         console.log('Fetching projects for user ID:', user.id);
         
-        // Fetch owned projects
+        // Fetch owned projects directly without explicitly filtering by user_id
+        // RLS will ensure we only get the projects owned by the current user
         const { data: ownedData, error: ownedError } = await supabase
           .from('projects')
-          .select('*')
-          .eq('user_id', user.id);
+          .select('*');
 
         if (ownedError) {
           console.error('Error fetching owned projects:', ownedError);

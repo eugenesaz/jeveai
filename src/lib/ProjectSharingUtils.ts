@@ -23,25 +23,36 @@ export async function canUserPerformAction(
       return true;
     }
 
-    // Check if user has any of the allowed roles
-    const { data: shareData, error: shareError } = await supabase
-      .from('project_shares')
-      .select('role')
-      .eq('project_id', projectId)
-      .eq('user_id', userId)
-      .eq('status', 'accepted')
-      .single();
+    // Check if user has any of the allowed roles using RPC function to avoid recursion
+    const { data: isShared, error: sharedError } = await supabase
+      .rpc('check_project_shared_with_user', { 
+        project_id: projectId, 
+        user_id: userId
+      });
+    
+    if (sharedError) throw sharedError;
+    
+    if (isShared) {
+      // If shared, check the specific role
+      const { data: shareData, error: shareError } = await supabase
+        .from('project_shares')
+        .select('role')
+        .eq('project_id', projectId)
+        .eq('user_id', userId)
+        .eq('status', 'accepted')
+        .single();
 
-    if (shareError) {
-      if (shareError.code === 'PGRST116') {
-        // No matching row found, user doesn't have access
-        return false;
+      if (shareError) {
+        if (shareError.code === 'PGRST116') {
+          // No matching row found, user doesn't have access
+          return false;
+        }
+        throw shareError;
       }
-      throw shareError;
-    }
 
-    if (shareData && allowedRoles.includes(shareData.role as ProjectRole)) {
-      return true;
+      if (shareData && allowedRoles.includes(shareData.role as ProjectRole)) {
+        return true;
+      }
     }
 
     return false;

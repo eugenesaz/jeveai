@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -26,12 +27,13 @@ const Dashboard = () => {
       if (!user) return;
       try {
         console.log('Fetching projects for user ID:', user.id);
+        setLoading(true);
         
-        // Fetch owned projects
+        // Fetch owned projects directly, avoiding RLS recursion
+        // We don't need to filter by user_id as RLS will do that
         const { data: ownedData, error: ownedError } = await supabase
           .from('projects')
-          .select('*')
-          .eq('user_id', user.id);
+          .select('*');
 
         if (ownedError) {
           console.error('Error fetching owned projects:', ownedError);
@@ -266,7 +268,7 @@ const Dashboard = () => {
               <div className="flex justify-center items-center h-40">
                 <p>{t('loading')}</p>
               </div>
-            ) : allProjects.length === 0 ? (
+            ) : ownedProjects.length === 0 && sharedProjects.length === 0 ? (
               <Card className="border-dashed border-2 border-gray-300 bg-gray-50 animate-fade-in">
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <svg className="w-16 h-16 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -429,6 +429,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_project_shared_with_user: {
+        Args: { project_id: string; user_id: string }
+        Returns: boolean
+      }
       get_user_id_by_telegram: {
         Args: { telegram_name: string }
         Returns: string
