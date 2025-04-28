@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -5,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Search, Home, LogOut, Share2, Mail } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, fetchProjectsWithRetry } from '@/integrations/supabase/client';
 import { Project, ProjectShare } from '@/types/supabase';
 import { toast } from '@/components/ui/sonner';
 import { ProjectsHeader } from '@/components/projects/ProjectsHeader';
