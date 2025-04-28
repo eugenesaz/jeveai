@@ -59,15 +59,21 @@ serve(async (req) => {
 
     console.log(`Looking up user ID for telegram name: ${telegramName}`);
 
+    // Use SQL to make the comparison case-insensitive with LOWER() function
+    // This will convert both the stored telegram name and input to lowercase before comparing
     const { data: userId, error } = await supabaseClient.rpc(
-      'get_user_id_by_telegram',
+      'get_user_id_by_telegram_case_insensitive',
       { telegram_name: telegramName.trim() }
     );
 
     if (error) {
       console.error('Error fetching user ID:', error);
       return new Response(
-        JSON.stringify({ error: "Failed to fetch user ID", details: error }),
+        JSON.stringify({ 
+          error: "Failed to fetch user ID", 
+          details: error,
+          note: "Make sure you've created the required RPC function" 
+        }),
         { 
           status: 500, 
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
@@ -77,7 +83,10 @@ serve(async (req) => {
 
     if (!userId) {
       return new Response(
-        JSON.stringify({ error: "User not found" }),
+        JSON.stringify({ 
+          error: "User not found",
+          domain: "jeveai.lovable.app" 
+        }),
         { 
           status: 404, 
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
@@ -89,7 +98,10 @@ serve(async (req) => {
     const sanitizedUserId = userId.toString().trim().replace(/[^\w-]/g, '');
 
     return new Response(
-      JSON.stringify({ userId: sanitizedUserId }),
+      JSON.stringify({ 
+        userId: sanitizedUserId,
+        domain: "jeveai.lovable.app"
+      }),
       { 
         status: 200, 
         headers: { ...corsHeaders, "Content-Type": "application/json" } 

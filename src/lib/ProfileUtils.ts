@@ -42,7 +42,7 @@ export const createUserProfile = async (
         id: userId,
         email: email || '',
         role: role,
-        telegram: telegramHandle,
+        telegram: telegramHandle ? telegramHandle.trim() : null, // Ensure telegram handle is trimmed
         created_at: new Date().toISOString()
       });
       
@@ -60,7 +60,7 @@ export const createUserProfile = async (
             id: userId,
             email: email || '',
             role: role,
-            telegram: telegramHandle
+            telegram: telegramHandle ? telegramHandle.trim() : null // Ensure telegram handle is trimmed
           }, { onConflict: 'id' });
           
         if (upsertError) {
