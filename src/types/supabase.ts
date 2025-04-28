@@ -89,7 +89,7 @@ export interface ProjectSecret {
   updated_at: string | null;
 }
 
-// New type for project roles
+// Updated type for project roles to include 'owner'
 export type ProjectRole = 'owner' | 'contributor' | 'knowledge_manager' | 'read_only';
 
 // New interface for project shares

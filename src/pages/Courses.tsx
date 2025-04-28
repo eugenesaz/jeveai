@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +18,7 @@ interface CourseWithProject extends Course {
   project: {
     name: string;
     color_scheme: string | null;
+    user_id?: string;
   } | null;
   canEdit?: boolean;
   isShared?: boolean;
@@ -170,14 +170,11 @@ const Courses = () => {
     }
   };
   
-  // Filter courses based on search text and selected tab
   const filteredCourses = courses
     .filter(course => {
-      // First apply tab filter
       if (tabView === 'owned' && course.isShared) return false;
       if (tabView === 'shared' && !course.isShared) return false;
       
-      // Then apply search text filter
       const searchText = search.toLowerCase();
       return (
         course.name.toLowerCase().includes(searchText) ||

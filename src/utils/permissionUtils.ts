@@ -51,14 +51,14 @@ export async function checkProjectPermission(
  * Check if user can edit courses for a project
  */
 export async function canEditCourses(projectId: string): Promise<boolean> {
-  return checkProjectPermission(projectId, ['contributor', 'influencer']);
+  return checkProjectPermission(projectId, ['owner', 'contributor']);
 }
 
 /**
  * Check if user can view courses for a project
  */
 export async function canViewCourses(projectId: string): Promise<boolean> {
-  return checkProjectPermission(projectId, ['contributor', 'influencer', 'read_only', 'knowledge_manager']);
+  return checkProjectPermission(projectId, ['owner', 'contributor', 'read_only', 'knowledge_manager']);
 }
 
 /**
@@ -79,7 +79,7 @@ export async function canAccessConversations(courseId: string): Promise<boolean>
       return false;
     }
     
-    return checkProjectPermission(course.project_id, ['contributor', 'influencer', 'read_only', 'knowledge_manager']);
+    return checkProjectPermission(course.project_id, ['owner', 'contributor', 'read_only', 'knowledge_manager']);
   } catch (error) {
     console.error('Exception checking conversation access:', error);
     return false;
