@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { addKnowledge } from '@/lib/KnowledgeUtils';
 
 interface AddKnowledgeDialogProps {
   courseId: string;
@@ -31,14 +31,7 @@ export function AddKnowledgeDialog({ courseId, onKnowledgeAdded }: AddKnowledgeD
 
       if (courseError) throw courseError;
 
-      const { error } = await supabase
-        .from('project_knowledge')
-        .insert({
-          project_id: courseData.project_id,
-          content: content.trim(),
-        });
-
-      if (error) throw error;
+      await addKnowledge(courseData.project_id, content.trim());
 
       toast({
         title: "Knowledge added successfully",
@@ -50,9 +43,13 @@ export function AddKnowledgeDialog({ courseId, onKnowledgeAdded }: AddKnowledgeD
       onKnowledgeAdded?.();
     } catch (error) {
       console.error('Error adding knowledge:', error);
+      const errorMessage = error instanceof Error && error.message.includes('too long') 
+        ? error.message 
+        : "There was a problem adding your knowledge. Please try again.";
+      
       toast({
         title: "Error adding knowledge",
-        description: "There was a problem adding your knowledge. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -71,7 +68,7 @@ export function AddKnowledgeDialog({ courseId, onKnowledgeAdded }: AddKnowledgeD
         <DialogHeader>
           <DialogTitle>Add Knowledge</DialogTitle>
           <DialogDescription>
-            Add new knowledge to help improve AI responses
+            Add new knowledge to help improve AI responses. Maximum length is supported.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">

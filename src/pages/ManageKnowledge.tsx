@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -104,9 +103,9 @@ const ManageKnowledge = () => {
         setProject(typedProject);
 
         const { data: knowledgeData, error: knowledgeError } = await supabase
-          .from('project_knowledge')
-          .select('*')
-          .eq('project_id', id)
+          .from('project_knowledge_vector')
+          .select('id, content, created_at')
+          .eq('metadata->project_id', id)
           .order('created_at', { ascending: false });
 
         if (knowledgeError) {
@@ -177,15 +176,7 @@ const ManageKnowledge = () => {
     setSaving(true);
     try {
       if (newKnowledgeContent.trim()) {
-        const { error } = await supabase.from('project_knowledge').insert({
-          project_id: id,
-          content: newKnowledgeContent.trim(),
-        });
-
-        if (error) {
-          console.error('Error creating text knowledge:', error);
-          throw error;
-        }
+        await addKnowledge(id, newKnowledgeContent.trim());
       }
 
       if (knowledgeDocuments.length > 0) {
@@ -196,7 +187,7 @@ const ManageKnowledge = () => {
         for (const doc of documents) {
           if (doc) {
             console.log(`Creating database entry for document: ${doc.fileName}`);
-            const { error } = await supabase.from('project_knowledge').insert({
+            const { error } = await supabase.from('project_knowledge_vector').insert({
               project_id: id,
               content: `Document: ${doc.fileName}`,
               document_url: doc.url,
@@ -212,9 +203,9 @@ const ManageKnowledge = () => {
       }
 
       const { data, error } = await supabase
-        .from('project_knowledge')
-        .select('*')
-        .eq('project_id', id)
+        .from('project_knowledge_vector')
+        .select('id, content, created_at')
+        .eq('metadata->project_id', id)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -233,9 +224,13 @@ const ManageKnowledge = () => {
       });
     } catch (error) {
       console.error('Error adding knowledge:', error);
+      const errorMessage = error instanceof Error && error.message.includes('too long') 
+        ? error.message 
+        : "Failed to add knowledge. Please try again.";
+      
       toast({
         title: 'Error',
-        description: `Failed to add knowledge: ${error.message}`,
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
@@ -250,10 +245,10 @@ const ManageKnowledge = () => {
     setDeleting(knowledgeId);
     try {
       const { error } = await supabase
-        .from('project_knowledge')
+        .from('project_knowledge_vector')
         .delete()
         .eq('id', knowledgeId)
-        .eq('project_id', id);
+        .eq('metadata->project_id', id);
 
       if (error) {
         console.error('Error deleting knowledge:', error);
