@@ -25,13 +25,13 @@ export interface Project {
   description: string | null; // Added description property
 }
 
-// Updated to match project_knowledge_vector table structure
+// Updated to match project_knowledge_vector table structure (without document_url)
 export interface ProjectKnowledge {
   id: number;
   content: string;
   created_at: string;
-  document_url?: string | null;
   metadata?: any;
+  // Removed document_url as it doesn't exist in the table yet
 }
 
 export interface Course {

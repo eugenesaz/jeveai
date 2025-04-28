@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -106,7 +107,7 @@ const ManageKnowledge = () => {
         // Updated to fetch from project_knowledge_vector table
         const { data: knowledgeData, error: knowledgeError } = await supabase
           .from('project_knowledge_vector')
-          .select('id, content, created_at, document_url')
+          .select('id, content, created_at, metadata')
           .eq('metadata->>project_id', id)
           .order('created_at', { ascending: false });
 
@@ -123,7 +124,7 @@ const ManageKnowledge = () => {
             id: item.id,
             content: item.content || '',
             created_at: item.created_at,
-            document_url: item.document_url || null
+            metadata: item.metadata
           }));
           setKnowledge(typedKnowledgeData);
         }
@@ -196,10 +197,10 @@ const ManageKnowledge = () => {
         for (const doc of documents) {
           if (doc) {
             console.log(`Creating database entry for document: ${doc.fileName}`);
+            // Insert without document_url for now
             const { error } = await supabase.from('project_knowledge_vector').insert({
               metadata: { project_id: id },
-              content: `Document: ${doc.fileName}`,
-              document_url: doc.url,
+              content: `Document: ${doc.fileName}`
             });
 
             if (error) {
@@ -214,7 +215,7 @@ const ManageKnowledge = () => {
       // Refresh the knowledge data
       const { data, error } = await supabase
         .from('project_knowledge_vector')
-        .select('id, content, created_at, document_url')
+        .select('id, content, created_at, metadata')
         .eq('metadata->>project_id', id)
         .order('created_at', { ascending: false });
 
@@ -226,7 +227,7 @@ const ManageKnowledge = () => {
           id: item.id,
           content: item.content || '',
           created_at: item.created_at,
-          document_url: item.document_url || null
+          metadata: item.metadata
         }));
         setKnowledge(typedKnowledgeData);
       }
@@ -357,33 +358,12 @@ const ManageKnowledge = () => {
                     <CardContent className="p-4">
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
-                          {item.document_url ? (
-                            <div className="flex flex-col">
-                              <div className="flex items-center mb-2">
-                                <FileText className="h-5 w-5 mr-2 text-blue-500" />
-                                <span className="font-medium">
-                                  {item.content.replace('Document: ', '')}
-                                </span>
-                              </div>
-                              <div className="flex space-x-2">
-                                <a
-                                  href={item.document_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800"
-                                >
-                                  <ExternalLink className="h-4 w-4 mr-1" />
-                                  {t('view', { defaultValue: 'View' })}
-                                </a>
-                                <a
-                                  href={item.document_url}
-                                  download
-                                  className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800"
-                                >
-                                  <Download className="h-4 w-4 mr-1" />
-                                  {t('download', { defaultValue: 'Download' })}
-                                </a>
-                              </div>
+                          {item.content.startsWith('Document: ') ? (
+                            <div className="flex items-center mb-2">
+                              <FileText className="h-5 w-5 mr-2 text-blue-500" />
+                              <span className="font-medium">
+                                {item.content.replace('Document: ', '')}
+                              </span>
                             </div>
                           ) : (
                             <div className="whitespace-pre-wrap">{item.content}</div>
