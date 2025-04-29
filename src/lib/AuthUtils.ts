@@ -75,25 +75,43 @@ export const clearAuthUrlParams = () => {
 };
 
 // Save the current path before redirecting for authentication
-export const saveAuthRedirectPath = () => {
+export const saveAuthRedirectPath = (additionalData?: Record<string, any>) => {
   if (typeof window === 'undefined') return;
   
   // Save the current pathname (excluding the domain)
   const currentPath = window.location.pathname;
-  if (currentPath && currentPath !== '/') {
-    localStorage.setItem('auth_redirect_path', currentPath);
-    console.log('Saved redirect path for after auth:', currentPath);
+  if (currentPath) {
+    // Save the path along with any additional data
+    const dataToSave = {
+      path: currentPath,
+      ...additionalData
+    };
+    localStorage.setItem('auth_redirect_data', JSON.stringify(dataToSave));
+    console.log('Saved redirect data for after auth:', dataToSave);
   }
 };
 
 // Get the saved redirect path and clear it from storage
-export const getAndClearSavedRedirectPath = (): string | null => {
-  if (typeof window === 'undefined') return null;
+export const getAndClearSavedRedirectData = (): { 
+  path: string | null, 
+  [key: string]: any 
+} => {
+  if (typeof window === 'undefined') return { path: null };
   
-  const savedPath = localStorage.getItem('auth_redirect_path');
-  localStorage.removeItem('auth_redirect_path');
-  console.log('Retrieved saved redirect path:', savedPath || 'none saved');
-  return savedPath;
+  const savedDataStr = localStorage.getItem('auth_redirect_data');
+  localStorage.removeItem('auth_redirect_data');
+  
+  if (savedDataStr) {
+    try {
+      const savedData = JSON.parse(savedDataStr);
+      console.log('Retrieved saved redirect data:', savedData);
+      return savedData;
+    } catch (e) {
+      console.error('Error parsing saved redirect data:', e);
+    }
+  }
+  
+  return { path: null };
 };
 
 // Handle authentication responses with tokens in the URL hash

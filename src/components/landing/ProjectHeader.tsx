@@ -1,3 +1,4 @@
+
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -122,6 +123,7 @@ export function ProjectHeader({ projectName, colorScheme, projectUrlName }: Proj
         setIsLoginOpen={setIsLoginOpen}
         isSignUpOpen={isSignUpOpen}
         setIsSignUpOpen={setIsSignUpOpen}
+        additionalData={{ projectUrlName }}
       />
     </>
   );

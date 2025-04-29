@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +8,7 @@ import { Benefits } from '@/components/landing/Benefits';
 import { AuthDialogs } from '@/components/auth/AuthDialogs';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
-import { checkAuthUrlErrors, clearAuthUrlParams, handleAuthResponse, checkAndFixSupabaseConfig, getAndClearSavedRedirectPath } from '@/lib/AuthUtils';
+import { checkAuthUrlErrors, clearAuthUrlParams, handleAuthResponse, checkAndFixSupabaseConfig, getAndClearSavedRedirectData } from '@/lib/AuthUtils';
 import { ArrowRight, MessageSquare, Users, Star } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 
@@ -23,15 +22,12 @@ const Index = () => {
   const [redirecting, setRedirecting] = useState(false);
   const [processingAuth, setProcessingAuth] = useState(false);
 
-  // Enhanced authentication handling
   useEffect(() => {
     const checkAuth = async () => {
       setProcessingAuth(true);
       
-      // Make sure Supabase config is correct
       await checkAndFixSupabaseConfig();
       
-      // First check for auth hash in URL
       if (window.location.hash) {
         console.log('Checking URL hash for auth tokens:', window.location.hash.substring(0, 20) + '...');
         
@@ -43,19 +39,16 @@ const Index = () => {
             // We'll navigate in the next useEffect when user is available
           }
         } else {
-          // Could be an error or other hash content
           console.log('URL hash present but no access token found');
         }
       }
       
-      // Then check for errors
       const { hasError, errorMessage } = checkAuthUrlErrors();
       if (hasError) {
         toast.error(errorMessage || 'Authentication error occurred');
         clearAuthUrlParams();
       }
       
-      // Make sure to clean the URL even if no errors are found
       if (window.location.search || window.location.hash) {
         console.log('Cleaning URL params and hash');
         clearAuthUrlParams();
@@ -76,17 +69,20 @@ const Index = () => {
 
   useEffect(() => {
     if (!isLoading && !processingAuth && user) {
-      console.log('User authenticated, checking for redirect path...');
+      console.log('User authenticated, checking for redirect data...');
       setRedirecting(true);
       
-      // Check if there was a saved redirect path from before authentication
-      const savedPath = getAndClearSavedRedirectPath();
+      const savedRedirectData = getAndClearSavedRedirectData();
       
-      // Add a small delay before redirecting to ensure everything is loaded
       const timer = setTimeout(() => {
-        if (savedPath) {
-          console.log('Redirecting to saved path:', savedPath);
-          navigate(savedPath);
+        if (savedRedirectData.path) {
+          console.log('Redirecting to saved path:', savedRedirectData.path);
+          
+          if (savedRedirectData.courseId && savedRedirectData.action === 'enroll') {
+            navigate(`/course/${savedRedirectData.courseId}`);
+          } else {
+            navigate(savedRedirectData.path);
+          }
         } else {
           console.log('No saved path found, redirecting to dashboard...');
           navigate('/dashboard');

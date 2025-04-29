@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,7 @@ interface AuthDialogsProps {
   setIsLoginOpen: (value: boolean) => void;
   isSignUpOpen: boolean;
   setIsSignUpOpen: (value: boolean) => void;
+  additionalData?: Record<string, any>;
 }
 
 export const AuthDialogs = ({
@@ -22,6 +24,7 @@ export const AuthDialogs = ({
   setIsLoginOpen,
   isSignUpOpen,
   setIsSignUpOpen,
+  additionalData = {}
 }: AuthDialogsProps) => {
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
@@ -89,7 +92,7 @@ export const AuthDialogs = ({
           .insert({
             id: authData.user.id,
             email: email,
-            telegram: telegram || null,
+            telegram: telegram ? telegram.replace(/^@/, '').trim() : null,
             role: 'customer',
           });
         if (profileError) {
@@ -111,10 +114,10 @@ export const AuthDialogs = ({
 
   const handleGoogleAuth = async () => {
     try {
-      saveAuthRedirectPath();
+      saveAuthRedirectPath(additionalData);
       
       setLoading(true);
-      console.log('Initiating Google sign in from AuthDialogs');
+      console.log('Initiating Google sign in from AuthDialogs with additionalData:', additionalData);
       
       const redirectUrl = getRedirectUrl();
       console.log('Using redirect URL for Google auth:', redirectUrl);

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -20,6 +19,7 @@ import {
 import { formatDate, isSubscriptionActive } from '@/utils/subscriptionUtils';
 import { MessageSquare, ArrowLeft } from 'lucide-react';
 import { TelegramPrompt } from '@/components/courses/TelegramPrompt';
+import { AuthDialogs } from '@/components/auth/AuthDialogs';
 
 export default function ViewCourse() {
   const { id } = useParams<{ id: string }>();
@@ -29,6 +29,8 @@ export default function ViewCourse() {
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [userTelegram, setUserTelegram] = useState<string | null>(null);
   const [isLoadingTelegram, setIsLoadingTelegram] = useState(true);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isSignUpOpen, setIsSignUpOpen] = useState(false);
 
   const { data: course, isLoading: courseLoading } = useQuery({
     queryKey: ['course', id],
@@ -116,7 +118,7 @@ export default function ViewCourse() {
 
   const handleRenewSubscription = () => {
     if (!user) {
-      toast.error(t('auth.required', 'Please sign in to enroll in courses'));
+      setIsSignUpOpen(true);
       return;
     }
     setIsPaymentOpen(true);
@@ -308,6 +310,14 @@ export default function ViewCourse() {
         onClose={() => setIsPaymentOpen(false)}
         course={course}
         userId={user?.id || null}
+      />
+
+      <AuthDialogs
+        isLoginOpen={isLoginOpen}
+        setIsLoginOpen={setIsLoginOpen}
+        isSignUpOpen={isSignUpOpen}
+        setIsSignUpOpen={setIsSignUpOpen}
+        additionalData={{ courseId: id, action: 'enroll' }}
       />
     </div>
   );
