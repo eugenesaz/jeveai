@@ -27,6 +27,9 @@ const CreateCourse = () => {
     setLoading(true);
 
     try {
+      // Ensure AI instructions respect the 200 character limit
+      const aiInstructions = formData.aiInstructions ? formData.aiInstructions.slice(0, 200) : null;
+      
       const { error } = await supabase.from('courses').insert({
         name: formData.name,
         description: formData.description,
@@ -38,7 +41,7 @@ const CreateCourse = () => {
         details: formData.details,
         telegram_bot: formData.telegramBot || null,
         project_id: selectedProject,
-        ai_instructions: formData.aiInstructions || null,
+        ai_instructions: aiInstructions,
         materials: formData.materials ? JSON.stringify(formData.materials) : '[]',
         course_plan: formData.coursePlan || null,
       });

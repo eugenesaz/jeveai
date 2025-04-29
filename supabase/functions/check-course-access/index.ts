@@ -54,12 +54,13 @@ serve(async (req) => {
           error: "Both telegramUsername and courseId are required",
           subscription_begin: null,
           subscription_end: null,
-          course_info_link: courseId ? `https://jeve.ai/course/${courseId}` : null
+          course_info_link: courseId ? `https://jeveai.lovable.app/course/${courseId}` : null
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    // Clean telegram handle by removing any @ symbol
     const cleanTelegramUsername = telegramUsername.replace('@', '').trim().toLowerCase();
     
     console.log('Processing request:', { telegramUsername: cleanTelegramUsername, courseId });
@@ -89,7 +90,7 @@ serve(async (req) => {
           error: "User not found",
           subscription_begin: null,
           subscription_end: null,
-          course_info_link: `https://jeve.ai/course/${courseId}`
+          course_info_link: `https://jeveai.lovable.app/course/${courseId}`
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -109,7 +110,7 @@ serve(async (req) => {
           status: "Not enrolled",
           subscription_begin: null,
           subscription_end: null,
-          course_info_link: `https://jeve.ai/course/${courseId}`
+          course_info_link: `https://jeveai.lovable.app/course/${courseId}`
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -131,7 +132,7 @@ serve(async (req) => {
           error: "Error checking subscription",
           subscription_begin: null,
           subscription_end: null,
-          course_info_link: `https://jeve.ai/course/${courseId}`
+          course_info_link: `https://jeveai.lovable.app/course/${courseId}`
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -145,7 +146,7 @@ serve(async (req) => {
           error: "No active subscription",
           subscription_begin: null,
           subscription_end: null,
-          course_info_link: `https://jeve.ai/course/${courseId}`,
+          course_info_link: `https://jeveai.lovable.app/course/${courseId}`,
           course_name: enrollmentData.courses?.name,
           course_description: enrollmentData.courses?.description
         }),
@@ -162,7 +163,7 @@ serve(async (req) => {
           status: "Expired",
           subscription_begin: subscriptionData.begin_date,
           subscription_end: subscriptionData.end_date,
-          course_info_link: `https://jeve.ai/course/${courseId}`,
+          course_info_link: `https://jeveai.lovable.app/course/${courseId}`,
           course_name: enrollmentData.courses?.name,
           course_description: enrollmentData.courses?.description
         }),
@@ -175,7 +176,7 @@ serve(async (req) => {
         status: "Active",
         subscription_begin: subscriptionData.begin_date,
         subscription_end: subscriptionData.end_date,
-        course_info_link: `https://jeve.ai/course/${courseId}`,
+        course_info_link: `https://jeveai.lovable.app/course/${courseId}`,
         course_name: enrollmentData.courses?.name,
         course_description: enrollmentData.courses?.description
       }),
@@ -190,7 +191,7 @@ serve(async (req) => {
         error: "Internal Server Error",
         subscription_begin: null,
         subscription_end: null,
-        course_info_link: courseId ? `https://jeve.ai/course/${courseId}` : null
+        course_info_link: courseId ? `https://jeveai.lovable.app/course/${courseId}` : null
       }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Input } from '@/components/ui/input';
@@ -69,11 +68,11 @@ export const CourseForm = ({ onSubmit, loading, initialValues, fieldLabels }: Co
     materials: [],
   });
 
-  // Store the original bot name for comparison during validation
   const [originalBotName, setOriginalBotName] = useState<string>('');
   const [activeTab, setActiveTab] = useState('basic');
 
-  // Initialize form with initial values if provided (for editing)
+  const MAX_AI_INSTRUCTIONS_LENGTH = 200;
+
   useEffect(() => {
     if (initialValues) {
       setFormData(prev => ({
@@ -90,13 +89,11 @@ export const CourseForm = ({ onSubmit, loading, initialValues, fieldLabels }: Co
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate the bot name before submitting
     if (formData.telegramBot && formData.telegramBot !== originalBotName) {
       const error = await validateBotName(formData.telegramBot, originalBotName);
       if (error) return;
     }
 
-    // Upload materials before submitting
     const uploadedMaterials = await Promise.all(
       formData.materials.map(async (file) => {
         const fileName = `${Date.now()}_${file.name}`;
@@ -117,7 +114,6 @@ export const CourseForm = ({ onSubmit, loading, initialValues, fieldLabels }: Co
       })
     );
 
-    // Filter out any null uploads
     const validMaterials = uploadedMaterials.filter(m => m !== null);
 
     await onSubmit({
@@ -128,7 +124,6 @@ export const CourseForm = ({ onSubmit, loading, initialValues, fieldLabels }: Co
 
   const handleBotNameChange = async (value: string) => {
     setFormData(prev => ({ ...prev, telegramBot: value }));
-    // Only validate after a slight delay to prevent immediate validation while typing
     setTimeout(() => {
       validateBotName(value, originalBotName);
     }, 500);
@@ -153,7 +148,11 @@ export const CourseForm = ({ onSubmit, loading, initialValues, fieldLabels }: Co
     }));
   };
 
-  // Use fieldLabels if provided, otherwise fallback to translation keys
+  const handleAiInstructionsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value.slice(0, MAX_AI_INSTRUCTIONS_LENGTH);
+    setFormData(prev => ({ ...prev, aiInstructions: value }));
+  };
+
   const labels = fieldLabels || {
     name: t('influencer.course.name', 'Course Name'),
     description: t('influencer.course.description', 'Course Description'),
@@ -339,11 +338,24 @@ export const CourseForm = ({ onSubmit, loading, initialValues, fieldLabels }: Co
                 <Textarea
                   id="aiInstructions"
                   value={formData.aiInstructions}
-                  onChange={(e) => setFormData(prev => ({ ...prev, aiInstructions: e.target.value }))}
+                  onChange={handleAiInstructionsChange}
                   placeholder={t('ai.instructions.placeholder', 'Optional AI instructions for the course')}
                   rows={3}
-                  className="bg-background"
+                  className={`bg-background ${formData.aiInstructions.length >= MAX_AI_INSTRUCTIONS_LENGTH ? 'border-red-500 focus:ring-red-500' : ''}`}
                 />
+                <div className="flex justify-between">
+                  <p className="text-xs text-muted-foreground">
+                    {t('ai.instructions.description', 'Instructions for the AI assistant')}
+                  </p>
+                  <p className={`text-xs ${formData.aiInstructions.length >= MAX_AI_INSTRUCTIONS_LENGTH ? 'text-red-500 font-bold' : 'text-muted-foreground'}`}>
+                    {formData.aiInstructions.length}/{MAX_AI_INSTRUCTIONS_LENGTH}
+                  </p>
+                </div>
+                {formData.aiInstructions.length >= MAX_AI_INSTRUCTIONS_LENGTH && (
+                  <p className="text-xs text-red-500">
+                    {t('ai.instructions.limit.warning', 'Maximum character limit reached')}
+                  </p>
+                )}
               </div>
             </TabsContent>
 

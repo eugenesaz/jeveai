@@ -110,6 +110,8 @@ const EditCourse = () => {
     try {
       setSaving(true);
       
+      const aiInstructions = formData.aiInstructions ? formData.aiInstructions.slice(0, 200) : null;
+      
       const updatedCourse = {
         name: formData.name,
         description: formData.description,
@@ -121,7 +123,7 @@ const EditCourse = () => {
         details: formData.details,
         telegram_bot: formData.telegramBot || null,
         project_id: projectId,
-        ai_instructions: formData.aiInstructions || null,
+        ai_instructions: aiInstructions,
         course_plan: formData.coursePlan || null,
         materials: formData.materials ? JSON.stringify(formData.materials) : null
       };

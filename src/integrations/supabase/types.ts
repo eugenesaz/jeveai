@@ -168,6 +168,27 @@ export type Database = {
         }
         Relationships: []
       }
+      memories_vector: {
+        Row: {
+          content: string | null
+          embedding: string | null
+          id: number
+          metadata: Json | null
+        }
+        Insert: {
+          content?: string | null
+          embedding?: string | null
+          id?: number
+          metadata?: Json | null
+        }
+        Update: {
+          content?: string | null
+          embedding?: string | null
+          id?: number
+          metadata?: Json | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -453,6 +474,10 @@ export type Database = {
         Args: { telegram_name: string }
         Returns: string
       }
+      get_user_id_by_telegram_case_insensitive: {
+        Args: { telegram_name: string }
+        Returns: string
+      }
       get_user_owned_project_ids: {
         Args: { owner_id: string }
         Returns: string[]
@@ -519,6 +544,15 @@ export type Database = {
         }[]
       }
       match_knowledge: {
+        Args: { query_embedding: string; match_count?: number; filter?: Json }
+        Returns: {
+          id: number
+          content: string
+          metadata: Json
+          similarity: number
+        }[]
+      }
+      match_memories: {
         Args: { query_embedding: string; match_count?: number; filter?: Json }
         Returns: {
           id: number
