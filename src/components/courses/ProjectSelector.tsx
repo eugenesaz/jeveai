@@ -24,12 +24,17 @@ export const ProjectSelector = ({
 }: ProjectSelectorProps) => {
   const { t } = useTranslation();
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProjects = async () => {
+      if (!userId) return;
+      
+      setLoading(true);
+      setError(null);
+      
       try {
-        if (!userId) return;
-        
         // Fixed query: Use proper select syntax and error handling
         const { data, error } = await supabase
           .from('projects')
@@ -39,7 +44,8 @@ export const ProjectSelector = ({
 
         if (error) {
           console.error('Error fetching projects:', error);
-          throw error;
+          setError(`Failed to fetch projects: ${error.message}`);
+          return;
         }
 
         if (data && data.length > 0) {
@@ -49,9 +55,14 @@ export const ProjectSelector = ({
           if (projectToSelect && onProjectSelect) {
             onProjectSelect(projectToSelect);
           }
+        } else {
+          setProjects([]);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching projects:', error);
+        setError(`Unexpected error: ${error.message}`);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -59,6 +70,24 @@ export const ProjectSelector = ({
       fetchProjects();
     }
   }, [userId, selectedProjectId, value, onProjectSelect]);
+
+  if (loading) {
+    return (
+      <div className="text-center p-6">
+        <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto"></div>
+        <p className="mt-2 text-sm text-gray-500">{t('loading.projects', 'Loading projects...')}</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center p-6">
+        <p className="text-red-500">{error}</p>
+        <p className="mt-2 text-sm">{t('error.tryAgain', 'Please try again later')}</p>
+      </div>
+    );
+  }
 
   if (projects.length === 0) {
     return (

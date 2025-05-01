@@ -1,4 +1,3 @@
-
 import { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -68,7 +67,7 @@ const CreateProject = () => {
 
   const checkUrlNameExists = async (urlNameToCheck: string): Promise<boolean> => {
     try {
-      // Fixed: Changed the query format to properly check for existing URL names
+      // Use the correct format for the query parameters
       const { data, error } = await supabase
         .from('projects')
         .select('id')
@@ -147,9 +146,14 @@ const CreateProject = () => {
         user_id: user.id
       };
 
-      const { error } = await supabase
+      // Log the project data for debugging
+      console.log('Sending project data:', JSON.stringify(projectData));
+
+      // Use the Supabase client to insert the project
+      const { data, error } = await supabase
         .from('projects')
-        .insert(projectData);
+        .insert([projectData])
+        .select();
 
       if (error) {
         console.error('Project creation error details:', error);
