@@ -80,7 +80,7 @@ serve(async (req) => {
 
       console.log(`Project with ID ${projectId} found (${projectData.name}), proceeding to fetch knowledge`);
 
-      // Get project knowledge using direct query to avoid ambiguous column issues
+      // Use explicit table alias to avoid ambiguous column references
       const { data: knowledgeData, error } = await supabaseClient
         .from('project_knowledge_vector')
         .select('id, content, metadata, created_at')
@@ -99,17 +99,7 @@ serve(async (req) => {
       }
 
       console.log(`Retrieved ${knowledgeData?.length || 0} knowledge entries for project ${projectId}`);
-      if (knowledgeData && knowledgeData.length > 0) {
-        console.log(`Sample first entry: ${JSON.stringify(knowledgeData[0])}`);
-      } else {
-        // Check if there are any entries in the table (diagnostic only)
-        const { count, error: countError } = await supabaseClient
-          .from('project_knowledge_vector')
-          .select('*', { count: 'exact', head: true });
-          
-        console.log(`Total count in project_knowledge_vector table: ${count}, error: ${countError ? JSON.stringify(countError) : 'none'}`);
-      }
-
+      
       return new Response(
         JSON.stringify({ knowledge: knowledgeData || [] }),
         { 

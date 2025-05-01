@@ -94,6 +94,7 @@ serve(async (req) => {
     // Get all knowledge entries for the project
     console.log(`Fetching knowledge entries for project ID: ${projectId}`);
 
+    // Use explicit project_id column to avoid ambiguity
     const { data: knowledgeData, error } = await supabaseClient
       .from('project_knowledge')
       .select('content')

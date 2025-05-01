@@ -485,7 +485,7 @@ export type Database = {
         Returns: undefined
       }
       assign_influencer_role_to_own_project: {
-        Args: { owner_id: string; project_id: string }
+        Args: { owner_id: string; project_uuid: string }
         Returns: undefined
       }
       binary_quantize: {

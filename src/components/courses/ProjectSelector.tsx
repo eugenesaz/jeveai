@@ -37,21 +37,43 @@ export const ProjectSelector = ({
       try {
         console.log(`Fetching projects for user ID: ${userId}`);
         
-        const { data, error } = await supabase
+        // Get projects owned by the user
+        const { data: ownedProjects, error: ownedError } = await supabase
           .from('projects')
           .select('id, name')
           .eq('user_id', userId);
 
-        if (error) {
-          console.error('Error fetching projects:', error);
-          setError(`Failed to fetch projects: ${error.message}`);
+        if (ownedError) {
+          console.error('Error fetching owned projects:', ownedError);
+          setError(`Failed to fetch projects: ${ownedError.message}`);
           return;
         }
 
-        if (data && data.length > 0) {
-          setProjects(data);
+        // Get projects shared with the user
+        const { data: sharedProjects, error: sharedError } = await supabase
+          .from('project_shares')
+          .select('project:project_id (id, name)')
+          .eq('user_id', userId)
+          .eq('status', 'accepted');
+
+        if (sharedError) {
+          console.error('Error fetching shared projects:', sharedError);
+          setError(`Failed to fetch shared projects: ${sharedError.message}`);
+          return;
+        }
+
+        // Combine and format the projects
+        const allProjects = [
+          ...(ownedProjects || []),
+          ...(sharedProjects?.map(item => item.project) || [])
+        ];
+
+        console.log(`Found ${allProjects.length} projects (${ownedProjects?.length || 0} owned, ${sharedProjects?.length || 0} shared)`);
+
+        if (allProjects.length > 0) {
+          setProjects(allProjects);
           // Use selectedProjectId or value, prioritizing selectedProjectId
-          const projectToSelect = selectedProjectId || value || (data.length > 0 ? data[0].id : '');
+          const projectToSelect = selectedProjectId || value || (allProjects.length > 0 ? allProjects[0].id : '');
           if (projectToSelect && onProjectSelect) {
             onProjectSelect(projectToSelect);
           }
@@ -73,7 +95,7 @@ export const ProjectSelector = ({
 
   if (loading) {
     return (
-      <div className="text-center p-6">
+      <div className="text-center p-4 border rounded-md bg-gray-50">
         <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto"></div>
         <p className="mt-2 text-sm text-gray-500">{t('loading.projects', 'Loading projects...')}</p>
       </div>
@@ -82,8 +104,8 @@ export const ProjectSelector = ({
 
   if (error) {
     return (
-      <div className="text-center p-6">
-        <p className="text-red-500">{error}</p>
+      <div className="text-center p-4 border rounded-md bg-red-50">
+        <p className="text-red-500 text-sm font-medium">{error}</p>
         <p className="mt-2 text-sm">{t('error.tryAgain', 'Please try again later')}</p>
       </div>
     );
@@ -91,8 +113,9 @@ export const ProjectSelector = ({
 
   if (projects.length === 0) {
     return (
-      <div className="text-center p-6">
-        <h3 className="text-lg font-semibold mb-4">{t('no.projects', 'No projects found')}</h3>
+      <div className="text-center p-4 border rounded-md bg-gray-50">
+        <h3 className="text-lg font-medium text-gray-700">{t('no.projects', 'No projects found')}</h3>
+        <p className="text-sm text-gray-500 mt-1">{t('create.project.first', 'Create a project first')}</p>
       </div>
     );
   }
