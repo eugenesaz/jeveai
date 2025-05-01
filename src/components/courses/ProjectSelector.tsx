@@ -35,12 +35,12 @@ export const ProjectSelector = ({
       setError(null);
       
       try {
-        // Fixed query: Use proper select syntax and error handling
+        console.log(`Fetching projects for user ID: ${userId}`);
+        
         const { data, error } = await supabase
           .from('projects')
           .select('id, name')
-          .eq('user_id', userId)
-          .eq('status', true);
+          .eq('user_id', userId);
 
         if (error) {
           console.error('Error fetching projects:', error);
@@ -92,14 +92,14 @@ export const ProjectSelector = ({
   if (projects.length === 0) {
     return (
       <div className="text-center p-6">
-        <h3 className="text-lg font-semibold mb-4">{t('no.projects')}</h3>
+        <h3 className="text-lg font-semibold mb-4">{t('no.projects', 'No projects found')}</h3>
       </div>
     );
   }
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="project">{t('select.project')}</Label>
+      <Label htmlFor="project">{t('select.project', 'Select Project')}</Label>
       <Select 
         value={selectedProjectId || value} 
         onValueChange={(newValue) => {
@@ -109,7 +109,7 @@ export const ProjectSelector = ({
         disabled={disabled}
       >
         <SelectTrigger>
-          <SelectValue placeholder={t('select.project')} />
+          <SelectValue placeholder={t('select.project', 'Select Project')} />
         </SelectTrigger>
         <SelectContent>
           {projects.map((project) => (

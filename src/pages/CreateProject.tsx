@@ -1,3 +1,4 @@
+
 import { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -67,7 +68,9 @@ const CreateProject = () => {
 
   const checkUrlNameExists = async (urlNameToCheck: string): Promise<boolean> => {
     try {
-      // Use the correct format for the query parameters
+      console.log(`Checking if URL name exists: ${urlNameToCheck}`);
+      
+      // Use single() instead of expecting an array, since we only want to know if any record exists
       const { data, error } = await supabase
         .from('projects')
         .select('id')
@@ -135,7 +138,7 @@ const CreateProject = () => {
         imageUrl = publicUrlData.publicUrl;
       }
 
-      // Create project with proper data structure
+      // Create the project data object
       const projectData = {
         name: projectName,
         url_name: urlName,
@@ -146,17 +149,15 @@ const CreateProject = () => {
         user_id: user.id
       };
 
-      // Log the project data for debugging
-      console.log('Sending project data:', JSON.stringify(projectData));
+      console.log('Creating project with data:', JSON.stringify(projectData));
 
-      // Use the Supabase client to insert the project
+      // Insert the project
       const { data, error } = await supabase
         .from('projects')
-        .insert([projectData])
-        .select();
+        .insert([projectData]);
 
       if (error) {
-        console.error('Project creation error details:', error);
+        console.error('Project creation error:', error);
         throw error;
       }
 

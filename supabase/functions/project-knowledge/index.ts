@@ -80,27 +80,11 @@ serve(async (req) => {
 
       console.log(`Project with ID ${projectId} found (${projectData.name}), proceeding to fetch knowledge`);
 
-      // Try to get project knowledge with the RPC function first
-      try {
-        const { data: rpcData, error: rpcError } = await supabaseClient.rpc(
-          'get_project_knowledge_direct',
-          { p_project_id: projectId }
-        );
-        
-        if (rpcError) {
-          console.error('RPC Error:', rpcError);
-        } else {
-          console.log(`RPC query returned ${rpcData?.length || 0} rows`);
-        }
-      } catch (rpcError) {
-        console.error('Error testing RPC function:', rpcError);
-      }
-
-      // Get project knowledge
+      // Get project knowledge using direct query to avoid ambiguous column issues
       const { data: knowledgeData, error } = await supabaseClient
-        .from('project_knowledge')
-        .select('*')
-        .eq('project_id', projectId)
+        .from('project_knowledge_vector')
+        .select('id, content, metadata, created_at')
+        .filter('metadata->>projectId', 'eq', projectId)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -120,10 +104,10 @@ serve(async (req) => {
       } else {
         // Check if there are any entries in the table (diagnostic only)
         const { count, error: countError } = await supabaseClient
-          .from('project_knowledge')
+          .from('project_knowledge_vector')
           .select('*', { count: 'exact', head: true });
           
-        console.log(`Total count in project_knowledge table: ${count}, error: ${countError ? JSON.stringify(countError) : 'none'}`);
+        console.log(`Total count in project_knowledge_vector table: ${count}, error: ${countError ? JSON.stringify(countError) : 'none'}`);
       }
 
       return new Response(
@@ -169,20 +153,23 @@ serve(async (req) => {
         );
       }
 
-      // Create knowledge entry
+      // Create knowledge entry with proper metadata
       const knowledgeEntry = {
-        project_id: projectId,
         content: content || '',
+        metadata: { 
+          projectId: projectId, 
+          source: documentUrl ? 'document' : 'manual'
+        }
       };
       
       if (documentUrl) {
-        knowledgeEntry.document_url = documentUrl;
+        knowledgeEntry.metadata.documentUrl = documentUrl;
       }
       
       console.log('Creating knowledge entry with data:', JSON.stringify(knowledgeEntry));
       
       const { data: newKnowledge, error } = await supabaseClient
-        .from('project_knowledge')
+        .from('project_knowledge_vector')
         .insert(knowledgeEntry)
         .select()
         .single();
