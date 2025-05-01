@@ -33,6 +33,7 @@ const CreateProject = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [saving, setSaving] = useState(false);
+  const [urlNameExists, setUrlNameExists] = useState(false);
 
   const handleUrlNameChange = (value: string) => {
     // Replace spaces with underscores, remove special characters, and convert to lowercase
@@ -41,6 +42,9 @@ const CreateProject = () => {
       .replace(/[^a-zA-Z0-9_]/g, '')
       .toLowerCase();
     setUrlName(formattedValue);
+    
+    // Reset the existing URL name error when changed
+    setUrlNameExists(false);
   };
 
   const handleImageClick = () => {
@@ -62,6 +66,27 @@ const CreateProject = () => {
     }
   };
 
+  const checkUrlNameExists = async (urlNameToCheck: string): Promise<boolean> => {
+    try {
+      // Fixed: Changed the query format to properly check for existing URL names
+      const { data, error } = await supabase
+        .from('projects')
+        .select('id')
+        .eq('url_name', urlNameToCheck)
+        .limit(1);
+
+      if (error) {
+        console.error('Error checking URL name:', error);
+        return false;
+      }
+
+      return data && data.length > 0;
+    } catch (error) {
+      console.error('Error in URL name check:', error);
+      return false;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -77,13 +102,9 @@ const CreateProject = () => {
       }
 
       // Check if URL name is already taken
-      const { data: existingProject, error: urlCheckError } = await supabase
-        .from('projects')
-        .select('id')
-        .eq('url_name', urlName)
-        .single();
-
-      if (!urlCheckError && existingProject) {
+      const exists = await checkUrlNameExists(urlName);
+      if (exists) {
+        setUrlNameExists(true);
         toast.error(t('errors.urlNameTaken', 'This URL name is already taken. Please choose another one.'));
         setSaving(false);
         return;
@@ -115,26 +136,29 @@ const CreateProject = () => {
         imageUrl = publicUrlData.publicUrl;
       }
 
-      // Create project
+      // Create project with proper data structure
+      const projectData = {
+        name: projectName,
+        url_name: urlName,
+        status: isActive,
+        telegram_bot: telegramBot || null,
+        color_scheme: colorScheme,
+        landing_image: imageUrl,
+        user_id: user.id
+      };
+
       const { error } = await supabase
         .from('projects')
-        .insert({
-          name: projectName,
-          url_name: urlName,
-          status: isActive,
-          telegram_bot: telegramBot || null,
-          color_scheme: colorScheme,
-          landing_image: imageUrl,
-          user_id: user.id
-        });
+        .insert(projectData);
 
       if (error) {
+        console.error('Project creation error details:', error);
         throw error;
       }
 
       toast.success(t('success.projectCreated', 'Project created successfully'));
       navigate('/projects');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating project:', error);
       toast.error(t('errors.createFailed', 'Failed to create project. Please try again.'));
     } finally {
@@ -185,11 +209,16 @@ const CreateProject = () => {
                     id="urlName"
                     value={urlName}
                     onChange={e => handleUrlNameChange(e.target.value)}
-                    className="rounded-l-none"
+                    className={`rounded-l-none ${urlNameExists ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                     placeholder="my-project"
                     required
                   />
                 </div>
+                {urlNameExists && (
+                  <p className="text-sm text-red-500">
+                    {t('errors.urlNameTaken', 'This URL name is already taken. Please choose another one.')}
+                  </p>
+                )}
                 <p className="text-sm text-gray-500">
                   {t('influencer.project.urlNameHint', 'Use only lowercase letters, numbers, and underscores')}
                 </p>
@@ -380,11 +409,20 @@ const CreateProject = () => {
               </Button>
               <Button
                 type="submit"
-                disabled={saving || !!botNameError}
+                disabled={saving || !!botNameError || urlNameExists}
                 className="flex items-center gap-2"
               >
-                <ArrowRight className="w-4 h-4" /> 
-                {saving ? t('saving', 'Saving...') : t('save', 'Save')}
+                {saving ? (
+                  <>
+                    <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                    {t('saving', 'Saving...')}
+                  </>
+                ) : (
+                  <>
+                    <ArrowRight className="w-4 h-4" />
+                    {t('save', 'Save')}
+                  </>
+                )}
               </Button>
             </CardFooter>
           </form>

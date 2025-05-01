@@ -54,14 +54,25 @@ serve(async (req) => {
         .from('projects')
         .select('id, name')
         .eq('id', projectId)
-        .single();
+        .maybeSingle();
 
-      if (projectError || !projectData) {
+      if (projectError) {
         console.error('Error checking if project exists:', projectError);
         return new Response(
-          JSON.stringify({ error: "Project not found or error verifying project", details: projectError }),
+          JSON.stringify({ error: "Failed to verify project", details: projectError }),
           { 
-            status: projectError ? 500 : 404, 
+            status: 500, 
+            headers: { ...corsHeaders, "Content-Type": "application/json" } 
+          }
+        );
+      }
+
+      if (!projectData) {
+        console.log(`Project with ID ${projectId} not found`);
+        return new Response(
+          JSON.stringify({ error: "Project not found" }),
+          { 
+            status: 404, 
             headers: { ...corsHeaders, "Content-Type": "application/json" } 
           }
         );
@@ -145,7 +156,7 @@ serve(async (req) => {
         .from('projects')
         .select('id')
         .eq('id', projectId)
-        .single();
+        .maybeSingle();
 
       if (projectError || !projectData) {
         console.error('Error verifying project exists:', projectError);

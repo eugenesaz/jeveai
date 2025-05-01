@@ -65,7 +65,7 @@ serve(async (req) => {
       .from('projects')
       .select('id, name')
       .eq('id', projectId)
-      .single();
+      .maybeSingle();
 
     if (projectError) {
       console.error('Error checking if project exists:', projectError);
@@ -142,4 +142,3 @@ serve(async (req) => {
     );
   }
 });
-

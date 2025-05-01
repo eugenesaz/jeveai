@@ -28,13 +28,19 @@ export const ProjectSelector = ({
   useEffect(() => {
     const fetchProjects = async () => {
       try {
+        if (!userId) return;
+        
+        // Fixed query: Use proper select syntax and error handling
         const { data, error } = await supabase
           .from('projects')
           .select('id, name')
           .eq('user_id', userId)
           .eq('status', true);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching projects:', error);
+          throw error;
+        }
 
         if (data && data.length > 0) {
           setProjects(data);
