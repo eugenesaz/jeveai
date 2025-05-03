@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +10,7 @@ import { AuthDialogs } from '@/components/auth/AuthDialogs';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { checkAuthUrlErrors, clearAuthUrlParams, handleAuthResponse, checkAndFixSupabaseConfig, getAndClearSavedRedirectData } from '@/lib/AuthUtils';
-import { ArrowRight, MessageSquare, Users, Star } from 'lucide-react';
+import { ArrowRight, Brain, Users, Sparkles, Star } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 
 const Index = () => {
@@ -95,9 +96,9 @@ const Index = () => {
 
   if (isLoading || processingAuth || redirecting) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-purple-50 to-blue-50">
-        <Spinner className="h-10 w-10 mb-4" />
-        <p className="text-lg">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-ai-light">
+        <Spinner className="h-10 w-10 mb-4 text-ai-purple" />
+        <p className="text-lg text-ai-dark">
           {t(
             redirecting 
               ? 'landing.redirecting' 
@@ -111,7 +112,7 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-ai-light">
       <LandingHeader
         onLoginClick={() => setIsLoginOpen(true)}
         onSignUpClick={() => setIsSignUpOpen(true)}
@@ -121,8 +122,17 @@ const Index = () => {
         colorScheme={"blue"}
       />
 
-      <section className="relative bg-gradient-to-r from-purple-900 to-indigo-800 py-20 overflow-hidden">
-        <div className="absolute inset-0 bg-pattern opacity-10"></div>
+      <section className="relative bg-gradient-to-br from-ai-blue via-ai-purple to-ai-pink py-24 overflow-hidden">
+        <div className="absolute inset-0 opacity-20">
+          <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <defs>
+              <pattern id="grid" width="8" height="8" patternUnits="userSpaceOnUse">
+                <path d="M 8 0 L 0 0 0 8" fill="none" stroke="white" strokeWidth="0.5" opacity="0.5" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+          </svg>
+        </div>
         
         <div className="container mx-auto px-6 relative z-10">
           <div className="flex flex-col lg:flex-row items-center gap-12">
@@ -130,13 +140,13 @@ const Index = () => {
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
                 {t('landing.hero.title', 'Create your digital business')}
               </h1>
-              <p className="text-xl md:text-2xl mb-8 text-purple-100">
+              <p className="text-xl md:text-2xl mb-8 text-white/90">
                 {t('landing.hero.subtitle', 'Create hyper-personalized programs that adapt to your customers\' individual needs')}
               </p>
               <div className="flex flex-wrap gap-4">
                 <Button 
                   size="lg" 
-                  className="bg-white text-purple-900 hover:bg-purple-50 px-8 py-6 text-lg font-semibold"
+                  className="bg-white text-ai-purple hover:bg-ai-light hover:text-ai-dark px-8 py-6 text-lg font-semibold shadow-lg transition-all duration-300"
                   onClick={() => setIsSignUpOpen(true)}
                 >
                   {t('landing.cta.start', 'Get Started')}
@@ -144,25 +154,24 @@ const Index = () => {
                 <Button 
                   variant="outline"
                   size="lg"
-                  className="text-purple-900 border-white bg-white hover:bg-gray-100 px-8 py-6 text-lg font-semibold"
+                  className="text-white border-white bg-transparent hover:bg-white/10 px-8 py-6 text-lg font-semibold transition-all duration-300"
                   onClick={() =>
                     document.getElementById("features-section")?.scrollIntoView({ behavior: "smooth" })
                   }
                 >
                   {t('landing.cta.explore', 'Explore Features')}
-                  <span className="ml-2">
-                    <svg className="inline-block h-5 w-5" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
-                  </span>
+                  <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </div>
             </div>
             <div className="lg:w-1/2">
-              <div className="relative rounded-xl overflow-hidden shadow-2xl">
+              <div className="relative rounded-xl overflow-hidden shadow-2xl animate-float">
                 <img 
-                  src="https://images.unsplash.com/photo-1649972904349-6e44c42644a7?auto=format&fit=crop&q=80&w=700&h=500" 
-                  alt="Influencer scaling their business" 
-                  className="w-full h-auto object-cover"
+                  src="/lovable-uploads/b7617ba3-6580-4f6b-b9b8-f4debb8d3995.png" 
+                  alt="AI digital persona interacting with customers" 
+                  className="w-full h-auto"
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-ai-purple/20 to-transparent"></div>
               </div>
             </div>
           </div>
@@ -171,36 +180,34 @@ const Index = () => {
 
       <section id="features-section" className="py-20 bg-white">
         <div className="container mx-auto px-8">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-gray-900">Platform Features</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-ai-dark">Platform Features</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-10 text-center">
-            <div className="bg-purple-50 rounded-2xl p-7 shadow hover-scale transition">
-              <svg className="mx-auto mb-4 h-10 w-10 text-purple-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" /><path d="M9.09 9.05a6.37 6.37 0 0 1 5.82 0"/><path d="M7.41 13.67A7.35 7.35 0 0 1 12 12.49a7.35 7.35 0 0 1 4.59 1.18"/>
-              </svg>
-              <h3 className="font-bold text-lg mb-2">Create a virtual copy of yourself</h3>
+            <div className="bg-gradient-to-br from-ai-blue/10 to-ai-pink/10 rounded-2xl p-7 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+              <div className="bg-ai-blue/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Brain className="h-8 w-8 text-ai-dark" />
+              </div>
+              <h3 className="font-bold text-lg mb-2 text-ai-dark">Create a virtual copy of yourself</h3>
               <p className="text-gray-600">Train your AI-powered digital persona and let it answer questions just like you do.</p>
             </div>
-            <div className="bg-blue-50 rounded-2xl p-7 shadow hover-scale transition">
-              <svg className="mx-auto mb-4 h-10 w-10 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" /><path d="M8 15V9a4 4 0 1 1 8 0v6"/><path d="M9 21V9h6v12"/>
-              </svg>
-              <h3 className="font-bold text-lg mb-2">Let customers access you 24/7</h3>
+            <div className="bg-gradient-to-br from-ai-blue/10 to-ai-pink/10 rounded-2xl p-7 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+              <div className="bg-ai-purple/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users className="h-8 w-8 text-ai-dark" />
+              </div>
+              <h3 className="font-bold text-lg mb-2 text-ai-dark">Let customers access you 24/7</h3>
               <p className="text-gray-600">Your digital self is always available to help your clients anytime, anywhere.</p>
             </div>
-            <div className="bg-green-50 rounded-2xl p-7 shadow hover-scale transition">
-              <svg className="mx-auto mb-4 h-10 w-10 text-green-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 3v4" /><path d="M8 3v4" />
-              </svg>
-              <h3 className="font-bold text-lg mb-2">Monetize your knowledge</h3>
+            <div className="bg-gradient-to-br from-ai-blue/10 to-ai-pink/10 rounded-2xl p-7 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+              <div className="bg-ai-pink/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Star className="h-8 w-8 text-ai-dark" />
+              </div>
+              <h3 className="font-bold text-lg mb-2 text-ai-dark">Monetize your knowledge</h3>
               <p className="text-gray-600">Offer digital products, courses and subscriptions directly through your platform.</p>
             </div>
-            <div className="bg-orange-50 rounded-2xl p-7 shadow hover-scale transition">
-              <svg className="mx-auto mb-4 h-10 w-10 text-orange-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                <line x1="12" x2="12" y1="19" y2="22"></line>
-              </svg>
-              <h3 className="font-bold text-lg mb-2">Scale your business</h3>
+            <div className="bg-gradient-to-br from-ai-blue/10 to-ai-pink/10 rounded-2xl p-7 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+              <div className="bg-ai-glow/30 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Sparkles className="h-8 w-8 text-ai-dark" />
+              </div>
+              <h3 className="font-bold text-lg mb-2 text-ai-dark">Scale your business</h3>
               <p className="text-gray-600">Grow beyond geography, language, and channels with automated, multilingual support.</p>
             </div>
           </div>
@@ -211,31 +218,31 @@ const Index = () => {
       
       <CallToAction onSignUpClick={() => setIsSignUpOpen(true)} />
 
-      <footer className="bg-gray-900 text-white py-12">
+      <footer className="bg-ai-dark text-white py-12">
         <div className="container mx-auto px-6">
           <div className="grid md:grid-cols-3 gap-8">
             <div>
               <h3 className="text-xl font-bold mb-4">{t('app.name')}</h3>
-              <p className="text-gray-400">{t('landing.footer.description', 'Empowering influencers to scale their business through personalization')}</p>
+              <p className="text-gray-300">{t('landing.footer.description', 'Empowering influencers to scale their business through personalization')}</p>
             </div>
             <div>
               <h4 className="font-bold mb-4">{t('landing.footer.links', 'Quick Links')}</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white">{t('landing.footer.about', 'About Us')}</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white">{t('landing.footer.features', 'Features')}</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white">{t('landing.footer.pricing', 'Pricing')}</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white">{t('landing.footer.contact', 'Contact')}</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-white transition-colors">{t('landing.footer.about', 'About Us')}</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-white transition-colors">{t('landing.footer.features', 'Features')}</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-white transition-colors">{t('landing.footer.pricing', 'Pricing')}</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-white transition-colors">{t('landing.footer.contact', 'Contact')}</a></li>
               </ul>
             </div>
             <div>
               <h4 className="font-bold mb-4">{t('landing.footer.legal', 'Legal')}</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white">{t('landing.footer.terms', 'Terms of Service')}</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white">{t('landing.footer.privacy', 'Privacy Policy')}</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-white transition-colors">{t('landing.footer.terms', 'Terms of Service')}</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-white transition-colors">{t('landing.footer.privacy', 'Privacy Policy')}</a></li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-500">
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
             <p>© {new Date().getFullYear()} {t('app.name')}. {t('landing.rights')}</p>
           </div>
         </div>

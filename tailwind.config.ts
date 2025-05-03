@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,20 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// New colors that match the image theme
+				ai: {
+					blue: '#92c4ff',
+					pink: '#ffc1d8',
+					purple: '#9b87f5',
+					light: '#fdf9ff',
+					dark: '#2a3c5a',
+					glow: '#ffe5b7'
+				},
+				gradient: {
+					start: '#92c4ff',
+					mid: '#e5c6ff',
+					end: '#ffb1cc'
 				}
 			},
 			borderRadius: {
@@ -84,11 +99,24 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'float': {
+					'0%, 100%': { transform: 'translateY(0)' },
+					'50%': { transform: 'translateY(-10px)' }
+				},
+				'pulse-glow': {
+					'0%, 100%': { opacity: '0.8' },
+					'50%': { opacity: '1' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'float': 'float 6s ease-in-out infinite',
+				'pulse-glow': 'pulse-glow 3s ease-in-out infinite'
+			},
+			backgroundImage: {
+				'ai-gradient': 'linear-gradient(135deg, #92c4ff 0%, #e5c6ff 50%, #ffb1cc 100%)'
 			}
 		}
 	},
