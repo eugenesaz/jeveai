@@ -11,32 +11,16 @@ interface CallToActionProps {
 export const CallToAction = ({ onSignUpClick, colorScheme = 'blue' }: CallToActionProps) => {
   const { t } = useTranslation();
   
-  // Get color based on scheme
+  // Get button color based on scheme
   const getButtonClass = () => {
-    switch (colorScheme) {
-      case 'blue': return 'bg-blue-600 hover:bg-blue-700';
-      case 'red': return 'bg-red-600 hover:bg-red-700';
-      case 'orange': return 'bg-orange-600 hover:bg-orange-700';
-      case 'green': return 'bg-green-600 hover:bg-green-700';
-      default: return 'bg-purple-600 hover:bg-purple-700';
-    }
-  };
-
-  const getBgGradient = () => {
-    switch (colorScheme) {
-      case 'blue': return 'from-blue-50 to-indigo-100';
-      case 'red': return 'from-red-50 to-pink-100';
-      case 'orange': return 'from-orange-50 to-amber-100';
-      case 'green': return 'from-green-50 to-emerald-100';
-      default: return 'from-purple-50 to-indigo-100';
-    }
+    return 'bg-gradient-to-r from-ai-blue to-ai-purple text-white hover:opacity-90';
   };
 
   return (
     <>
-      <section className="py-24 text-center">
+      <section className="py-24 text-center bg-gradient-to-tr from-ai-light via-white to-ai-blue/5">
         <div className="container mx-auto px-6">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900">
+          <h1 className="text-4xl md:text-5xl font-bold mb-6 text-ai-dark">
             {t('influencer.benefits.title')}
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-10">
@@ -44,7 +28,7 @@ export const CallToAction = ({ onSignUpClick, colorScheme = 'blue' }: CallToActi
           </p>
           <Button 
             size="lg" 
-            className={`${getButtonClass()} text-white px-8 py-6 text-lg font-medium rounded-lg`}
+            className={`${getButtonClass()} px-8 py-6 text-lg font-medium rounded-lg shadow-md`}
             onClick={onSignUpClick}
           >
             {t('landing.cta.start')} <ArrowRight className="ml-2 h-5 w-5" />
@@ -52,7 +36,7 @@ export const CallToAction = ({ onSignUpClick, colorScheme = 'blue' }: CallToActi
         </div>
       </section>
 
-      <section className={`py-24 bg-gradient-to-br ${getBgGradient()} rounded-none`}>
+      <section className="py-24 bg-gradient-to-br from-ai-blue/10 via-ai-purple/10 to-ai-pink/10 rounded-none">
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
             <div className="grid md:grid-cols-2">
@@ -65,13 +49,13 @@ export const CallToAction = ({ onSignUpClick, colorScheme = 'blue' }: CallToActi
                 </p>
                 <Button 
                   size="lg" 
-                  className={`${getButtonClass()} text-white px-8 py-3 text-lg font-medium self-start`}
+                  className="bg-gradient-to-r from-ai-blue to-ai-purple text-white hover:opacity-90 shadow-md px-8 py-3 text-lg font-medium self-start"
                   onClick={onSignUpClick}
                 >
                   {t('landing.cta.start')}
                 </Button>
               </div>
-              <div className="bg-cover bg-center hidden md:block" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&q=80&w=800&h=600)' }}>
+              <div className="bg-cover bg-center hidden md:block" style={{ backgroundImage: 'url(/lovable-uploads/b7617ba3-6580-4f6b-b9b8-f4debb8d3995.png)' }}>
               </div>
             </div>
           </div>

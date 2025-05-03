@@ -51,7 +51,7 @@ export const LandingHeader = ({
   // Get color based on scheme
   const getHeaderColorClass = () => {
     switch (colorScheme) {
-      case 'blue': return 'bg-blue-500 text-white';
+      case 'blue': return 'bg-gradient-to-r from-ai-blue via-ai-purple to-ai-pink text-white';
       case 'red': return 'bg-red-500 text-white';
       case 'orange': return 'bg-orange-500 text-white';
       case 'green': return 'bg-green-500 text-white';
@@ -61,10 +61,10 @@ export const LandingHeader = ({
 
   // Default header with login/signup buttons
   return (
-    <header className={user ? getHeaderColorClass() : "bg-white shadow-sm"}>
+    <header className={user ? getHeaderColorClass() : "bg-gradient-to-r from-ai-blue via-ai-purple to-ai-pink shadow-md"}>
       <div className="container mx-auto p-4 flex justify-between items-center">
         <div className="flex items-center space-x-2">
-          <h1 className={`text-2xl font-bold ${user ? 'text-white' : 'text-purple-800'}`}>
+          <h1 className="text-2xl font-bold text-white">
             Jeve.ai
           </h1>
         </div>
@@ -74,7 +74,7 @@ export const LandingHeader = ({
           {user ? (
             <>
               <Link to="/dashboard">
-                <Button variant={colorScheme ? "outline" : "outline"} className={colorScheme ? "text-white border-white hover:bg-white/20" : ""}>
+                <Button variant="outline" className="text-white border-white/30 bg-white/20 hover:bg-white/30 hover:text-white">
                   {t('influencer.dashboard.title')}
                 </Button>
               </Link>
@@ -83,12 +83,19 @@ export const LandingHeader = ({
           ) : (
             <>
               {onLoginClick && (
-                <Button variant="outline" onClick={onLoginClick}>
+                <Button 
+                  variant="outline" 
+                  onClick={onLoginClick}
+                  className="text-white border-white/30 bg-white/20 hover:bg-white/30 hover:text-white"
+                >
                   {t('navigation.login')}
                 </Button>
               )}
               {onSignUpClick && (
-                <Button onClick={onSignUpClick}>
+                <Button 
+                  onClick={onSignUpClick}
+                  className="bg-white text-ai-purple hover:bg-ai-light"
+                >
                   {t('navigation.signup')}
                 </Button>
               )}

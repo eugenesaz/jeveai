@@ -23,30 +23,30 @@ export const ProjectsHeader = () => {
   };
 
   return (
-    <header className="bg-white shadow-sm">
+    <header className="bg-gradient-to-r from-ai-blue to-ai-purple text-white shadow-sm">
       <div className="container mx-auto p-4 flex justify-between items-center">
         <h1 className="text-2xl font-bold">{t('projects.title', 'Projects')}</h1>
         <div className="flex gap-4">
           <Button
             variant="outline"
             onClick={() => navigate('/enrolled-courses')}
-            className="flex items-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-800"
+            className="flex items-center gap-2 text-white border-white/30 bg-white/20 hover:bg-white/30 hover:text-white"
           >
             <BookOpen className="w-4 h-4" />
             {t('navigation.my_courses', 'My courses')}
           </Button>
           <Button 
             onClick={() => navigate('/courses')} 
-            variant="ghost"
-            className="flex items-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-800"
+            variant="outline"
+            className="flex items-center gap-2 text-white border-white/30 bg-white/20 hover:bg-white/30 hover:text-white"
           >
             <List className="w-4 h-4" />
             {t('navigation.courses')}
           </Button>
           <Button 
             onClick={handleLogout} 
-            variant="ghost"
-            className="flex items-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-800"
+            variant="outline"
+            className="flex items-center gap-2 text-white border-white/30 bg-white/20 hover:bg-white/30 hover:text-white"
           >
             <LogOut className="w-4 h-4" />
             {t('navigation.logout')}
@@ -54,7 +54,7 @@ export const ProjectsHeader = () => {
           <Button 
             onClick={() => navigate('/create-project')} 
             variant="default"
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 bg-white text-ai-purple hover:bg-ai-light"
           >
             <Plus className="w-4 h-4" />
             {t('influencer.project.createNew')}

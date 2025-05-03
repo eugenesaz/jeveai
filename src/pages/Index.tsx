@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -116,10 +115,6 @@ const Index = () => {
       <LandingHeader
         onLoginClick={() => setIsLoginOpen(true)}
         onSignUpClick={() => setIsSignUpOpen(true)}
-        title={undefined}
-        subtitle={undefined}
-        backgroundImage={undefined}
-        colorScheme={"blue"}
       />
 
       <section className="relative bg-gradient-to-br from-ai-blue via-ai-purple to-ai-pink py-24 overflow-hidden">
@@ -222,7 +217,7 @@ const Index = () => {
         <div className="container mx-auto px-6">
           <div className="grid md:grid-cols-3 gap-8">
             <div>
-              <h3 className="text-xl font-bold mb-4">{t('app.name')}</h3>
+              <h3 className="text-xl font-bold mb-4">Jeve.ai</h3>
               <p className="text-gray-300">{t('landing.footer.description', 'Empowering influencers to scale their business through personalization')}</p>
             </div>
             <div>
@@ -243,7 +238,7 @@ const Index = () => {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>© {new Date().getFullYear()} {t('app.name')}. {t('landing.rights')}</p>
+            <p>© {new Date().getFullYear()} Jeve.ai. {t('landing.rights')}</p>
           </div>
         </div>
       </footer>
