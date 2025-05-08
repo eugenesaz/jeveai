@@ -13,10 +13,12 @@ export type Database = {
         Row: {
           course_id: string
           created_at: string
+          file_storage_path: string | null
           id: string
           message_highlight: string | null
           message_time: string
           name: string
+          original_file_name: string | null
           response: string
           response_time: string
           user_id: string
@@ -25,10 +27,12 @@ export type Database = {
         Insert: {
           course_id: string
           created_at?: string
+          file_storage_path?: string | null
           id?: string
           message_highlight?: string | null
           message_time?: string
           name: string
+          original_file_name?: string | null
           response: string
           response_time?: string
           user_id: string
@@ -37,10 +41,12 @@ export type Database = {
         Update: {
           course_id?: string
           created_at?: string
+          file_storage_path?: string | null
           id?: string
           message_highlight?: string | null
           message_time?: string
           name?: string
+          original_file_name?: string | null
           response?: string
           response_time?: string
           user_id?: string

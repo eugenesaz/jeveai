@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,8 @@ interface Message {
   response: string;
   response_time: string;
   message_highlight: string | null;
+  file_storage_path: string | null;
+  original_file_name: string | null;
 }
 
 const ViewConversations = () => {
