@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -5,6 +6,7 @@ import { Search, FileIcon, FileText, Image, FileVideo, FileAudio, File, RefreshC
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from "@/components/ui/button";
+import { toast } from '@/components/ui/sonner';
 
 interface Message {
   id: string;
@@ -24,6 +26,8 @@ interface MessageListProps {
 export const MessageList = ({ messages }: MessageListProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
+  const [loadingFiles, setLoadingFiles] = useState<Record<string, boolean>>({});
+  const [fileErrors, setFileErrors] = useState<Record<string, string>>({});
   
   const filteredMessages = messages.filter(message => 
     message.user_message.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -46,49 +50,64 @@ export const MessageList = ({ messages }: MessageListProps) => {
   // Function to get a signed URL for file access
   const getSignedUrl = async (filePath: string) => {
     try {
+      setLoadingFiles(prev => ({ ...prev, [filePath]: true }));
+      setFileErrors(prev => ({ ...prev, [filePath]: '' }));
+      
       const { data, error } = await supabase.functions.invoke('get-private-file-url', {
         body: { filePath },
       });
 
       if (error) {
         console.error('Error getting signed URL:', error);
+        setFileErrors(prev => ({ ...prev, [filePath]: `Error: ${error.message}` }));
         return null;
       }
 
       return data.signedUrl;
     } catch (error) {
       console.error('Failed to get signed URL:', error);
+      setFileErrors(prev => ({ ...prev, [filePath]: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`}));
       return null;
+    } finally {
+      setLoadingFiles(prev => ({ ...prev, [filePath]: false }));
     }
   };
 
   // Get signed URLs for all file messages on component mount
   useEffect(() => {
     const fetchSignedUrls = async () => {
-      const urlPromises = messages
-        .filter(message => message.file_storage_path)
-        .map(async (message) => {
-          if (!message.file_storage_path) return null;
-          
-          const signedUrl = await getSignedUrl(message.file_storage_path);
-          return { path: message.file_storage_path, url: signedUrl };
-        });
-
-      const results = await Promise.all(urlPromises);
+      const filesToFetch = messages.filter(message => message.file_storage_path);
       
-      const urlMap: Record<string, string> = {};
-      results.forEach(result => {
-        if (result && result.path && result.url) {
-          urlMap[result.path] = result.url;
+      if (filesToFetch.length === 0) return;
+      
+      // Initialize loading state for all files
+      const initialLoadingState: Record<string, boolean> = {};
+      filesToFetch.forEach(message => {
+        if (message.file_storage_path) {
+          initialLoadingState[message.file_storage_path] = true;
         }
       });
+      setLoadingFiles(initialLoadingState);
       
-      setSignedUrls(urlMap);
+      // Fetch files one by one to avoid overwhelming the edge function
+      for (const message of filesToFetch) {
+        if (!message.file_storage_path) continue;
+        
+        try {
+          const signedUrl = await getSignedUrl(message.file_storage_path);
+          if (signedUrl) {
+            setSignedUrls(prev => ({ 
+              ...prev, 
+              [message.file_storage_path!]: signedUrl 
+            }));
+          }
+        } catch (err) {
+          console.error(`Error fetching URL for ${message.file_storage_path}:`, err);
+        }
+      }
     };
 
-    if (messages.some(message => message.file_storage_path)) {
-      fetchSignedUrls();
-    }
+    fetchSignedUrls();
   }, [messages]);
 
   // Helper to determine file type for icon display
@@ -112,12 +131,57 @@ export const MessageList = ({ messages }: MessageListProps) => {
 
   // Helper to render file content based on its type
   const renderFileContent = (filePath: string, fileName: string) => {
+    const isLoading = loadingFiles[filePath];
+    const error = fileErrors[filePath];
     const signedUrl = signedUrls[filePath];
-    if (!signedUrl) return <div>Loading file...</div>;
     
-    const extension = fileName.split('.').pop()?.toLowerCase();
+    if (isLoading) {
+      return <div className="mt-2 text-sm text-gray-500">Loading file...</div>;
+    }
+    
+    if (error) {
+      return (
+        <div className="mt-2">
+          <div className="text-sm text-red-500 mb-2">{error}</div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={async () => {
+              const newUrl = await getSignedUrl(filePath);
+              if (newUrl) {
+                setSignedUrls(prev => ({ ...prev, [filePath]: newUrl }));
+                toast.success("File URL refreshed");
+              }
+            }}
+            className="flex items-center gap-2"
+          >
+            <RefreshCcw className="h-4 w-4" /> Try Again
+          </Button>
+        </div>
+      );
+    }
+    
+    if (!signedUrl) return (
+      <div className="mt-2">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={async () => {
+            const newUrl = await getSignedUrl(filePath);
+            if (newUrl) {
+              setSignedUrls(prev => ({ ...prev, [filePath]: newUrl }));
+              toast.success("File URL generated");
+            }
+          }}
+          className="flex items-center gap-2"
+        >
+          <RefreshCcw className="h-4 w-4" /> Load File
+        </Button>
+      </div>
+    );
     
     // Images can be rendered directly
+    const extension = fileName.split('.').pop()?.toLowerCase();
     if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension || '')) {
       return (
         <div className="mt-2">
@@ -139,6 +203,7 @@ export const MessageList = ({ messages }: MessageListProps) => {
                 const newUrl = await getSignedUrl(filePath);
                 if (newUrl) {
                   setSignedUrls(prev => ({ ...prev, [filePath]: newUrl }));
+                  toast.success("Image refreshed");
                   document.getElementById(`reload-${filePath}`)?.classList.add('hidden');
                   const imgElement = document.querySelector(`img[alt="${fileName}"]`);
                   if (imgElement) {
